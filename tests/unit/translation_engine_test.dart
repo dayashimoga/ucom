@@ -53,13 +53,37 @@ void main() {
       expect(res.confidence, equals(1.0));
     });
 
-    test('applies formality rules when specified', () async {
-      final formalRes = await engine.translate(
+    test('applies formality rules when specified in Spanish and German', () async {
+      final formalEs = await engine.translate(
         'tú eres bueno',
         options: const TranslationOptions(sourceLanguage: 'es', targetLanguage: 'es', formality: 'more'),
       );
-      // Formal in Spanish uses usted
-      expect(formalRes.translatedText, contains('usted'));
+      expect(formalEs.translatedText, contains('usted'));
+
+      final formalDe = await engine.translate(
+        'du bist gut',
+        options: const TranslationOptions(sourceLanguage: 'de', targetLanguage: 'de', formality: 'more'),
+      );
+      expect(formalDe.translatedText, contains('Sie'));
+    });
+
+    test('handles auto source language detection when source is not specified', () async {
+      final res = await engine.translate(
+        'こんにちは',
+        options: const TranslationOptions(targetLanguage: 'en'),
+      );
+      expect(res.detectedSourceLanguage, equals('ja'));
+      expect(res.translatedText.toLowerCase(), contains('hello'));
+    });
+
+    test('translates tokenized words across non-English pairs and preserves unknown tokens', () async {
+      // Spanish 'mundo' to French 'monde'
+      final res = await engine.translate(
+        'mundo QuantumUnobtainium',
+        options: const TranslationOptions(sourceLanguage: 'es', targetLanguage: 'fr'),
+      );
+      expect(res.translatedText, contains('monde'));
+      expect(res.translatedText, contains('QuantumUnobtainium'));
     });
 
     test('handles empty input gracefully', () async {

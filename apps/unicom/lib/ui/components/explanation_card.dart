@@ -5,7 +5,7 @@ import '../../app/theme.dart';
 class ExplanationCard extends StatefulWidget {
   final ExplanationResult explanation;
 
-  const ExplanationCard({Key? key, required this.explanation}) : super(key: key);
+  const ExplanationCard({super.key, required this.explanation});
 
   @override
   State<ExplanationCard> createState() => _ExplanationCardState();

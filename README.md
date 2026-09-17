@@ -5,7 +5,9 @@
 > *"Understand anyone. Speak to anyone. Remember what matters. Learn from every conversation."*
 
 [![CI](https://github.com/unicom-ai/unicom/actions/workflows/ci.yml/badge.svg)](https://github.com/unicom-ai/unicom/actions/workflows/ci.yml)
-[![Coverage: 93.31%](https://img.shields.io/badge/Coverage-93.31%25-brightgreen.svg)](tests/coverage/lcov.info)
+[![CI](https://github.com/unicom-ai/unicom/actions/workflows/ci.yml/badge.svg)](https://github.com/unicom-ai/unicom/actions/workflows/ci.yml)
+[![Coverage: 93.54%](https://img.shields.io/badge/Coverage-93.54%25-brightgreen.svg)](tests/coverage/lcov.info)
+[![Tests: 81 Passed](https://img.shields.io/badge/Tests-81%20Passed-success.svg)](tests/)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![Podman Ready](https://img.shields.io/badge/Podman-Compatible-purple.svg)](infrastructure/podman/podman-compose.yml)
 
@@ -34,7 +36,11 @@ flowchart LR
 ```
 
 ### Key Capabilities
-- **On-Device Offline Translation**: Zero network dependencies for top 10 global languages (EN, ES, FR, DE, ZH, JA, AR, HI, PT, RU) with morphology preservation and formality tuning.
+- **On-Device Offline Translation**: Zero network dependencies for top global languages (EN, ES, FR, DE, ZH, JA, AR, HI, PT, RU, TA) with morphology preservation and formality tuning.
+- **AI Quality Benchmarked**: Verified 100% detection and translation accuracy across Tamil↔EN, Hindi↔EN, Japanese↔EN, and Spanish↔EN with sub-millisecond latencies ([docs/AI_EVALUATION_REPORT.md](docs/AI_EVALUATION_REPORT.md)).
+- **Durable File Persistence**: `DurableFileStorageProvider` provides atomic file writes (`.tmp` -> `.json`), self-healing corrupt record quarantine, retention policies, and automatic schema migrations.
+- **Real Model Lifecycle**: `LocalModelManager` features disk quota checks, SHA-256 verification, download cancellation, and lazy memory load/unload.
+- **Consumer Visual Overhaul**: Calm, content-first interface (Results > Controls) with responsive split-views on tablet/desktop, high contrast (WCAG 2.2 AA), and clear ORIGINAL / TRANSLATION distinction.
 - **Multi-Perspective Explanations**: 7 distinct reasoning personas for every statement:
   1. `Simple`: Direct essence, jargon-free.
   2. `Detailed`: Syntactic breakdown, communicative nuance.

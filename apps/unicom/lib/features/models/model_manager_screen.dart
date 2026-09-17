@@ -6,7 +6,7 @@ import '../../app/theme.dart';
 class ModelManagerScreen extends StatefulWidget {
   final LocalModelManager modelManager;
 
-  const ModelManagerScreen({Key? key, required this.modelManager}) : super(key: key);
+  const ModelManagerScreen({super.key, required this.modelManager});
 
   @override
   State<ModelManagerScreen> createState() => _ModelManagerScreenState();

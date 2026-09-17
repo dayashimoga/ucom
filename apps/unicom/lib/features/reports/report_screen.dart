@@ -7,7 +7,7 @@ import '../conversation/conversation_state_notifier.dart';
 class ReportScreen extends StatefulWidget {
   final ConversationController controller;
 
-  const ReportScreen({Key? key, required this.controller}) : super(key: key);
+  const ReportScreen({super.key, required this.controller});
 
   @override
   State<ReportScreen> createState() => _ReportScreenState();

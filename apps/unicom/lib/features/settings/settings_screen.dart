@@ -6,7 +6,7 @@ import '../conversation/conversation_state_notifier.dart';
 class SettingsScreen extends StatelessWidget {
   final ConversationController controller;
 
-  const SettingsScreen({Key? key, required this.controller}) : super(key: key);
+  const SettingsScreen({super.key, required this.controller});
 
   @override
   Widget build(BuildContext context) {

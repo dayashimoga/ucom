@@ -32,15 +32,13 @@ class UnicomTheme {
         primary: primaryBlueLight,
         secondary: accentCyan,
         surface: darkSurface,
-        background: darkBg,
         error: dangerRed,
         onPrimary: Colors.white,
         onSecondary: Colors.black,
         onSurface: darkTextPrimary,
-        onBackground: darkTextPrimary,
         onError: Colors.white,
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: darkSurface,
         elevation: 0,
         shape: RoundedRectangleBorder(
@@ -80,15 +78,13 @@ class UnicomTheme {
         primary: primaryBlue,
         secondary: accentCyan,
         surface: lightSurface,
-        background: lightBg,
         error: dangerRed,
         onPrimary: Colors.white,
         onSecondary: Colors.black,
         onSurface: lightTextPrimary,
-        onBackground: lightTextPrimary,
         onError: Colors.white,
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: lightSurface,
         elevation: 0,
         shape: RoundedRectangleBorder(

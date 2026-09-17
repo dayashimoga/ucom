@@ -6,7 +6,7 @@ import '../conversation/conversation_state_notifier.dart';
 class MeetingScreen extends StatefulWidget {
   final ConversationController controller;
 
-  const MeetingScreen({Key? key, required this.controller}) : super(key: key);
+  const MeetingScreen({super.key, required this.controller});
 
   @override
   State<MeetingScreen> createState() => _MeetingScreenState();

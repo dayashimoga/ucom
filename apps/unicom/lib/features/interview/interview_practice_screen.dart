@@ -6,7 +6,7 @@ import '../conversation/conversation_state_notifier.dart';
 class InterviewPracticeScreen extends StatefulWidget {
   final ConversationController controller;
 
-  const InterviewPracticeScreen({Key? key, required this.controller}) : super(key: key);
+  const InterviewPracticeScreen({super.key, required this.controller});
 
   @override
   State<InterviewPracticeScreen> createState() => _InterviewPracticeScreenState();
@@ -74,7 +74,7 @@ class _InterviewPracticeScreenState extends State<InterviewPracticeScreen> {
                         tooltip: 'Switch Question',
                         onSelected: (q) => setState(() => _activeQuestion = q),
                         itemBuilder: (context) => _sampleQuestions
-                            .map((q) => DropdownMenuItem(value: q, child: Text(q, maxLines: 1, overflow: TextOverflow.ellipsis)))
+                            .map((q) => PopupMenuItem(value: q, child: Text(q, maxLines: 1, overflow: TextOverflow.ellipsis)))
                             .toList(),
                       ),
                     ],

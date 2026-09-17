@@ -567,6 +567,13 @@ class ModelMetadata {
   final List<String> supportedLanguages;
   final List<String> capabilities;
 
+  final String? runtime; // e.g. ONNX Runtime, GGML, Pure Dart
+  final String? quantization; // e.g. INT8, FP16, None
+  final int? minRamMb;
+  final List<String> supportedAccelerators; // CPU, GPU, NPU
+  final bool isLoadedInMemory;
+  final String? installPath;
+
   ModelMetadata({
     required this.id,
     required this.name,
@@ -581,6 +588,12 @@ class ModelMetadata {
     this.downloadUrl,
     this.supportedLanguages = const [],
     this.capabilities = const [],
+    this.runtime,
+    this.quantization,
+    this.minRamMb,
+    this.supportedAccelerators = const ['CPU'],
+    this.isLoadedInMemory = false,
+    this.installPath,
   });
 
   Map<String, dynamic> toJson() => {
@@ -597,6 +610,12 @@ class ModelMetadata {
         if (downloadUrl != null) 'downloadUrl': downloadUrl,
         'supportedLanguages': supportedLanguages,
         'capabilities': capabilities,
+        if (runtime != null) 'runtime': runtime,
+        if (quantization != null) 'quantization': quantization,
+        if (minRamMb != null) 'minRamMb': minRamMb,
+        'supportedAccelerators': supportedAccelerators,
+        'isLoadedInMemory': isLoadedInMemory,
+        if (installPath != null) 'installPath': installPath,
       };
 
   factory ModelMetadata.fromJson(Map<String, dynamic> json) => ModelMetadata(
@@ -619,5 +638,14 @@ class ModelMetadata {
                 ?.map((e) => e as String)
                 .toList() ??
             const [],
+        runtime: json['runtime'] as String?,
+        quantization: json['quantization'] as String?,
+        minRamMb: json['minRamMb'] as int?,
+        supportedAccelerators: (json['supportedAccelerators'] as List<dynamic>?)
+                ?.map((e) => e as String)
+                .toList() ??
+            const ['CPU'],
+        isLoadedInMemory: json['isLoadedInMemory'] as bool? ?? false,
+        installPath: json['installPath'] as String?,
       );
 }

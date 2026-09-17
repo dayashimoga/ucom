@@ -5,6 +5,7 @@ class ExplanationEngine {
     String text, {
     String? segmentId,
     String? translatedText,
+    String? sourceLanguage,
     String? targetLanguage,
     List<ExplanationPersona>? personas,
     String? context,

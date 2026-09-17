@@ -12,4 +12,6 @@ class CryptoUtils {
     final digest = sha256.convert(bytes);
     return digest.toString();
   }
+
+  static String sha256Hex(List<int> bytes) => sha256Bytes(bytes);
 }

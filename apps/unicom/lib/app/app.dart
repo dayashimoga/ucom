@@ -15,10 +15,10 @@ class UnicomApp extends StatefulWidget {
   final LocalModelManager modelManager;
 
   const UnicomApp({
-    Key? key,
+    super.key,
     required this.controller,
     required this.modelManager,
-  }) : super(key: key);
+  });
 
   @override
   State<UnicomApp> createState() => _UnicomAppState();
@@ -26,7 +26,7 @@ class UnicomApp extends StatefulWidget {
 
 class _UnicomAppState extends State<UnicomApp> {
   int _currentIndex = 0;
-  ThemeMode _themeMode = ThemeMode.dark;
+  final ThemeMode _themeMode = ThemeMode.dark;
 
   @override
   Widget build(BuildContext context) {
@@ -62,12 +62,12 @@ class _UnicomAppState extends State<UnicomApp> {
                   selectedIndex: _currentIndex,
                   onDestinationSelected: (idx) => setState(() => _currentIndex = idx),
                   labelType: NavigationRailLabelType.all,
-                  leading: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  leading: const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 16),
                     child: CircleAvatar(
                       radius: 20,
                       backgroundColor: UnicomTheme.primaryBlue,
-                      child: const Icon(Icons.hub, color: Colors.white, size: 22),
+                      child: Icon(Icons.hub, color: Colors.white, size: 22),
                     ),
                   ),
                   destinations: const [

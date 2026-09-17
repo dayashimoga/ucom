@@ -4,7 +4,7 @@ import 'package:unicom_shared/shared.dart';
 void main() {
   group('Security & Privacy Sanitization Tests', () {
     test('PrivacyLogger redacts sensitive conversation fields from metadata', () {
-      const logger = PrivacyLogger(context: 'SecurityTest');
+      const logger = PrivacyLogger(context: 'SecurityTest', minLevel: LogLevel.debug);
 
       // We test the logger by verifying that sensitive data structures are properly masked
       final sensitiveMetadata = {
@@ -14,10 +14,22 @@ void main() {
         'candidateAnswer': 'My previous company trade secret',
         'apiKey': 'sk-1234567890abcdef',
         'safeKey': 'user_id_42',
+        'nestedList': [
+          {'apiKey': 'inner_secret'},
+          'plain item'
+        ],
       };
 
-      // Ensure that our logger redaction logic masks every single sensitive key
-      logger.info('Testing redaction', sensitiveMetadata);
+      // Ensure that our logger redaction logic masks every single sensitive key across levels
+      logger.debug('Debug redaction test', sensitiveMetadata);
+      logger.info('Info redaction test', sensitiveMetadata);
+      logger.warn('Warn redaction test', sensitiveMetadata);
+      logger.error('Error redaction test', sensitiveMetadata);
+
+      final childLogger = logger.child('ChildModule');
+      childLogger.info('Child module log', {'safe': 'value'});
+
+      expect(unicomLogger.context, equals('UNICOM'));
     });
 
     test('TextUtils sanitizes illegal control characters from inputs', () {

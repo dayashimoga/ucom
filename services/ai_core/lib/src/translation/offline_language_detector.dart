@@ -43,6 +43,10 @@ class OfflineLanguageDetector implements LanguageDetectionProvider {
     if (RegExp(r'[\u0900-\u097F]').hasMatch(trimmed)) {
       return const LanguageDetectionResult(language: 'hi', confidence: 0.99);
     }
+    // Tamil Script
+    if (RegExp(r'[\u0B80-\u0BFF]').hasMatch(trimmed)) {
+      return const LanguageDetectionResult(language: 'ta', confidence: 0.99);
+    }
     // Russian Cyrillic
     if (RegExp(r'[\u0400-\u04FF]').hasMatch(trimmed)) {
       return const LanguageDetectionResult(language: 'ru', confidence: 0.99);

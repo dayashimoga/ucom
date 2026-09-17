@@ -72,3 +72,24 @@ class ChecksumMismatchException extends UnicomException {
           statusCode: 422,
         );
 }
+
+class StorageFullException extends UnicomException {
+  const StorageFullException(String message, [dynamic details])
+      : super(
+          message,
+          code: 'STORAGE_FULL',
+          statusCode: 507,
+          details: details,
+        );
+}
+
+class CorruptedDataException extends UnicomException {
+  const CorruptedDataException(String message, [dynamic details])
+      : super(
+          message,
+          code: 'CORRUPTED_DATA',
+          statusCode: 422,
+          details: details,
+        );
+}
+

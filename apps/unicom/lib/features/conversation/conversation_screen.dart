@@ -10,7 +10,7 @@ import 'conversation_state_notifier.dart';
 class ConversationScreen extends StatefulWidget {
   final ConversationController controller;
 
-  const ConversationScreen({Key? key, required this.controller}) : super(key: key);
+  const ConversationScreen({super.key, required this.controller});
 
   @override
   State<ConversationScreen> createState() => _ConversationScreenState();
@@ -29,6 +29,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
     {'code': 'ja', 'name': '日本語'},
     {'code': 'ar', 'name': 'العربية'},
     {'code': 'hi', 'name': 'हिन्दी'},
+    {'code': 'ta', 'name': 'தமிழ்'},
     {'code': 'pt', 'name': 'Português'},
     {'code': 'ru', 'name': 'Русский'},
   ];
@@ -162,7 +163,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.record_voice_over, size: 56, color: UnicomTheme.accentCyan.withOpacity(0.5)),
+            Icon(Icons.record_voice_over, size: 56, color: UnicomTheme.accentCyan.withValues(alpha: 0.5)),
             const SizedBox(height: 16),
             const Text(
               'Universal Communication Intelligence',

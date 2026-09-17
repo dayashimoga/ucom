@@ -47,7 +47,7 @@ class ConversationController extends ChangeNotifier {
     InterviewEvaluator? interviewEvaluatorInstance,
     ReportGenerator? reportGeneratorInstance,
     StorageProvider? storageProvider,
-  })  : stt = sttProvider ?? DeterministicFakeSTTProvider(),
+  })  : stt = sttProvider ?? LocalSTTProvider(isModelInstalled: true),
         tts = ttsProvider ?? OfflineAudioSynthesizer(),
         translator = translationProvider ?? OfflineTranslationEngine(),
         explanationEngine = explanationEngineInstance ?? ExplanationEngine(),

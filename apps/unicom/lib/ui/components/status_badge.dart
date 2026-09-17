@@ -7,10 +7,10 @@ class StatusBadge extends StatelessWidget {
   final ConversationState state;
 
   const StatusBadge({
-    Key? key,
+    super.key,
     required this.executionMode,
     required this.state,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
