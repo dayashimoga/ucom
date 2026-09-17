@@ -1,0 +1,27 @@
+name: unicom_app
+description: UNICOM AI - Universal Communication Intelligence Flutter Application
+version: 1.0.0+1
+publish_to: none
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+  flutter: '>=3.16.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  unicom_contracts:
+    path: ../../packages/contracts
+  unicom_shared:
+    path: ../../packages/shared
+  unicom_ai_core:
+    path: ../../services/ai_core
+  unicom_reporting:
+    path: ../../services/reporting
+  unicom_model_runtime:
+    path: ../../services/model_runtime
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0

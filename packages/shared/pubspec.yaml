@@ -1,0 +1,17 @@
+name: unicom_shared
+description: Universal Communication Intelligence - Shared Utilities, Errors, and Privacy Logger
+version: 1.0.0
+publish_to: none
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  unicom_contracts:
+    path: ../contracts
+  crypto: ^3.0.3
+  meta: ^1.11.0
+
+dev_dependencies:
+  test: ^1.24.0
+  lints: ^3.0.0

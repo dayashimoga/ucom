@@ -1,0 +1,18 @@
+name: unicom_ai_core
+description: Universal Communication Intelligence - Core AI Engines (Offline Translation, Speech, Explanations, Interview Evaluation, NLP Extraction)
+version: 1.0.0
+publish_to: none
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  unicom_contracts:
+    path: ../../packages/contracts
+  unicom_shared:
+    path: ../../packages/shared
+  meta: ^1.11.0
+
+dev_dependencies:
+  test: ^1.24.0
+  lints: ^3.0.0

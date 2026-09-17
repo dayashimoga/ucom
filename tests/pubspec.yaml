@@ -1,0 +1,23 @@
+name: unicom_tests
+description: Comprehensive Test Suite for UNICOM AI
+version: 1.0.0
+publish_to: none
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  unicom_contracts:
+    path: ../packages/contracts
+  unicom_shared:
+    path: ../packages/shared
+  unicom_ai_core:
+    path: ../services/ai_core
+  unicom_reporting:
+    path: ../services/reporting
+  unicom_model_runtime:
+    path: ../services/model_runtime
+  test: ^1.24.0
+
+dev_dependencies:
+  lints: ^3.0.0

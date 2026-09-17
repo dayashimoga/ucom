@@ -1,0 +1,25 @@
+name: Security & Privacy Audits
+
+on:
+  push:
+    branches: [ main ]
+  schedule:
+    - cron: '0 0 * * 1' # Weekly security audit
+
+jobs:
+  security-audit:
+    name: Secret Leak, SAST & Privacy Audits
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: TruffleHog Secret Scan
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+
+      - name: Offline Privacy Invariant Verification
+        run: |
+          docker run --rm --network none -v "${PWD}:/app" -e PUB_CACHE=/app/.pub-cache -w /app/tests ghcr.io/cirruslabs/flutter:stable dart test offline

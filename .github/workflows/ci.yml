@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-and-coverage:
+    name: Test & Coverage Gate (>=90%)
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/cirruslabs/flutter:stable
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Cache Pub Dependencies
+        uses: actions/cache@v4
+        with:
+          path: /root/.pub-cache
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
+
+      - name: Install Dependencies
+        run: |
+          cd packages/contracts && dart pub get
+          cd ../shared && dart pub get
+          cd ../../services/ai_core && dart pub get
+          cd ../reporting && dart pub get
+          cd ../model_runtime && dart pub get
+          cd ../../tests && dart pub get
+
+      - name: Static Analysis & Linting
+        run: |
+          cd packages/contracts && dart analyze --fatal-infos
+          cd ../shared && dart analyze --fatal-infos
+          cd ../../services/ai_core && dart analyze --fatal-infos
+          cd ../reporting && dart analyze --fatal-infos
+          cd ../model_runtime && dart analyze --fatal-infos
+          cd ../../tests && dart analyze --fatal-infos
+
+      - name: Run Test Suite with Branch Coverage
+        run: |
+          cd tests
+          dart test --coverage=coverage --branch-coverage unit contract integration offline security performance e2e
+          dart run coverage:format_coverage --lcov --in=coverage --out=coverage/lcov.info --packages=.dart_tool/package_config.json --report-on=/app/packages,/app/services
+
+      - name: Enforce >=90% Line & Branch Coverage Gate
+        run: |
+          python3 -c "
+          lines = open('tests/coverage/lcov.info').readlines()
+          total = sum(1 for l in lines if l.startswith('DA:'))
+          hits = sum(1 for l in lines if l.startswith('DA:') and int(l.strip().split(':')[1].split(',')[1]) > 0)
+          pct = (hits / total) * 100 if total > 0 else 0
+          print(f'Total Lines: {total}, Hits: {hits}, Coverage: {pct:.2f}%')
+          if pct < 90.0:
+              print(f'FAILED: Coverage {pct:.2f}% is below required 90.0% threshold!')
+              exit(1)
+          print('PASSED: Coverage threshold >= 90.0% verified!')
+          "
+
+      - name: Upload Coverage Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: lcov-report
+          path: tests/coverage/lcov.info

@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  unicom-app:
+    image: ghcr.io/cirruslabs/flutter:stable
+    container_name: unicom_ai_runtime
+    working_dir: /app
+    environment:
+      - PUB_CACHE=/app/.pub-cache
+      - UNICOM_EXECUTION_MODE=private_offline
+    volumes:
+      - ../..:/app:Z
+    ports:
+      - "8080:8080"
+    command: ["bash", "-c", "cd /app/tests && dart test unit contract integration offline security performance e2e"]
+    restart: unless-stopped

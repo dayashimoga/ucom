@@ -1,0 +1,88 @@
+name: Multi-Platform Build & Verification
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-android-and-web:
+    name: Build Android (APK + AAB) & Web
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/cirruslabs/flutter:stable
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install All Dependencies
+        run: |
+          cd packages/contracts && dart pub get
+          cd ../shared && dart pub get
+          cd ../../services/ai_core && dart pub get
+          cd ../reporting && dart pub get
+          cd ../model_runtime && dart pub get
+          cd ../../apps/unicom && flutter pub get
+
+      - name: Build Web Production Bundle
+        run: |
+          cd apps/unicom
+          flutter build web --release --base-href "/"
+          test -d build/web
+          test -f build/web/index.html
+
+      - name: Build Android Release APK
+        run: |
+          cd apps/unicom
+          flutter build apk --release --no-pub
+          test -f build/app/outputs/flutter-apk/app-release.apk
+
+      - name: Build Android App Bundle (AAB)
+        run: |
+          cd apps/unicom
+          flutter build appbundle --release --no-pub
+          test -f build/app/outputs/bundle/release/app-release.aab
+
+      - name: Generate Checksums & SBOM
+        run: |
+          mkdir -p artifacts
+          cp apps/unicom/build/app/outputs/flutter-apk/app-release.apk artifacts/unicom-android-v1.0.0.apk
+          cp apps/unicom/build/app/outputs/bundle/release/app-release.aab artifacts/unicom-android-v1.0.0.aab
+          tar -czf artifacts/unicom-web-v1.0.0.tar.gz -C apps/unicom/build/web .
+          bash infrastructure/scripts/generate-sbom.sh artifacts/UNICOM_AI_SBOM.json
+          cd artifacts && sha256sum * > SHA256SUMS
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: unicom-release-artifacts
+          path: artifacts/
+
+  build-windows:
+    name: Build Windows Desktop
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+      - name: Build Windows Executable
+        run: |
+          cd apps/unicom
+          flutter pub get
+          flutter build windows --release
+
+  build-macos:
+    name: Build macOS Desktop
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+      - name: Build macOS Application
+        run: |
+          cd apps/unicom
+          flutter pub get
+          flutter build macos --release

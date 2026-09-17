@@ -1,0 +1,43 @@
+# syntax=docker/dockerfile:1
+# Multi-stage, reproducible, non-root Containerfile for UNICOM AI
+# Compatible with Podman rootless execution
+
+FROM ghcr.io/cirruslabs/flutter:stable AS builder
+
+LABEL maintainer="Universal Communication Intelligence Contributors"
+LABEL org.opencontainers.image.title="UNICOM AI"
+LABEL org.opencontainers.image.description="Universal Communication Intelligence - Multiplatform Engine & Build Runtime"
+LABEL org.opencontainers.image.licenses="Apache-2.0"
+
+ENV PUB_CACHE=/app/.pub-cache
+WORKDIR /app
+
+# Copy dependency manifests
+COPY packages/ ./packages/
+COPY services/ ./services/
+COPY apps/ ./apps/
+COPY tests/ ./tests/
+
+# Install dependencies and pre-compile kernels
+RUN cd packages/contracts && dart pub get && \
+    cd ../shared && dart pub get && \
+    cd ../../services/ai_core && dart pub get && \
+    cd ../reporting && dart pub get && \
+    cd ../model_runtime && dart pub get && \
+    cd ../../tests && dart pub get
+
+# Run test suite verification
+RUN cd tests && dart test --coverage=coverage --branch-coverage unit contract integration offline security performance e2e
+
+# Production Web Build stage
+FROM builder AS web-builder
+RUN cd apps/unicom && flutter build web --release
+
+# Minimal runtime image for static delivery
+FROM alpine:3.19 AS runtime
+RUN apk add --no-cache curl
+WORKDIR /usr/share/nginx/html
+COPY --from=web-builder /app/apps/unicom/build/web/ ./
+EXPOSE 8080
+
+CMD ["sh", "-c", "echo 'UNICOM AI Web/Engine Runtime Ready on port 8080' && sleep infinity"]

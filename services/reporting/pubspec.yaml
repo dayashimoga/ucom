@@ -1,0 +1,18 @@
+name: unicom_reporting
+description: Universal Communication Intelligence - Multi-Format Reporting Engine (Quick/Detailed Summaries, Minutes, Interview, Action Items, PDF/MD/JSON/TXT)
+version: 1.0.0
+publish_to: none
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  unicom_contracts:
+    path: ../../packages/contracts
+  unicom_shared:
+    path: ../../packages/shared
+  meta: ^1.11.0
+
+dev_dependencies:
+  test: ^1.24.0
+  lints: ^3.0.0

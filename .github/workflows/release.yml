@@ -1,0 +1,45 @@
+name: Release Pipeline
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    name: Production Release & Validated Packaging
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/cirruslabs/flutter:stable
+
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Full Test & Coverage Verification
+        run: |
+          cd packages/contracts && dart pub get
+          cd ../shared && dart pub get
+          cd ../../services/ai_core && dart pub get
+          cd ../reporting && dart pub get
+          cd ../model_runtime && dart pub get
+          cd ../../tests && dart pub get
+          dart test --coverage=coverage --branch-coverage unit contract integration offline security performance e2e
+
+      - name: Package Release Assets
+        run: |
+          mkdir -p release-dist
+          cd apps/unicom && flutter pub get && flutter build web --release
+          tar -czf ../../release-dist/unicom-web-${GITHUB_REF_NAME}.tar.gz -C build/web .
+          cd ../..
+          bash infrastructure/scripts/generate-sbom.sh release-dist/UNICOM_AI_SBOM.json
+          cd release-dist && sha256sum * > SHA256SUMS
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release-dist/*
+          generate_release_notes: true
