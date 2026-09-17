@@ -57,9 +57,9 @@ class DeterministicFakeTTSProvider implements TTSProvider {
     SynthesisOptions options = const SynthesisOptions(),
   }) async {
     // Generate valid 44-byte WAV header + mock PCM sample bytes
-    final sampleRate = 16000;
-    final numChannels = 1;
-    final bitsPerSample = 16;
+    const sampleRate = 16000;
+    const numChannels = 1;
+    const bitsPerSample = 16;
     final durationSeconds = (text.length * 0.05).clamp(0.5, 30.0);
     final numSamples = (sampleRate * durationSeconds).floor();
     final dataByteCount = numSamples * numChannels * (bitsPerSample ~/ 8);

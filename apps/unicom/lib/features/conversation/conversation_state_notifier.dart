@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:unicom_contracts/contracts.dart';
 import 'package:unicom_ai_core/ai_core.dart';
 import 'package:unicom_reporting/reporting.dart';
+import 'package:unicom_model_runtime/model_runtime.dart';
 import '../../providers/in_memory_storage_provider.dart';
 
 class ConversationController extends ChangeNotifier {
@@ -13,6 +14,14 @@ class ConversationController extends ChangeNotifier {
   final InterviewEvaluator interviewEvaluator;
   final ReportGenerator reportGenerator;
   final StorageProvider storage;
+  final LocalModelManager modelManager;
+
+  late final AndroidAICoreProvider androidAICore;
+  late final LocalLLMProvider localLLM;
+  late final CloudLLMProvider cloudLLM;
+  late final AIProviderRouter router;
+  late final RagRetrievalProvider ragRetrieval;
+  late final KnowledgeEngine knowledgeEngine;
 
   ConversationState _state = ConversationState.idle;
   ConversationState get state => _state;
@@ -38,6 +47,30 @@ class ConversationController extends ChangeNotifier {
   GeneratedReport? _latestReport;
   GeneratedReport? get latestReport => _latestReport;
 
+  KnowledgeResponse? _latestKnowledgeResponse;
+  KnowledgeResponse? get latestKnowledgeResponse => _latestKnowledgeResponse;
+
+  AICoreStatus? _aicoreStatus;
+  AICoreStatus? get aicoreStatus => _aicoreStatus;
+
+  String? _cloudApiKey;
+  String? get cloudApiKey => _cloudApiKey;
+
+  String _cloudModelName = 'gemini-1.5-flash';
+  String get cloudModelName => _cloudModelName;
+
+  double _cloudTemperature = 0.7;
+  double get cloudTemperature => _cloudTemperature;
+
+  int _cloudMaxTokens = 1000;
+  int get cloudMaxTokens => _cloudMaxTokens;
+
+  int _cloudTimeoutMs = 15000;
+  int get cloudTimeoutMs => _cloudTimeoutMs;
+
+  ConnectionTestResult? _lastConnectionTest;
+  ConnectionTestResult? get lastConnectionTest => _lastConnectionTest;
+
   ConversationController({
     STTProvider? sttProvider,
     TTSProvider? ttsProvider,
@@ -47,6 +80,11 @@ class ConversationController extends ChangeNotifier {
     InterviewEvaluator? interviewEvaluatorInstance,
     ReportGenerator? reportGeneratorInstance,
     StorageProvider? storageProvider,
+    LocalModelManager? modelManagerInstance,
+    AndroidAICoreProvider? androidAICoreInstance,
+    LocalLLMProvider? localLLMInstance,
+    CloudLLMProvider? cloudLLMInstance,
+    RagRetrievalProvider? ragRetrievalInstance,
   })  : stt = sttProvider ?? LocalSTTProvider(isModelInstalled: true),
         tts = ttsProvider ?? OfflineAudioSynthesizer(),
         translator = translationProvider ?? OfflineTranslationEngine(),
@@ -54,8 +92,34 @@ class ConversationController extends ChangeNotifier {
         extractor = extractorInstance ?? ConversationExtractor(),
         interviewEvaluator = interviewEvaluatorInstance ?? InterviewEvaluator(),
         reportGenerator = reportGeneratorInstance ?? ReportGenerator(),
-        storage = storageProvider ?? LocalStorageProvider() {
+        storage = storageProvider ?? LocalStorageProvider(),
+        modelManager = modelManagerInstance ?? LocalModelManager() {
+    androidAICore = androidAICoreInstance ?? AndroidAICoreProvider();
+    localLLM = localLLMInstance ?? LocalLLMProvider();
+    cloudLLM = cloudLLMInstance ??
+        CloudLLMProvider(
+          executionMode: _executionMode,
+          apiKey: _cloudApiKey,
+          modelName: _cloudModelName,
+          timeoutMs: _cloudTimeoutMs,
+        );
+
+    router = AIProviderRouter(
+      androidProvider: androidAICore,
+      localProvider: localLLM,
+      cloudProvider: cloudLLM,
+      executionMode: _executionMode,
+    );
+
+    ragRetrieval = ragRetrievalInstance ?? RagRetrievalProvider();
+    knowledgeEngine = KnowledgeEngine(
+      router: router,
+      retrievalProvider: ragRetrieval,
+      translationProvider: translator,
+    );
+
     _startNewSession();
+    refreshAICoreStatus();
   }
 
   void _startNewSession() {
@@ -73,8 +137,14 @@ class ConversationController extends ChangeNotifier {
     );
   }
 
+  Future<void> refreshAICoreStatus() async {
+    _aicoreStatus = await androidAICore.checkStatus();
+    notifyListeners();
+  }
+
   void setExecutionMode(ExecutionMode mode) {
     _executionMode = mode;
+    router.setExecutionMode(mode);
     notifyListeners();
   }
 
@@ -90,9 +160,93 @@ class ConversationController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setCloudConfig({
+    String? apiKey,
+    String? modelName,
+    double? temperature,
+    int? maxTokens,
+    int? timeoutMs,
+  }) {
+    if (apiKey != null) _cloudApiKey = apiKey;
+    if (modelName != null) _cloudModelName = modelName;
+    if (temperature != null) _cloudTemperature = temperature;
+    if (maxTokens != null) _cloudMaxTokens = maxTokens;
+    if (timeoutMs != null) _cloudTimeoutMs = timeoutMs;
+    notifyListeners();
+  }
+
+  Future<ConnectionTestResult> testCloudConnection() async {
+    final testProvider = CloudLLMProvider(
+      executionMode: _executionMode,
+      apiKey: _cloudApiKey,
+      modelName: _cloudModelName,
+      timeoutMs: _cloudTimeoutMs,
+    );
+    _lastConnectionTest = await testProvider.testConnection();
+    notifyListeners();
+    return _lastConnectionTest!;
+  }
+
   void selectExplanation(ExplanationResult? explanation) {
     _selectedExplanation = explanation;
     notifyListeners();
+  }
+
+  /// General Knowledge / Q&A interaction
+  Future<KnowledgeResponse> askKnowledge(
+    String question, {
+    ExplanationPersona? persona,
+    String? targetLanguage,
+    bool retrieveContext = true,
+  }) async {
+    _state = ConversationState.translating;
+    notifyListeners();
+
+    final response = await knowledgeEngine.ask(
+      question: question,
+      persona: persona,
+      targetLanguage: targetLanguage ?? _targetLanguage,
+      retrieveContext: retrieveContext,
+    );
+
+    _latestKnowledgeResponse = response;
+
+    // Record Q&A in conversation as structured segment
+    final newSegment = ConversationSegment(
+      id: 'seg_${_currentConversation.segments.length + 1}',
+      speakerId: 'p1',
+      speakerName: 'You',
+      startTime: DateTime.now().millisecondsSinceEpoch,
+      originalText: question,
+      originalLanguage: _sourceLanguage,
+      translatedText: response.generativeAnswer,
+      targetLanguage: _targetLanguage,
+      confidence: 0.99,
+      isFinal: true,
+    );
+
+    final updatedSegments = List<ConversationSegment>.from(_currentConversation.segments)..add(newSegment);
+    _currentConversation = Conversation(
+      id: _currentConversation.id,
+      title: _currentConversation.title,
+      mode: _mode,
+      executionMode: _executionMode,
+      startedAt: _currentConversation.startedAt,
+      participants: _currentConversation.participants,
+      segments: updatedSegments,
+      questions: _currentConversation.questions,
+      topics: _currentConversation.topics,
+      decisions: _currentConversation.decisions,
+      actionItems: _currentConversation.actionItems,
+      unresolvedQuestions: _currentConversation.unresolvedQuestions,
+      assessments: _currentConversation.assessments,
+    );
+
+    await storage.saveConversation(_currentConversation);
+
+    _state = ConversationState.idle;
+    notifyListeners();
+    return response;
   }
 
   Future<void> sendTextInput(String text, {String speakerName = 'You', String? speakerId}) async {

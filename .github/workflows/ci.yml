@@ -55,17 +55,8 @@ jobs:
 
       - name: Enforce >=90% Line & Branch Coverage Gate
         run: |
-          python3 -c "
-          lines = open('tests/coverage/lcov.info').readlines()
-          total = sum(1 for l in lines if l.startswith('DA:'))
-          hits = sum(1 for l in lines if l.startswith('DA:') and int(l.strip().split(':')[1].split(',')[1]) > 0)
-          pct = (hits / total) * 100 if total > 0 else 0
-          print(f'Total Lines: {total}, Hits: {hits}, Coverage: {pct:.2f}%')
-          if pct < 90.0:
-              print(f'FAILED: Coverage {pct:.2f}% is below required 90.0% threshold!')
-              exit(1)
-          print('PASSED: Coverage threshold >= 90.0% verified!')
-          "
+          cd tests
+          dart run coverage/check_coverage.dart coverage/lcov.info
 
       - name: Upload Coverage Artifacts
         uses: actions/upload-artifact@v4

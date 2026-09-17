@@ -17,7 +17,7 @@ class OfflineAudioSynthesizer implements TTSProvider {
     String text, {
     SynthesisOptions options = const SynthesisOptions(),
   }) async {
-    final sampleRate = 22050;
+    const sampleRate = 22050;
     final baseFreq = 220.0 * options.pitch;
     final durationSeconds = (text.length * (0.05 / options.rate.clamp(0.5, 2.0))).clamp(0.3, 60.0);
     final numSamples = (sampleRate * durationSeconds).floor();
@@ -41,8 +41,8 @@ class OfflineAudioSynthesizer implements TTSProvider {
 
     // Generate harmonic waveforms with attack/decay envelope
     final volume = options.volume.clamp(0.1, 1.0);
-    final attack = sampleRate * 0.05;
-    final decay = sampleRate * 0.05;
+    const attack = sampleRate * 0.05;
+    const decay = sampleRate * 0.05;
 
     for (int i = 0; i < numSamples; i++) {
       final t = i / sampleRate;

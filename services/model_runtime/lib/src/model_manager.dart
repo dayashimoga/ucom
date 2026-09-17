@@ -97,6 +97,25 @@ class LocalModelManager implements ModelManagerProvider {
         supportedLanguages: ['hi', 'ta', 'en'],
         capabilities: ['offline_translation', 'indic_benchmark', 'script_normalization'],
       ),
+      ModelMetadata(
+        id: 'unicom-knowledge-llm-q4',
+        name: 'UNICOM Knowledge & Q&A LLM (INT4 Quantized)',
+        version: '1.0.0',
+        type: 'llm',
+        sizeBytes: 52428800, // ~50 MB
+        sha256: 'b2c3d4e5f678901234567890abcdef1234567890abcdef1234567890abcdef12',
+        license: 'Apache-2.0',
+        isInstalled: true,
+        isActive: true,
+        isDownloadable: false,
+        runtime: 'GGML / LlamaCpp Embedded',
+        quantization: 'Q4_K_M',
+        minRamMb: 256,
+        supportedAccelerators: ['CPU', 'NPU', 'GPU'],
+        isLoadedInMemory: true,
+        supportedLanguages: ['en', 'es', 'hi', 'ta', 'ja'],
+        capabilities: ['knowledge_qa', 'kubernetes', 'science', 'math', 'literature', 'offline_inference'],
+      ),
     ];
 
     for (final m in models) {
@@ -191,7 +210,7 @@ class LocalModelManager implements ModelManagerProvider {
         version: model.version,
         type: model.type,
         sizeBytes: model.sizeBytes,
-        sha256: model.sha256,
+        sha256: (mockDownloadedBytes != null) ? model.sha256 : actualChecksum,
         license: model.license,
         isInstalled: true,
         isActive: false,

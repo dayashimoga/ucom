@@ -34,6 +34,11 @@ class StatusBadge extends StatelessWidget {
         modeLabel = 'CLOUD';
         modeIcon = Icons.cloud_done;
         break;
+      case ExecutionMode.auto:
+        modeColor = UnicomTheme.accentCyan;
+        modeLabel = 'AUTO AI';
+        modeIcon = Icons.auto_awesome;
+        break;
     }
 
     Color stateColor;

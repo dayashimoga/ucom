@@ -212,3 +212,51 @@ abstract class ModelManagerProvider {
   Future<bool> activateModel(String id);
   Future<bool> removeModel(String id);
 }
+
+class RetrievalDocument {
+  final String id;
+  final String title;
+  final String content;
+  final String? sourceUri;
+  final double score;
+  final Map<String, dynamic>? metadata;
+
+  const RetrievalDocument({
+    required this.id,
+    required this.title,
+    required this.content,
+    this.sourceUri,
+    this.score = 1.0,
+    this.metadata,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'title': title,
+        'content': content,
+        if (sourceUri != null) 'sourceUri': sourceUri,
+        'score': score,
+        if (metadata != null) 'metadata': metadata,
+      };
+
+  factory RetrievalDocument.fromJson(Map<String, dynamic> json) =>
+      RetrievalDocument(
+        id: json['id'] as String,
+        title: json['title'] as String,
+        content: json['content'] as String,
+        sourceUri: json['sourceUri'] as String?,
+        score: (json['score'] as num?)?.toDouble() ?? 1.0,
+        metadata: json['metadata'] as Map<String, dynamic>?,
+      );
+}
+
+abstract class RetrievalProvider {
+  String get id;
+  String get name;
+  bool get isOfflineCapable;
+
+  Future<List<RetrievalDocument>> retrieve(String query, {int topK = 5});
+  Future<void> indexDocument(RetrievalDocument doc);
+  Future<bool> deleteDocument(String id);
+}
+

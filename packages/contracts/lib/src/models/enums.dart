@@ -2,7 +2,8 @@
 enum ExecutionMode {
   privateOffline,
   hybrid,
-  cloud;
+  cloud,
+  auto;
 
   String toJson() {
     switch (this) {
@@ -12,6 +13,8 @@ enum ExecutionMode {
         return 'hybrid';
       case ExecutionMode.cloud:
         return 'cloud';
+      case ExecutionMode.auto:
+        return 'auto';
     }
   }
 
@@ -23,6 +26,8 @@ enum ExecutionMode {
         return ExecutionMode.hybrid;
       case 'cloud':
         return ExecutionMode.cloud;
+      case 'auto':
+        return ExecutionMode.auto;
       default:
         return ExecutionMode.privateOffline;
     }
