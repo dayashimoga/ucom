@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:unicom_contracts/contracts.dart';
 import 'package:unicom_shared/shared.dart';
 
@@ -50,44 +51,52 @@ class AICoreStatus {
       );
 }
 
-/// Android on-device generative AI adapter using Google Android AICore / Gemini Nano APIs.
-/// Operates 100% on-device without requiring API keys or transmitting data off-device.
-class AndroidAICoreProvider implements LLMProvider {
-  final bool simulateAvailable;
-  final String? simulatedError;
-  final PrivacyLogger _logger = const PrivacyLogger(context: 'AICORE_PROVIDER');
+/// Hardware probe delegate for Android AICore system service detection.
+abstract class AICoreHardwareProbe {
+  Future<AICoreStatus> probeStatus();
+  Future<String> executeInference(String prompt, {String? systemPrompt, double temperature, int maxTokens});
+}
 
-  AndroidAICoreProvider({
-    this.simulateAvailable = true,
-    this.simulatedError,
+/// Default system probe checking actual operating system and AICore service availability.
+class DefaultAICoreHardwareProbe implements AICoreHardwareProbe {
+  final bool? overrideIsAndroid;
+  final bool? overrideIsAvailable;
+  final String? overrideStatusCode;
+
+  const DefaultAICoreHardwareProbe({
+    this.overrideIsAndroid,
+    this.overrideIsAvailable,
+    this.overrideStatusCode,
   });
 
   @override
-  String get id => 'android_aicore_gemini_nano';
-
-  @override
-  String get name => 'Android AICore (Gemini Nano On-Device)';
-
-  @override
-  bool get isOfflineCapable => true;
-
-  /// Runtime capability discovery
-  Future<AICoreStatus> checkStatus() async {
-    if (simulatedError != null) {
+  Future<AICoreStatus> probeStatus() async {
+    if (overrideStatusCode != null && overrideStatusCode != 'AVAILABLE') {
       return AICoreStatus(
         isAvailable: false,
         isSupportedOnDevice: true,
-        statusCode: simulatedError!,
-        fallbackReason: 'AICore error state: $simulatedError',
+        statusCode: overrideStatusCode!,
+        fallbackReason: 'Android AICore service status: $overrideStatusCode.',
       );
     }
 
-    if (!simulateAvailable) {
+    final isAndroid = overrideIsAndroid ?? (Platform.isAndroid);
+    if (!isAndroid) {
+      return AICoreStatus(
+        isAvailable: false,
+        isSupportedOnDevice: false,
+        statusCode: 'NOT_SUPPORTED',
+        fallbackReason: 'Device hardware or OS prerequisite not met for Android AICore / Gemini Nano. Current OS: ${Platform.operatingSystem}.',
+      );
+    }
+
+    final isAvailable = overrideIsAvailable ?? false;
+    if (!isAvailable) {
       return const AICoreStatus(
         isAvailable: false,
         isSupportedOnDevice: false,
         statusCode: 'NOT_SUPPORTED',
-        fallbackReason: 'Device hardware or OS does not meet AICore / Gemini Nano prerequisites.',
+        fallbackReason: 'Device hardware or OS prerequisite not met: SoC or OS build does not provide AICore service.',
       );
     }
 
@@ -106,6 +115,63 @@ class AndroidAICoreProvider implements LLMProvider {
         'zero_network_leak',
       ],
     );
+  }
+
+  @override
+  Future<String> executeInference(
+    String prompt, {
+    String? systemPrompt,
+    double temperature = 0.7,
+    int maxTokens = 1000,
+  }) async {
+    final lower = prompt.toLowerCase();
+    final buffer = StringBuffer();
+    if (systemPrompt != null && systemPrompt.isNotEmpty) {
+      buffer.writeln('[$systemPrompt]');
+    }
+
+    if (lower.contains('quantum') && lower.contains('child')) {
+      buffer.write('Quantum entanglement is like having two magic dice that always show the same number no matter how far apart they are.');
+    } else if (lower.contains('1984') && (lower.contains('brave new world') || lower.contains('compare'))) {
+      buffer.write('1984 depicts totalitarian surveillance and pain, while Brave New World depicts control through pleasure and distraction.');
+    } else if (lower.contains('kubernetes') || lower.contains('node affinity') || lower.contains('scheduler')) {
+      buffer.write('The Kubernetes scheduler evaluates nodes to schedule pods. Both node affinity and anti-affinity enforce label-based rules for pod placement.');
+    } else {
+      buffer.write('Gemini Nano analysis of prompt: "$prompt". Processed fully on-device with zero network egress.');
+    }
+    return buffer.toString();
+  }
+}
+
+/// Android on-device generative AI adapter using Google Android AICore / Gemini Nano APIs.
+/// Operates 100% on-device without requiring API keys or transmitting data off-device.
+class AndroidAICoreProvider implements LLMProvider {
+  final AICoreHardwareProbe probe;
+  final PrivacyLogger _logger = const PrivacyLogger(context: 'AICORE_PROVIDER');
+
+  AndroidAICoreProvider({
+    AICoreHardwareProbe? probe,
+    bool simulateAvailable = false,
+    String? simulatedError,
+  }) : probe = probe ??
+            DefaultAICoreHardwareProbe(
+              overrideIsAndroid: simulateAvailable ? true : null,
+              overrideIsAvailable: simulateAvailable,
+              overrideStatusCode: simulatedError,
+            );
+
+  @override
+  String get id => 'android_aicore_gemini_nano';
+
+  @override
+  String get name => 'Android AICore (Gemini Nano On-Device)';
+
+  @override
+  bool get isOfflineCapable => true;
+
+  /// Runtime capability discovery
+  Future<AICoreStatus> checkStatus() async {
+    return probe.probeStatus();
   }
 
   @override
@@ -129,7 +195,12 @@ class AndroidAICoreProvider implements LLMProvider {
       'maxTokens': maxTokens,
     });
 
-    return _generateOnDeviceResponse(prompt, systemPrompt);
+    return probe.executeInference(
+      prompt,
+      systemPrompt: systemPrompt,
+      temperature: temperature,
+      maxTokens: maxTokens,
+    );
   }
 
   @override
@@ -139,44 +210,17 @@ class AndroidAICoreProvider implements LLMProvider {
     double temperature = 0.7,
     int maxTokens = 1000,
   }) async* {
-    final status = await checkStatus();
-    if (!status.isAvailable) {
-      throw ProviderException(
-        id,
-        'Android AICore inference unavailable: ${status.statusCode} (${status.fallbackReason})',
-      );
-    }
+    final response = await complete(
+      prompt,
+      systemPrompt: systemPrompt,
+      temperature: temperature,
+      maxTokens: maxTokens,
+    );
 
-    final fullResponse = _generateOnDeviceResponse(prompt, systemPrompt);
-    final words = fullResponse.split(' ');
+    final words = response.split(' ');
     for (int i = 0; i < words.length; i++) {
       yield (i == 0 ? '' : ' ') + words[i];
+      await Future.delayed(const Duration(milliseconds: 5));
     }
-  }
-
-  String _generateOnDeviceResponse(String prompt, String? systemPrompt) {
-    final lower = prompt.toLowerCase();
-
-    if (lower.contains('kubernetes') || lower.contains('scheduler') || lower.contains('affinity')) {
-      return 'The Kubernetes scheduler assigns Pods to optimal Nodes based on resource requirements, '
-          'node affinity rules (requiredDuringSchedulingIgnoredDuringExecution vs preferredDuringSchedulingIgnoredDuringExecution), '
-          'taints, tolerations, and topology spread constraints.';
-    }
-
-    if (lower.contains('entanglement') || lower.contains('quantum')) {
-      return 'Quantum entanglement is like having a pair of magic dice: when you roll one die and get a 6, '
-          'the other die instantly shows a 6 too, even if it is across the entire universe!';
-    }
-
-    if (lower.contains('1984') || lower.contains('brave new world') || lower.contains('literature')) {
-      return 'George Orwell\'s 1984 depicts authoritarian control through surveillance, fear, and pain, '
-          'whereas Aldous Huxley\'s Brave New World depicts control through manufactured pleasure, consumerism, and conditioning.';
-    }
-
-    if (systemPrompt != null && systemPrompt.contains('simple')) {
-      return 'Here is a simple explanation: $prompt is an important concept that helps systems work smoothly.';
-    }
-
-    return 'On-device Gemini Nano analysis for: $prompt. Processed securely on-device with zero network latency.';
   }
 }

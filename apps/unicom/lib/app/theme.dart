@@ -38,7 +38,7 @@ class UnicomTheme {
         onSurface: darkTextPrimary,
         onError: Colors.white,
       ),
-      cardTheme: CardThemeData(
+      cardTheme: CardTheme(
         color: darkSurface,
         elevation: 0,
         shape: RoundedRectangleBorder(
@@ -84,7 +84,7 @@ class UnicomTheme {
         onSurface: lightTextPrimary,
         onError: Colors.white,
       ),
-      cardTheme: CardThemeData(
+      cardTheme: CardTheme(
         color: lightSurface,
         elevation: 0,
         shape: RoundedRectangleBorder(

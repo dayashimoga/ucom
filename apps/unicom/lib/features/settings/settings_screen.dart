@@ -164,8 +164,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
                 color: isAvail
-                    ? UnicomTheme.successGreen.withValues(alpha: 0.15)
-                    : UnicomTheme.warningAmber.withValues(alpha: 0.15),
+                    ? UnicomTheme.successGreen.withOpacity(0.15)
+                    : UnicomTheme.warningAmber.withOpacity(0.15),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                   color: isAvail ? UnicomTheme.successGreen : UnicomTheme.warningAmber,
@@ -233,13 +233,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               style: TextStyle(fontSize: 13, color: Colors.grey),
             ),
             const SizedBox(height: 12),
-            FutureBuilder<List<ModelMetadata>>(
-              future: widget.controller.modelManager.listModels(),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                final models = snapshot.data!;
+            Builder(
+              builder: (context) {
+                final models = widget.controller.modelManager.cachedModels;
                 return Column(
                   children: models.map((m) {
                     return ListTile(

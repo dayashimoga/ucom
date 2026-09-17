@@ -29,13 +29,18 @@ class _ExplanationCardState extends State<ExplanationCard> {
               children: [
                 const Icon(Icons.psychology, color: UnicomTheme.accentCyan, size: 20),
                 const SizedBox(width: 8),
-                const Text(
-                  'Multi-Persona Intelligence',
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                const Flexible(
+                  child: Text(
+                    'Multi-Persona Intelligence',
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-                const Spacer(),
+                const SizedBox(width: 8),
                 Text(
-                  widget.explanation.createdAt.substring(11, 16),
+                  widget.explanation.createdAt.length >= 16
+                      ? widget.explanation.createdAt.substring(11, 16)
+                      : widget.explanation.createdAt,
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],

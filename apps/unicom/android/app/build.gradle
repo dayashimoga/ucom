@@ -42,7 +42,7 @@ android {
 
     defaultConfig {
         applicationId "com.unicom.ai"
-        minSdkVersion flutter.minSdkVersion
+        minSdkVersion 26
         targetSdk 34
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName

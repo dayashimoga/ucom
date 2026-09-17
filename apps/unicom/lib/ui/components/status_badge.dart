@@ -63,12 +63,14 @@ class StatusBadge extends StatelessWidget {
         break;
     }
 
-    return Row(
-      mainAxisSize: MainAxisSize.min,
+    return Wrap(
+      spacing: 6,
+      runSpacing: 4,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         // Mode badge
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
             color: modeColor.withOpacity(0.15),
             borderRadius: BorderRadius.circular(12),
@@ -79,19 +81,21 @@ class StatusBadge extends StatelessWidget {
             children: [
               Icon(modeIcon, size: 14, color: modeColor),
               const SizedBox(width: 4),
-              Text(
-                modeLabel,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: modeColor,
-                  letterSpacing: 0.5,
+              Flexible(
+                child: Text(
+                  modeLabel,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: modeColor,
+                    letterSpacing: 0.5,
+                  ),
                 ),
               ),
             ],
           ),
         ),
-        const SizedBox(width: 8),
         // State badge
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -112,12 +116,15 @@ class StatusBadge extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 6),
-              Text(
-                state.name.toUpperCase(),
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  color: stateColor,
+              Flexible(
+                child: Text(
+                  state.name.toUpperCase(),
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: stateColor,
+                  ),
                 ),
               ),
             ],

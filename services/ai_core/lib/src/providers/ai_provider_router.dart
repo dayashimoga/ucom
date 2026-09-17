@@ -25,7 +25,9 @@ class AIProviderRouter implements LLMProvider {
     required this.localProvider,
     required this.cloudProvider,
     this.executionMode = ExecutionMode.privateOffline,
-  });
+  }) {
+    NetworkGate().setOfflineEnforcement(executionMode == ExecutionMode.privateOffline);
+  }
 
   @override
   String get id => 'ai_provider_router';
@@ -38,6 +40,7 @@ class AIProviderRouter implements LLMProvider {
 
   void setExecutionMode(ExecutionMode mode) {
     executionMode = mode;
+    NetworkGate().setOfflineEnforcement(mode == ExecutionMode.privateOffline);
   }
 
   /// Capability discovery across all three tiers

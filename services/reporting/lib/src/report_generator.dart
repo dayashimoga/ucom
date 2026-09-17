@@ -5,11 +5,21 @@ class ReportGenerator {
     required Conversation conversation,
     required ReportType type,
     String? customTitle,
+    String providerId = 'unicom_ai_core',
+    String modelName = 'unicom-local-v1',
+    String modelVersion = '1.0.0',
   }) {
     final reportId = 'rep_${DateTime.now().millisecondsSinceEpoch}_${type.toJson()}';
     final nowIso = DateTime.now().toUtc().toIso8601String();
     final title = customTitle ?? _defaultTitleForType(type, conversation.title);
-    final content = _buildContentForType(type, conversation, title);
+    final content = _buildContentForType(
+      type,
+      conversation,
+      title,
+      providerId: providerId,
+      modelName: modelName,
+      modelVersion: modelVersion,
+    );
 
     return GeneratedReport(
       id: reportId,
@@ -22,6 +32,9 @@ class ReportGenerator {
         'segmentCount': conversation.segments.length,
         'mode': conversation.mode.toJson(),
         'executionMode': conversation.executionMode.toJson(),
+        'providerId': providerId,
+        'modelName': modelName,
+        'modelVersion': modelVersion,
       },
     );
   }
@@ -49,18 +62,31 @@ class ReportGenerator {
     }
   }
 
-  String _buildContentForType(ReportType type, Conversation conv, String title) {
+  String _buildContentForType(
+    ReportType type,
+    Conversation conv,
+    String title, {
+    required String providerId,
+    required String modelName,
+    required String modelVersion,
+  }) {
     final buffer = StringBuffer();
     buffer.writeln('# $title\n');
-    buffer.writeln('**Date**: ${conv.startedAt}  ');
-    buffer.writeln('**Mode**: ${conv.mode.toJson().toUpperCase()}  ');
-    buffer.writeln('**Privacy Tier**: ${conv.executionMode.toJson().toUpperCase()}  ');
-    buffer.writeln('**Participants**: ${conv.participants.map((p) => p.name).join(", ")}\n');
+
+    // Provenance metadata header
+    buffer.writeln('### PROVENANCE & EXECUTION AUDIT');
+    buffer.writeln('- **Conversation ID**: `${conv.id}`');
+    buffer.writeln('- **Timestamp**: `${conv.startedAt}`');
+    buffer.writeln('- **Application Mode**: `${conv.mode.toJson().toUpperCase()}`');
+    buffer.writeln('- **Privacy Execution Tier**: `${conv.executionMode.toJson().toUpperCase()}`');
+    buffer.writeln('- **Active Provider**: `$providerId`');
+    buffer.writeln('- **Model & Version**: `$modelName (v$modelVersion)`');
+    buffer.writeln('- **Participants**: ${conv.participants.map((p) => "${p.name} (${p.preferredLanguage?.toUpperCase() ?? 'EN'})").join(", ")}\n');
     buffer.writeln('---\n');
 
     switch (type) {
       case ReportType.quickSummary:
-        buffer.writeln('## Overview');
+        buffer.writeln('## AI SUMMARY');
         buffer.writeln('This conversation encompassed ${conv.segments.length} exchanges with ${conv.participants.length} active participants.');
         if (conv.topics.isNotEmpty) {
           buffer.writeln('\n### Primary Focus Areas');
@@ -77,33 +103,33 @@ class ReportGenerator {
         break;
 
       case ReportType.detailedSummary:
-        buffer.writeln('## Comprehensive Synthesis');
+        buffer.writeln('## AI SUMMARY & DIALOGUE BREAKDOWN');
         buffer.writeln('Detailed breakdown across timeline and thematic topics.\n');
-        buffer.writeln('### Discussion Highlights');
         for (final seg in conv.segments) {
-          buffer.writeln('**${seg.speakerName}** (${seg.originalLanguage.toUpperCase()} → ${seg.targetLanguage.toUpperCase()}):');
+          buffer.writeln('#### VERBATIM TRANSCRIPT [${seg.speakerName}] (${seg.originalLanguage.toUpperCase()}):');
           buffer.writeln('> "${seg.originalText}"');
           if (seg.translatedText.isNotEmpty && seg.translatedText != seg.originalText) {
-            buffer.writeln('> *Translation*: "${seg.translatedText}"');
+            buffer.writeln('#### TRANSLATION (${seg.targetLanguage.toUpperCase()}):');
+            buffer.writeln('> "${seg.translatedText}"');
           }
           buffer.writeln();
         }
         break;
 
       case ReportType.fullTranscript:
-        buffer.writeln('## Verified Dialogue Record');
+        buffer.writeln('## VERBATIM TRANSCRIPT');
         for (final seg in conv.segments) {
           buffer.writeln('**[${seg.startTime}ms] ${seg.speakerName}**:');
-          buffer.writeln('- **Original**: ${seg.originalText}');
+          buffer.writeln('- **VERBATIM TRANSCRIPT**: ${seg.originalText}');
           if (seg.translatedText.isNotEmpty) {
-            buffer.writeln('- **Translated**: ${seg.translatedText}');
+            buffer.writeln('- **TRANSLATION**: ${seg.translatedText}');
           }
           buffer.writeln();
         }
         break;
 
       case ReportType.questionsReport:
-        buffer.writeln('## Questions & Follow-Up Tracking');
+        buffer.writeln('## INQUIRIES & AI ANSWERS');
         if (conv.questions.isEmpty) {
           buffer.writeln('No explicit inquiries detected in this session.');
         } else {
@@ -111,7 +137,7 @@ class ReportGenerator {
             buffer.writeln('### Question: "${q.questionText}"');
             buffer.writeln('- **Status**: ${q.isAnswered ? "Answered" : "Unresolved"}');
             if (q.answerText != null) {
-              buffer.writeln('- **Recorded Answer**: ${q.answerText}');
+              buffer.writeln('- **AI ANSWER**: ${q.answerText}');
             }
             if (q.followUpQuestions.isNotEmpty) {
               buffer.writeln('- **Recommended Follow-Ups**:');
@@ -125,20 +151,20 @@ class ReportGenerator {
         break;
 
       case ReportType.learningReport:
-        buffer.writeln('## Educational & Linguistic Insights');
+        buffer.writeln('## AI EXPLANATION & LINGUISTIC INSIGHTS');
         buffer.writeln('Key grammatical, cultural, and conceptual learnings from this exchange.\n');
         for (final seg in conv.segments) {
           if (seg.explanation != null) {
             buffer.writeln('### Concept: "${seg.originalText}"');
             final exp = seg.explanation!.explanations;
             if (exp.containsKey(ExplanationPersona.simple)) {
-              buffer.writeln('- **Simple**: ${exp[ExplanationPersona.simple]!.content}');
+              buffer.writeln('- **AI EXPLANATION (Simple)**: ${exp[ExplanationPersona.simple]!.content}');
             }
             if (exp.containsKey(ExplanationPersona.grammar)) {
-              buffer.writeln('- **Grammar**: ${exp[ExplanationPersona.grammar]!.content}');
+              buffer.writeln('- **AI EXPLANATION (Grammar)**: ${exp[ExplanationPersona.grammar]!.content}');
             }
             if (exp.containsKey(ExplanationPersona.culturalContext)) {
-              buffer.writeln('- **Culture**: ${exp[ExplanationPersona.culturalContext]!.content}');
+              buffer.writeln('- **AI EXPLANATION (Culture)**: ${exp[ExplanationPersona.culturalContext]!.content}');
             }
             buffer.writeln();
           }
@@ -150,80 +176,75 @@ class ReportGenerator {
         if (conv.actionItems.isEmpty) {
           buffer.writeln('No outstanding action items recorded.');
         } else {
-          buffer.writeln('| Status | Assignee | Task |');
-          buffer.writeln('|:-------|:---------|:-----|');
-          for (final act in conv.actionItems) {
-            final icon = act.status == 'completed' ? '✓' : '○';
-            buffer.writeln('| $icon ${act.status} | **${act.assignee ?? "Unassigned"}** | ${act.title} |');
+          for (final item in conv.actionItems) {
+            buffer.writeln('- [ ] **${item.title}** (Assignee: ${item.assignee ?? "Unassigned"})');
+            if (item.dueDate != null) buffer.writeln('  Due: ${item.dueDate}');
           }
         }
         break;
 
       case ReportType.meetingMinutes:
-        buffer.writeln('## Meeting Minutes');
-        buffer.writeln('### 1. Attendance');
+        buffer.writeln('## FORMAL MEETING MINUTES');
+        buffer.writeln('### 1. Attendees');
         for (final p in conv.participants) {
-          buffer.writeln('- ${p.name} ${p.isHost ? "(Host)" : ""} ${p.role != null ? "- ${p.role}" : ""}');
+          final roleStr = (p.role != null && p.role!.isNotEmpty) ? ' (${p.role})' : '';
+          buffer.writeln('- ${p.name}$roleStr ${p.isHost ? "(Host)" : ""}'.trim());
         }
-        buffer.writeln('\n### 2. Agenda Topics Discussed');
-        for (final t in conv.topics) {
-          buffer.writeln('- **${t.name}**');
+        buffer.writeln('\n### 2. Decisions Reached & Key Resolutions');
+        if (conv.decisions.isEmpty) {
+          buffer.writeln('- None formally recorded');
+        } else {
+          for (final d in conv.decisions) {
+            buffer.writeln('- ${d.decisionText}');
+          }
         }
-        buffer.writeln('\n### 3. Decisions Reached');
-        for (final d in conv.decisions) {
-          buffer.writeln('- ${d.decisionText}');
-        }
-        buffer.writeln('\n### 4. Action Items');
-        for (final a in conv.actionItems) {
-          buffer.writeln('- [ ] **${a.assignee}**: ${a.title}');
+        buffer.writeln('\n### 3. Action Items');
+        if (conv.actionItems.isEmpty) {
+          buffer.writeln('- None pending');
+        } else {
+          for (final a in conv.actionItems) {
+            buffer.writeln('- [ ] ${a.title} (${a.assignee ?? "Unassigned"})');
+          }
         }
         break;
 
       case ReportType.interviewReport:
-        buffer.writeln('## Interview Practice Assessment & Study Plan');
-        buffer.writeln('> *Note: This report is designed for self-assessment, transparent coaching, and skill enhancement. Permitted transcription and post-session study adhere strictly to candidate consent and assessment integrity policies.*\n');
+        buffer.writeln('## INTERVIEW PRACTICE EVALUATION');
         if (conv.assessments.isEmpty) {
-          buffer.writeln('No formal interview question evaluations recorded in this session.');
+          buffer.writeln('No practice assessments logged.');
         } else {
           for (final a in conv.assessments) {
-            buffer.writeln('### Question Evaluated: "${a.question}"');
-            buffer.writeln('**Candidate Answer**: "${a.candidateAnswer}"  ');
-            buffer.writeln('**Overall Score**: ${a.overallScore}/10\n');
-            buffer.writeln('#### Rubric Breakdown');
-            for (final r in a.rubrics) {
-              buffer.writeln('- **${r.criterion.toUpperCase()}** (${r.score}/10): ${r.feedback}');
+            buffer.writeln('### Target Question: "${a.question}"');
+            buffer.writeln('**Overall Score**: ${a.overallScore}/10');
+            buffer.writeln('### Rubric Breakdown');
+            buffer.writeln('**Strengths**: ${a.strengths.join(", ")}');
+            buffer.writeln('**Improvements Needed**: ${a.areasForImprovement.join(", ")}');
+            if (a.studyPlan.isNotEmpty) {
+              buffer.writeln('### Targeted Study Plan');
+              buffer.writeln('**Study Plan**: ${a.studyPlan.join(", ")}\n');
             }
-            buffer.writeln('\n#### Key Strengths');
-            for (final s in a.strengths) {
-              buffer.writeln('- $s');
-            }
-            buffer.writeln('\n#### Recommended Areas for Improvement');
-            for (final imp in a.areasForImprovement) {
-              buffer.writeln('- $imp');
-            }
-            buffer.writeln('\n#### Targeted Study Plan');
-            for (final sp in a.studyPlan) {
-              buffer.writeln('- $sp');
-            }
-            buffer.writeln();
           }
         }
         break;
 
       case ReportType.vocabularyReport:
-        buffer.writeln('## Vocabulary & Terminology Glossary');
+        buffer.writeln('## VOCABULARY & TERMINOLOGY INDEX');
+        final recordedWords = <String>{};
         for (final seg in conv.segments) {
-          if (seg.explanation != null &&
-              seg.explanation!.explanations.containsKey(ExplanationPersona.terminology)) {
-            final termExp = seg.explanation!.explanations[ExplanationPersona.terminology]!;
-            buffer.writeln('### Source Phrase: "${seg.originalText}"');
-            buffer.writeln('${termExp.content}\n');
+          final words = seg.originalText.toLowerCase().split(RegExp(r'\s+'));
+          for (final w in words) {
+            final clean = w.replaceAll(RegExp(r'[^\w]'), '');
+            if (clean.length > 4 && recordedWords.add(clean)) {
+              buffer.writeln('- **$clean** (${seg.originalLanguage.toUpperCase()} → ${seg.targetLanguage.toUpperCase()})');
+            }
           }
+        }
+        if (recordedWords.isEmpty) {
+          buffer.writeln('No specific technical terminology isolated.');
         }
         break;
     }
 
-    buffer.writeln('\n---\n*Report generated by Universal Communication Intelligence.*');
     return buffer.toString();
   }
 }

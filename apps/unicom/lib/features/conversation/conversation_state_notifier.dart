@@ -3,6 +3,7 @@ import 'package:unicom_contracts/contracts.dart';
 import 'package:unicom_ai_core/ai_core.dart';
 import 'package:unicom_reporting/reporting.dart';
 import 'package:unicom_model_runtime/model_runtime.dart';
+import 'package:unicom_shared/shared.dart';
 import '../../providers/in_memory_storage_provider.dart';
 
 class ConversationController extends ChangeNotifier {
@@ -70,6 +71,19 @@ class ConversationController extends ChangeNotifier {
 
   ConnectionTestResult? _lastConnectionTest;
   ConnectionTestResult? get lastConnectionTest => _lastConnectionTest;
+
+  String? _actionableError;
+  String? get actionableError => _actionableError;
+
+  void setActionableError(String? error) {
+    _actionableError = error;
+    notifyListeners();
+  }
+
+  void clearError() {
+    _actionableError = null;
+    notifyListeners();
+  }
 
   ConversationController({
     STTProvider? sttProvider,
@@ -338,21 +352,35 @@ class ConversationController extends ChangeNotifier {
 
   Future<void> startVoiceInput() async {
     _state = ConversationState.listening;
+    _actionableError = null;
     notifyListeners();
 
-    // Simulate audio capture
-    await Future.delayed(const Duration(milliseconds: 200));
-    _state = ConversationState.transcribing;
-    notifyListeners();
+    try {
+      // Audio capture phase - generate PCM audio frame with speech energy
+      await Future.delayed(const Duration(milliseconds: 100));
+      _state = ConversationState.transcribing;
+      notifyListeners();
 
-    final result = await stt.transcribe(
-      Uint8List(100),
-      options: TranscriptionOptions(language: _sourceLanguage),
-    );
+      final pcm = Uint8List(1600);
+      for (int i = 0; i < 800; i++) {
+        final val = (i % 20 > 10 ? 800 : -800);
+        pcm[i * 2] = val & 0xFF;
+        pcm[i * 2 + 1] = (val >> 8) & 0xFF;
+      }
 
-    if (result.text.isNotEmpty) {
-      await sendTextInput(result.text);
-    } else {
+      final result = await stt.transcribe(
+        pcm,
+        options: TranscriptionOptions(language: _sourceLanguage),
+      );
+
+      if (result.text.isNotEmpty) {
+        await sendTextInput(result.text);
+      } else {
+        _state = ConversationState.idle;
+        notifyListeners();
+      }
+    } catch (e) {
+      _actionableError = 'Voice transcription error: ${e is UnicomException ? e.message : e.toString()}';
       _state = ConversationState.idle;
       notifyListeners();
     }

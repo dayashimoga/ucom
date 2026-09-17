@@ -18,6 +18,9 @@ dist/
 build/
 *.tsbuildinfo
 .vite/
+artifacts/*.apk
+artifacts/*.aab
+artifacts/*.tar.gz
 
 # Environment and Secrets
 .env
@@ -45,6 +48,8 @@ Thumbs.db
 
 # Podman / Container temporary files
 .container-tmp/
+.podman_pub_cache/
+**/.gradle/
 
 # Flutter ephemeral & local
 **/ephemeral/

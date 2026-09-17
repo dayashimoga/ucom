@@ -37,6 +37,7 @@ jobs:
           cd ../reporting && dart pub get
           cd ../model_runtime && dart pub get
           cd ../../tests && dart pub get
+          cd ../apps/unicom && flutter pub get
 
       - name: Static Analysis & Linting
         run: |
@@ -46,20 +47,27 @@ jobs:
           cd ../reporting && dart analyze --fatal-infos
           cd ../model_runtime && dart analyze --fatal-infos
           cd ../../tests && dart analyze --fatal-infos
+          cd ../apps/unicom && flutter analyze --fatal-infos
 
-      - name: Run Test Suite with Branch Coverage
+      - name: Run Flutter App Tests with Coverage
+        run: |
+          cd apps/unicom
+          flutter test --coverage
+
+      - name: Run Backend Test Suite with Branch Coverage
         run: |
           cd tests
           dart test --coverage=coverage --branch-coverage unit contract integration offline security performance e2e
           dart run coverage:format_coverage --lcov --in=coverage --out=coverage/lcov.info --packages=.dart_tool/package_config.json --report-on=/app/packages,/app/services
 
-      - name: Enforce >=90% Line & Branch Coverage Gate
+      - name: Enforce >=90% Line & Branch Coverage Gate Across Monorepo
         run: |
-          cd tests
-          dart run coverage/check_coverage.dart coverage/lcov.info
+          dart run tests/coverage/check_coverage.dart tests/coverage/lcov.info apps/unicom/coverage/lcov.info
 
       - name: Upload Coverage Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: lcov-report
-          path: tests/coverage/lcov.info
+          name: monorepo-lcov-reports
+          path: |
+            tests/coverage/lcov.info
+            apps/unicom/coverage/lcov.info

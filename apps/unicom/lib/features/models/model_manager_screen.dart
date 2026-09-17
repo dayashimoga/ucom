@@ -14,20 +14,23 @@ class ModelManagerScreen extends StatefulWidget {
 
 class _ModelManagerScreenState extends State<ModelManagerScreen> {
   List<ModelMetadata> _models = [];
-  bool _loading = true;
+  bool _loading = false;
 
   @override
   void initState() {
     super.initState();
+    _models = widget.modelManager.cachedModels;
     _refreshModels();
   }
 
   Future<void> _refreshModels() async {
     final list = await widget.modelManager.listModels();
-    setState(() {
-      _models = list;
-      _loading = false;
-    });
+    if (mounted) {
+      setState(() {
+        _models = list;
+        _loading = false;
+      });
+    }
   }
 
   @override

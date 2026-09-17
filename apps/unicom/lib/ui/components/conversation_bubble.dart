@@ -30,12 +30,12 @@ class ConversationBubble extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isMe
-              ? UnicomTheme.primaryBlue.withValues(alpha: 0.08)
+              ? UnicomTheme.primaryBlue.withOpacity(0.08)
               : (Theme.of(context).cardTheme.color ?? (isDark ? UnicomTheme.darkSurface : UnicomTheme.lightSurface)),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isMe
-                ? UnicomTheme.primaryBlue.withValues(alpha: 0.3)
+                ? UnicomTheme.primaryBlue.withOpacity(0.3)
                 : UnicomTheme.darkSurfaceVariant,
           ),
         ),
@@ -44,6 +44,7 @@ class ConversationBubble extends StatelessWidget {
           children: [
             // Header: Speaker attribution (honest pre-labelled badge) & language direction
             Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 CircleAvatar(
                   radius: 12,
@@ -54,29 +55,34 @@ class ConversationBubble extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                Text(
-                  segment.speakerName,
-                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-                ),
-                const SizedBox(width: 6),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: isDark ? Colors.white10 : Colors.black12,
-                    borderRadius: BorderRadius.circular(4),
+                Expanded(
+                  child: Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 6,
+                    runSpacing: 2,
+                    children: [
+                      Text(
+                        segment.speakerName,
+                        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.white10 : Colors.black12,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text(
+                          'Pre-labelled',
+                          style: TextStyle(fontSize: 10, letterSpacing: 0.2),
+                        ),
+                      ),
+                      Text(
+                        '${segment.originalLanguage.toUpperCase()} → ${segment.targetLanguage.toUpperCase()}',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
                   ),
-                  child: const Text(
-                    'Pre-labelled',
-                    style: TextStyle(fontSize: 10, letterSpacing: 0.2),
-                  ),
                 ),
-                const SizedBox(width: 6),
-                Text(
-                  '${segment.originalLanguage.toUpperCase()} → ${segment.targetLanguage.toUpperCase()}',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                const Spacer(),
-                // Copy Action
                 IconButton(
                   icon: const Icon(Icons.copy, size: 16),
                   tooltip: 'Copy text',
@@ -93,14 +99,12 @@ class ConversationBubble extends StatelessWidget {
                   },
                   visualDensity: VisualDensity.compact,
                 ),
-                // TTS Speak button
                 IconButton(
                   icon: const Icon(Icons.volume_up, size: 18),
                   tooltip: 'Listen to translation',
                   onPressed: onSpeak,
                   visualDensity: VisualDensity.compact,
                 ),
-                // Explain button
                 IconButton(
                   icon: Icon(
                     Icons.psychology,
@@ -134,10 +138,10 @@ class ConversationBubble extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
                   color: isDark
-                      ? Colors.black.withValues(alpha: 0.25)
-                      : Colors.blueGrey.withValues(alpha: 0.06),
+                      ? Colors.black.withOpacity(0.25)
+                      : Colors.blueGrey.withOpacity(0.06),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: UnicomTheme.accentCyan.withValues(alpha: 0.25)),
+                  border: Border.all(color: UnicomTheme.accentCyan.withOpacity(0.25)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

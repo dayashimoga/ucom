@@ -43,7 +43,15 @@ class _ConversationScreenState extends State<ConversationScreen> {
 
         return Scaffold(
           appBar: _buildAppBar(context),
-          body: isSplit ? _buildSplitLayout(context) : _buildPhoneLayout(context),
+          body: Column(
+            children: [
+              _buildErrorBanner(context),
+              _buildTopStatusBanner(context),
+              Expanded(
+                child: isSplit ? _buildSplitLayout(context) : _buildPhoneLayout(context),
+              ),
+            ],
+          ),
           bottomNavigationBar: _buildBottomActionBar(context),
         );
       },
@@ -52,25 +60,71 @@ class _ConversationScreenState extends State<ConversationScreen> {
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
     return AppBar(
-      title: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(widget.controller.currentConversation.title),
-              const SizedBox(width: 8),
-              StatusBadge(
-                executionMode: widget.controller.executionMode,
-                state: widget.controller.state,
-              ),
-            ],
-          ),
-        ],
+      title: Text(
+        widget.controller.currentConversation.title,
+        overflow: TextOverflow.ellipsis,
       ),
       actions: [
         _buildLanguageSelector(context),
-        const SizedBox(width: 12),
+        const SizedBox(width: 8),
       ],
+    );
+  }
+
+  Widget _buildErrorBanner(BuildContext context) {
+    final error = widget.controller.actionableError;
+    if (error == null) return const SizedBox.shrink();
+
+    return Container(
+      width: double.infinity,
+      color: UnicomTheme.dangerRed,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
+          const Icon(Icons.error_outline, color: Colors.white, size: 20),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              error,
+              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.close, color: Colors.white, size: 16),
+            onPressed: () => widget.controller.clearError(),
+            visualDensity: VisualDensity.compact,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTopStatusBanner(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      color: Theme.of(context).cardTheme.color?.withOpacity(0.5),
+      child: Wrap(
+        alignment: WrapAlignment.spaceBetween,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: 8,
+        runSpacing: 4,
+        children: [
+          StatusBadge(
+            executionMode: widget.controller.executionMode,
+            state: widget.controller.state,
+          ),
+          Text(
+            widget.controller.mode.name.toUpperCase(),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: UnicomTheme.accentCyan,
+                ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -147,9 +201,11 @@ class _ConversationScreenState extends State<ConversationScreen> {
         Expanded(child: _buildConversationList(context)),
         if (widget.controller.selectedExplanation != null)
           Container(
-            constraints: const BoxConstraints(maxHeight: 220),
+            constraints: const BoxConstraints(maxHeight: 280),
             padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: ExplanationCard(explanation: widget.controller.selectedExplanation!),
+            child: SingleChildScrollView(
+              child: ExplanationCard(explanation: widget.controller.selectedExplanation!),
+            ),
           ),
       ],
     );
@@ -160,21 +216,26 @@ class _ConversationScreenState extends State<ConversationScreen> {
 
     if (segments.isEmpty) {
       return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.record_voice_over, size: 56, color: UnicomTheme.accentCyan.withValues(alpha: 0.5)),
-            const SizedBox(height: 16),
-            const Text(
-              'Universal Communication Intelligence',
-              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Type or tap the microphone to begin translating in real-time.',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-          ],
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.record_voice_over, size: 56, color: UnicomTheme.accentCyan.withOpacity(0.5)),
+              const SizedBox(height: 16),
+              const Text(
+                'Universal Communication Intelligence',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Type or tap the microphone to begin translating in real-time.',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ],
+          ),
         ),
       );
     }

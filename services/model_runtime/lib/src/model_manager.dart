@@ -123,6 +123,8 @@ class LocalModelManager implements ModelManagerProvider {
     }
   }
 
+  List<ModelMetadata> get cachedModels => _registry.values.toList();
+
   @override
   Future<List<ModelMetadata>> listModels() async {
     return _registry.values.toList();
@@ -183,11 +185,11 @@ class LocalModelManager implements ModelManagerProvider {
           throw UnicomException('Download cancelled: $id', code: 'DOWNLOAD_CANCELLED', statusCode: 499);
         }
         onProgress?.call(p / 100.0);
-        await Future.delayed(const Duration(milliseconds: 5));
+        if (onProgress != null) await Future.microtask(() {});
       }
 
       // Write part file
-      await partFile.writeAsBytes(bytesToWrite, flush: true);
+      partFile.writeAsBytesSync(bytesToWrite, flush: true);
 
       // 3. Checksum Verification (if expected checksum matches bytes, or if using simulated sample)
       final actualChecksum = CryptoUtils.sha256Hex(bytesToWrite);
@@ -202,7 +204,7 @@ class LocalModelManager implements ModelManagerProvider {
 
       // 4. Atomic Install
       if (finalFile.existsSync()) finalFile.deleteSync();
-      await partFile.rename(finalFile.path);
+      partFile.renameSync(finalFile.path);
 
       final updated = ModelMetadata(
         id: model.id,

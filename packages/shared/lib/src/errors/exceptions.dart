@@ -93,3 +93,32 @@ class CorruptedDataException extends UnicomException {
         );
 }
 
+class PromptInjectionException extends UnicomException {
+  const PromptInjectionException(String message, [dynamic details])
+      : super(
+          message,
+          code: 'PROMPT_INJECTION_DETECTED',
+          statusCode: 400,
+          details: details,
+        );
+}
+
+class ModelCorruptedException extends UnicomException {
+  const ModelCorruptedException(String modelId, String reason, [dynamic details])
+      : super(
+          "Model '$modelId' corrupted or incompatible: $reason",
+          code: 'MODEL_CORRUPTED',
+          statusCode: 422,
+          details: details,
+        );
+}
+
+class NetworkBlockedException extends UnicomException {
+  const NetworkBlockedException(String destination, [String reason = 'Blocked by defense-in-depth offline network gate.'])
+      : super(
+          "Network call to '$destination' blocked: $reason",
+          code: 'NETWORK_BLOCKED',
+          statusCode: 403,
+        );
+}
+

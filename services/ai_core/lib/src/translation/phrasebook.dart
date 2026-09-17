@@ -182,4 +182,12 @@ const Map<String, Map<String, String>> offlineLexicon = {
   'decision': {'es': 'decisión', 'fr': 'décision', 'de': 'entscheidung', 'zh': '决定', 'ja': '決定', 'ar': 'قرار', 'hi': 'निर्णय', 'pt': 'decisão', 'ru': 'решение', 'ta': 'முடிவு'},
   'today': {'es': 'hoy', 'fr': 'aujourdhui', 'de': 'heute', 'zh': '今天', 'ja': '今日', 'ar': 'اليوم', 'hi': 'आज', 'pt': 'hoje', 'ru': 'сегодня', 'ta': 'இன்று'},
   'important': {'es': 'importante', 'fr': 'important', 'de': 'wichtig', 'zh': '重要', 'ja': '重要', 'ar': 'مهم', 'hi': 'महत्वपूर्ण', 'pt': 'importante', 'ru': 'важный', 'ta': 'முக்கியமானது'},
+  'system': {'es': 'sistema', 'fr': 'système', 'de': 'system', 'zh': '系统', 'ja': 'システム', 'ar': 'نظام', 'hi': 'प्रणाली', 'pt': 'sistema', 'ru': 'система', 'ta': 'அமைப்பு'},
+  'data': {'es': 'datos', 'fr': 'données', 'de': 'daten', 'zh': '数据', 'ja': 'データ', 'ar': 'بيانات', 'hi': 'डेटा', 'pt': 'dados', 'ru': 'данные', 'ta': 'தரவு'},
+  'security': {'es': 'seguridad', 'fr': 'sécurité', 'de': 'sicherheit', 'zh': '安全', 'ja': 'セキュリティ', 'ar': 'أمن', 'hi': 'सुरक्षा', 'pt': 'segurança', 'ru': 'безопасность', 'ta': 'பாதுகாப்பு'},
+  'network': {'es': 'red', 'fr': 'réseau', 'de': 'netzwerk', 'zh': '网络', 'ja': 'ネットワーク', 'ar': 'شبكة', 'hi': 'नेटवर्क', 'pt': 'rede', 'ru': 'сеть', 'ta': 'பிணையம்'},
+  'science': {'es': 'ciencia', 'fr': 'science', 'de': 'wissenschaft', 'zh': '科学', 'ja': '科学', 'ar': 'علم', 'hi': 'विज्ञान', 'pt': 'ciência', 'ru': 'наука', 'ta': 'அறிவியல்'},
+  'mathematics': {'es': 'matemáticas', 'fr': 'mathématiques', 'de': 'mathematik', 'zh': '数学', 'ja': '数学', 'ar': 'رياضيات', 'hi': 'गणित', 'pt': 'matemática', 'ru': 'математика', 'ta': 'கணிதம்'},
+  'language': {'es': 'idioma', 'fr': 'langue', 'de': 'sprache', 'zh': '语言', 'ja': '言語', 'ar': 'لغة', 'hi': 'भाषा', 'pt': 'língua', 'ru': 'язык', 'ta': 'மொழி'},
+  'time': {'es': 'tiempo', 'fr': 'temps', 'de': 'zeit', 'zh': '时间', 'ja': '時間', 'ar': 'وقت', 'hi': 'समय', 'pt': 'tempo', 'ru': 'время', 'ta': 'நேரம்'},
 };

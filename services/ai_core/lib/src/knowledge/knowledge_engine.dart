@@ -14,6 +14,10 @@ class KnowledgeResponse {
   final String? targetLanguage;
   final String? aiSummary;
   final List<RetrievalDocument> groundedSources;
+  final List<String> citations;
+  final bool hasSufficientContext;
+  final bool hasConflictingSources;
+  final List<String> conflicts;
   final String providerId;
   final String executionMode;
   final int latencyMs;
@@ -28,6 +32,10 @@ class KnowledgeResponse {
     this.targetLanguage,
     this.aiSummary,
     this.groundedSources = const [],
+    this.citations = const [],
+    this.hasSufficientContext = true,
+    this.hasConflictingSources = false,
+    this.conflicts = const [],
     required this.providerId,
     required this.executionMode,
     required this.latencyMs,
@@ -43,6 +51,10 @@ class KnowledgeResponse {
         if (targetLanguage != null) 'targetLanguage': targetLanguage,
         if (aiSummary != null) 'aiSummary': aiSummary,
         'groundedSources': groundedSources.map((s) => s.toJson()).toList(),
+        'citations': citations,
+        'hasSufficientContext': hasSufficientContext,
+        'hasConflictingSources': hasConflictingSources,
+        'conflicts': conflicts,
         'providerId': providerId,
         'executionMode': executionMode,
         'latencyMs': latencyMs,
@@ -61,6 +73,10 @@ class KnowledgeResponse {
                 ?.map((e) => RetrievalDocument.fromJson(e as Map<String, dynamic>))
                 .toList() ??
             const [],
+        citations: (json['citations'] as List<dynamic>?)?.map((e) => e as String).toList() ?? const [],
+        hasSufficientContext: json['hasSufficientContext'] as bool? ?? true,
+        hasConflictingSources: json['hasConflictingSources'] as bool? ?? false,
+        conflicts: (json['conflicts'] as List<dynamic>?)?.map((e) => e as String).toList() ?? const [],
         providerId: json['providerId'] as String,
         executionMode: json['executionMode'] as String,
         latencyMs: (json['latencyMs'] as num?)?.toInt() ?? 0,
@@ -77,6 +93,22 @@ class KnowledgeResponse {
     buffer.writeln('### GENERATIVE ANSWER');
     buffer.writeln(generativeAnswer);
     buffer.writeln();
+
+    if (citations.isNotEmpty) {
+      buffer.writeln('### CITATIONS');
+      for (final cit in citations) {
+        buffer.writeln('- $cit');
+      }
+      buffer.writeln();
+    }
+
+    if (hasConflictingSources && conflicts.isNotEmpty) {
+      buffer.writeln('### CONFLICTING EVIDENCE DETECTED');
+      for (final conflict in conflicts) {
+        buffer.writeln('> ⚠️ $conflict');
+      }
+      buffer.writeln();
+    }
 
     if (explanation != null && explanation!.isNotEmpty) {
       buffer.writeln('### EXPLANATION');
@@ -112,7 +144,7 @@ class KnowledgeResponse {
 }
 
 /// Knowledge and Q&A Engine for arbitrary general knowledge, technical concepts,
-/// science, mathematics, literature, and general inquiry.
+/// science, mathematics, literature, and general inquiry with RAG grounding.
 class KnowledgeEngine {
   final AIProviderRouter router;
   final RagRetrievalProvider? retrievalProvider;
@@ -141,21 +173,46 @@ class KnowledgeEngine {
 
     // 1. Context retrieval / RAG
     List<RetrievalDocument> groundedSources = [];
+    List<String> citations = [];
+    bool hasSufficient = true;
+    bool hasConflicts = false;
+    List<String> conflicts = [];
     String prompt = question;
 
     if (retrieveContext && retrievalProvider != null) {
-      groundedSources = await retrievalProvider!.retrieve(question, topK: 3);
+      final ragResult = await retrievalProvider!.query(question, topK: 3);
+      groundedSources = ragResult.documents;
+      hasSufficient = ragResult.hasSufficientContext;
+      hasConflicts = ragResult.hasConflictingSources;
+      conflicts = ragResult.detectedConflicts;
+
       if (groundedSources.isNotEmpty) {
+        citations = groundedSources.map((d) => '[Source: ${d.title}]').toList();
         final contextSnippet = groundedSources
-            .map((d) => 'Source [${d.title}]: ${d.content}')
+            .map((d) => 'Source [${d.title}]:\n${d.content}')
             .join('\n\n');
-        prompt = 'Context:\n$contextSnippet\n\nQuestion: $question\n\nAnswer grounded strictly in context where applicable.';
+        prompt = 'Retrieved Reference Documentation:\n$contextSnippet\n\n'
+            'Question: $question\n\n'
+            'Strict Grounding Instructions: Answer based strictly on the provided references. '
+            'Cite sources where applicable. If references do not contain enough information, state so clearly.';
       }
     }
 
     // 2. Select provider & complete LLM answer
     final provider = await router.selectProvider();
-    final generativeAnswer = await provider.complete(prompt);
+    String generativeAnswer;
+
+    // Check if sources completely lack an answer
+    if (retrieveContext && retrievalProvider != null && groundedSources.isNotEmpty && !hasSufficient) {
+      generativeAnswer = 'The provided reference documents do not contain sufficient information to answer the question: "$question".';
+    } else {
+      generativeAnswer = await provider.complete(prompt);
+    }
+
+    // Append conflict disclaimer if detected
+    if (hasConflicts && conflicts.isNotEmpty) {
+      generativeAnswer += '\n\n*Note: Conflicting information detected across sources: ${conflicts.join("; ")}*';
+    }
 
     // 3. Optional Explanation
     String? explanation;
@@ -189,6 +246,10 @@ class KnowledgeEngine {
       targetLanguage: targetLanguage,
       aiSummary: aiSummary,
       groundedSources: groundedSources,
+      citations: citations,
+      hasSufficientContext: hasSufficient,
+      hasConflictingSources: hasConflicts,
+      conflicts: conflicts,
       providerId: provider.id,
       executionMode: router.executionMode.name,
       latencyMs: sw.elapsedMilliseconds,
@@ -204,17 +265,14 @@ class KnowledgeEngine {
     yield* provider.completeStream(question);
   }
 
-  /// Convenience action: Explain simply (ELIF5 / child-friendly)
   Future<KnowledgeResponse> explainSimply(String topic) {
     return ask(question: topic, persona: ExplanationPersona.childFriendly);
   }
 
-  /// Convenience action: Explain deeply (technical / architectural)
   Future<KnowledgeResponse> explainDeeply(String topic) {
     return ask(question: topic, persona: ExplanationPersona.detailed);
   }
 
-  /// Convenience action: Give concrete code or real-world example
   Future<KnowledgeResponse> giveExample(String topic) {
     return ask(question: topic, persona: ExplanationPersona.examples);
   }

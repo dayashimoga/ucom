@@ -58,26 +58,40 @@ class _UnicomAppState extends State<UnicomApp> {
           return Scaffold(
             body: Row(
               children: [
-                NavigationRail(
-                  selectedIndex: _currentIndex,
-                  onDestinationSelected: (idx) => setState(() => _currentIndex = idx),
-                  labelType: NavigationRailLabelType.all,
-                  leading: const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 16),
-                    child: CircleAvatar(
-                      radius: 20,
-                      backgroundColor: UnicomTheme.primaryBlue,
-                      child: Icon(Icons.hub, color: Colors.white, size: 22),
-                    ),
-                  ),
-                  destinations: const [
-                    NavigationRailDestination(icon: Icon(Icons.chat_bubble_outline), selectedIcon: Icon(Icons.chat_bubble), label: Text('Live')),
-                    NavigationRailDestination(icon: Icon(Icons.school_outlined), selectedIcon: Icon(Icons.school), label: Text('Interview')),
-                    NavigationRailDestination(icon: Icon(Icons.groups_outlined), selectedIcon: Icon(Icons.groups), label: Text('Meeting')),
-                    NavigationRailDestination(icon: Icon(Icons.description_outlined), selectedIcon: Icon(Icons.description), label: Text('Reports')),
-                    NavigationRailDestination(icon: Icon(Icons.memory_outlined), selectedIcon: Icon(Icons.memory), label: Text('Models')),
-                    NavigationRailDestination(icon: Icon(Icons.settings_outlined), selectedIcon: Icon(Icons.settings), label: Text('Settings')),
-                  ],
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    return SingleChildScrollView(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                        child: IntrinsicHeight(
+                          child: NavigationRail(
+                            selectedIndex: _currentIndex,
+                            onDestinationSelected: (idx) => setState(() => _currentIndex = idx),
+                            labelType: constraints.maxHeight < 550
+                                ? NavigationRailLabelType.none
+                                : NavigationRailLabelType.all,
+                            leading: Padding(
+                              padding: EdgeInsets.symmetric(
+                                  vertical: constraints.maxHeight < 550 ? 8 : 16),
+                              child: const CircleAvatar(
+                                radius: 18,
+                                backgroundColor: UnicomTheme.primaryBlue,
+                                child: Icon(Icons.hub, color: Colors.white, size: 20),
+                              ),
+                            ),
+                            destinations: const [
+                              NavigationRailDestination(icon: Icon(Icons.chat_bubble_outline), selectedIcon: Icon(Icons.chat_bubble), label: Text('Live')),
+                              NavigationRailDestination(icon: Icon(Icons.school_outlined), selectedIcon: Icon(Icons.school), label: Text('Interview')),
+                              NavigationRailDestination(icon: Icon(Icons.groups_outlined), selectedIcon: Icon(Icons.groups), label: Text('Meeting')),
+                              NavigationRailDestination(icon: Icon(Icons.description_outlined), selectedIcon: Icon(Icons.description), label: Text('Reports')),
+                              NavigationRailDestination(icon: Icon(Icons.memory_outlined), selectedIcon: Icon(Icons.memory), label: Text('Models')),
+                              NavigationRailDestination(icon: Icon(Icons.settings_outlined), selectedIcon: Icon(Icons.settings), label: Text('Settings')),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
                 ),
                 const VerticalDivider(thickness: 1, width: 1),
                 Expanded(child: screens[_currentIndex]),
@@ -92,6 +106,7 @@ class _UnicomAppState extends State<UnicomApp> {
           bottomNavigationBar: NavigationBar(
             selectedIndex: _currentIndex,
             onDestinationSelected: (idx) => setState(() => _currentIndex = idx),
+            labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
             destinations: const [
               NavigationDestination(icon: Icon(Icons.chat_bubble_outline), selectedIcon: Icon(Icons.chat_bubble), label: 'Live'),
               NavigationDestination(icon: Icon(Icons.school_outlined), selectedIcon: Icon(Icons.school), label: 'Interview'),

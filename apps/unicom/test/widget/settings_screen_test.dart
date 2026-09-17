@@ -1,0 +1,124 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:unicom_contracts/contracts.dart';
+import 'package:unicom_app/app/theme.dart';
+import 'package:unicom_app/features/settings/settings_screen.dart';
+import 'package:unicom_app/features/conversation/conversation_state_notifier.dart';
+
+void main() {
+  group('SettingsScreen Widget Tests', () {
+    late ConversationController controller;
+
+    setUp(() {
+      controller = ConversationController();
+    });
+
+    Widget createTestApp() {
+      return MaterialApp(
+        theme: UnicomTheme.darkTheme,
+        home: SettingsScreen(controller: controller),
+      );
+    }
+
+    testWidgets('renders all settings cards', (tester) async {
+      tester.view.physicalSize = const Size(1280, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+
+      await tester.pumpWidget(createTestApp());
+      await tester.pumpAndSettle();
+
+      expect(find.text('AI & System Settings'), findsOneWidget);
+      expect(find.text('AI Execution Tier & Privacy'), findsOneWidget);
+      expect(find.text('Android Built-in AI (AICore)'), findsOneWidget);
+      expect(find.text('Downloaded Local Models'), findsOneWidget);
+      expect(find.text('Cloud AI & Model Configuration'), findsOneWidget);
+      expect(find.text('Active Intelligence Mode'), findsOneWidget);
+      expect(find.text('Data Hygiene & Retention'), findsOneWidget);
+    });
+
+    testWidgets('switches AI execution modes via radio buttons', (tester) async {
+      tester.view.physicalSize = const Size(1280, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+
+      await tester.pumpWidget(createTestApp());
+      await tester.pumpAndSettle();
+
+      // Tap Hybrid mode
+      final hybridTile = find.text('Hybrid Mode');
+      await tester.tap(hybridTile);
+      await tester.pumpAndSettle();
+      expect(controller.executionMode, equals(ExecutionMode.hybrid));
+
+      // Tap Cloud Preferred mode
+      final cloudTile = find.text('Cloud Preferred');
+      await tester.tap(cloudTile);
+      await tester.pumpAndSettle();
+      expect(controller.executionMode, equals(ExecutionMode.cloud));
+
+      // Tap Offline Only
+      final offlineTile = find.text('Offline Only (Strict Privacy Invariant)');
+      await tester.tap(offlineTile);
+      await tester.pumpAndSettle();
+      expect(controller.executionMode, equals(ExecutionMode.privateOffline));
+    });
+
+    testWidgets('enters API key and tests connection in settings', (tester) async {
+      tester.view.physicalSize = const Size(1280, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+
+      await tester.pumpWidget(createTestApp());
+      await tester.pumpAndSettle();
+
+      final apiKeyField = find.byType(TextField);
+      await tester.enterText(apiKeyField, 'ai_key_test_12345');
+      await tester.pumpAndSettle();
+
+      // Find Test Connection button
+      final testBtn = find.widgetWithText(ElevatedButton, 'Test');
+      await tester.tap(testBtn);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pumpAndSettle();
+
+      expect(controller.cloudApiKey, equals('ai_key_test_12345'));
+    });
+
+    testWidgets('changes application mode to interview practice', (tester) async {
+      tester.view.physicalSize = const Size(1280, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+
+      await tester.pumpWidget(createTestApp());
+      await tester.pumpAndSettle();
+
+      // Tap the dropdown to open it
+      final dropdown = find.byType(DropdownButtonFormField<ApplicationMode>);
+      await tester.tap(dropdown);
+      await tester.pumpAndSettle();
+
+      final interviewChoice = find.text('Interview Practice & Rubric Coaching').last;
+      await tester.tap(interviewChoice);
+      await tester.pumpAndSettle();
+
+      expect(controller.mode, equals(ApplicationMode.interviewPractice));
+    });
+
+    testWidgets('executes data purge in hygiene card', (tester) async {
+      tester.view.physicalSize = const Size(1280, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+
+      await tester.pumpWidget(createTestApp());
+      await tester.pumpAndSettle();
+
+      final purgeBtn = find.text('Clear All Local Data');
+      await tester.tap(purgeBtn);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(SnackBar), findsOneWidget);
+    });
+  });
+}

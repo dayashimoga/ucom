@@ -63,8 +63,8 @@ void main() {
     test('rejects download when SHA256 checksum mismatches', () async {
       final badBytes = [1, 2, 3, 4, 5]; // Checksum won't match model's expected sha256
 
-      expect(
-        () async => await manager.downloadModel(
+      await expectLater(
+        () => manager.downloadModel(
           'whisper-tiny-quantized',
           mockDownloadedBytes: badBytes,
         ),
@@ -80,8 +80,8 @@ void main() {
       // Trigger cancellation immediately
       manager.cancelDownload('whisper-tiny-quantized');
 
-      expect(
-        () async => await manager.downloadModel('whisper-tiny-quantized'),
+      await expectLater(
+        () => manager.downloadModel('whisper-tiny-quantized'),
         throwsA(isA<UnicomException>()),
       );
 
