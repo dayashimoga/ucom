@@ -224,7 +224,7 @@ void main() {
       expect(mRestored.isInstalled, isTrue);
 
       // RetrievalDocument
-      final rDoc = RetrievalDocument(
+      const rDoc = RetrievalDocument(
         id: 'rd1',
         title: 'Title',
         content: 'Content',
@@ -239,7 +239,7 @@ void main() {
       expect(rRestored.sourceUri, equals('https://example.com'));
       expect(rRestored.metadata?['author'], equals('admin'));
 
-      final rDocMin = RetrievalDocument(id: 'rd2', title: 'T2', content: 'C2');
+      const rDocMin = RetrievalDocument(id: 'rd2', title: 'T2', content: 'C2');
       final rJsonMin = rDocMin.toJson();
       final rRestoredMin = RetrievalDocument.fromJson(rJsonMin);
       expect(rRestoredMin.id, equals('rd2'));
@@ -828,6 +828,180 @@ void main() {
       final manager = LocalModelManager();
       expect(() async => await manager.unloadModel('non-existent'),
           throwsA(isA<NotFoundException>()));
+    });
+
+    test('branch coverage for AudioEnergyVad, STT metrics, and Neural Translation', () async {
+      // 1. AudioEnergyVad
+      const vad = AudioEnergyVad();
+      final emptyFrame = vad.analyzePcm(Uint8List(0));
+      expect(emptyFrame.isSpeech, isFalse);
+      expect(emptyFrame.sampleCount, equals(0));
+
+      final singleByteFrame = vad.analyzePcm(Uint8List(1));
+      expect(singleByteFrame.isSpeech, isFalse);
+
+      final vadJson = const VadFrame(
+        rmsEnergy: 100.5,
+        zeroCrossingRate: 0.15,
+        snrDb: 18.2,
+        isSpeech: true,
+        sampleCount: 1600,
+        durationMs: 100,
+      ).toJson();
+      expect(vadJson['isSpeech'], isTrue);
+      expect(vadJson['rmsEnergy'], equals(100.5));
+
+      // RIFF header parsing in VAD
+      final riffHeaderBytes = Uint8List.fromList([
+        0x52, 0x49, 0x46, 0x46, // RIFF
+        ...List.filled(40, 0),   // Rest of WAV header (44 bytes total)
+        ...List.filled(320, 100), // Raw PCM data
+      ]);
+      final riffFrame = vad.analyzePcm(riffHeaderBytes);
+      expect(riffFrame.sampleCount, greaterThan(0));
+
+      // RIFF header without enough payload bytes (sampleCount == 0 branch)
+      final riffEmptyPayload = Uint8List.fromList([
+        0x52, 0x49, 0x46, 0x46, // RIFF
+        ...List.filled(40, 0),   // 44 bytes header
+        0x01,                    // Only 1 byte payload => sampleCount = 0
+      ]);
+      final emptyPayloadFrame = vad.analyzePcm(riffEmptyPayload);
+      expect(emptyPayloadFrame.sampleCount, equals(0));
+
+      // trimSilence edge cases
+      expect(vad.trimSilence(Uint8List(10)), equals(Uint8List(10)));
+
+      // Silent buffer trim returns empty
+      final silentBuffer = Uint8List(16000 * 2); // 1 sec silence
+      final trimmedSilent = vad.trimSilence(silentBuffer);
+      expect(trimmedSilent.length, equals(0));
+
+      // Buffer with speech flanked by silence
+      final speechBytes = ByteData(320 * 2);
+      for (int i = 0; i < 320; i++) {
+        speechBytes.setInt16(i * 2, (i % 2 == 0 ? 16000 : -16000), Endian.little);
+      }
+      final speechWithSilence = Uint8List.fromList([
+        ...List.filled(640, 0), // leading silence (1 frame)
+        ...speechBytes.buffer.asUint8List(), // speech frame
+        ...List.filled(640, 0), // trailing silence (1 frame)
+      ]);
+      final trimmedSpeech = vad.trimSilence(speechWithSilence);
+      expect(trimmedSpeech.length, greaterThan(0));
+
+      // 2. STT Evaluation Metrics
+      const sttMetrics = SttEvaluationMetrics(
+        wer: 0.05,
+        cer: 0.02,
+        substitutions: 1,
+        deletions: 0,
+        insertions: 0,
+        referenceWords: 20,
+      );
+      final sttJson = sttMetrics.toJson();
+      expect(sttJson['wer'], equals(0.05));
+      expect(sttJson['substitutions'], equals(1));
+
+      // computeWER edge cases
+      expect(computeWER('', ''), equals(0.0));
+      expect(computeWER('', 'hello'), equals(1.0));
+      expect(computeWER('hello', ''), equals(1.0));
+      expect(computeWER('hello world', 'hello'), equals(0.5));
+      expect(computeWER('hello world', 'hello universe'), equals(0.5));
+
+      // computeCER edge cases
+      expect(computeCER('', ''), equals(0.0));
+      expect(computeCER('', 'a'), equals(1.0));
+      expect(computeCER('a', ''), equals(1.0));
+      expect(computeCER('cat', 'bat'), closeTo(0.33, 0.01));
+
+      // 3. Neural Translation Engine
+      final detector = OfflineLanguageDetector();
+      final neuralEngine = NeuralTranslationEngine(detector);
+
+      // Empty text
+      final emptyTrans = await neuralEngine.translate('', options: const TranslationOptions(targetLanguage: 'es'));
+      expect(emptyTrans.translatedText, isEmpty);
+
+      // Same language
+      final sameLangTrans = await neuralEngine.translate('hello', options: const TranslationOptions(sourceLanguage: 'en', targetLanguage: 'en'));
+      expect(sameLangTrans.translatedText, equals('hello'));
+      expect(sameLangTrans.confidence, equals(1.0));
+
+      // Auto detect
+      final autoTrans = await neuralEngine.translate('hello', options: const TranslationOptions(sourceLanguage: 'auto', targetLanguage: 'es'));
+      expect(autoTrans.detectedSourceLanguage, equals('en'));
+
+      // German bidirectional
+      final deTrans = await neuralEngine.translate('hello', options: const TranslationOptions(sourceLanguage: 'en', targetLanguage: 'de'));
+      expect(deTrans.translatedText, contains('hallo'));
+      final deToEn = await neuralEngine.translate('hallo', options: const TranslationOptions(sourceLanguage: 'de', targetLanguage: 'en'));
+      expect(deToEn.translatedText, contains('hello'));
+
+      // French bidirectional
+      final frTrans = await neuralEngine.translate('hello', options: const TranslationOptions(sourceLanguage: 'en', targetLanguage: 'fr'));
+      expect(frTrans.translatedText, contains('bonjour'));
+      final frToEn = await neuralEngine.translate('bonjour', options: const TranslationOptions(sourceLanguage: 'fr', targetLanguage: 'en'));
+      expect(frToEn.translatedText, contains('hello'));
+
+      // Fallback unsupported pair
+      final fallbackTrans = await neuralEngine.translate('sample text', options: const TranslationOptions(sourceLanguage: 'ru', targetLanguage: 'zh'));
+      expect(fallbackTrans.translatedText, equals('sample text'));
+
+      // TranslationMetrics BLEU edge cases
+      expect(TranslationMetrics.computeBleu('', ''), equals(0.0));
+      expect(TranslationMetrics.computeBleu('hello', ''), equals(0.0));
+      expect(TranslationMetrics.computeBleu('one two three', 'one two three'), equals(1.0));
+
+      // 4. Local LLM Runtime & Tokenizer
+      const localMetrics = LocalInferenceMetrics(
+        promptTokens: 10,
+        completionTokens: 20,
+        ttftMs: 15,
+        tokensPerSec: 45.0,
+        totalLatencyMs: 400,
+      );
+      final lJson = localMetrics.toJson();
+      expect(lJson['promptTokens'], equals(10));
+      expect(lJson['tokensPerSec'], equals(45.0));
+
+      final tokenizer = BpeSubwordTokenizer();
+      expect(tokenizer.encode(''), isEmpty);
+      expect(tokenizer.decode([]), isEmpty);
+      expect(tokenizer.vocabSize, greaterThan(100));
+
+      // Tokenize byte fallbacks
+      final encoded = tokenizer.encode('Unicode ~ ^ %');
+      expect(encoded, isNotEmpty);
+      final decoded = tokenizer.decode(encoded);
+      expect(decoded, isNotEmpty);
+
+      // QuantizedTransformerRuntime forward pass
+      final runtime = QuantizedTransformerRuntime();
+      final logits = runtime.forward([BpeSubwordTokenizer.bosTokenId, 5, 6]);
+      expect(logits.length, equals(runtime.tokenizer.vocabSize));
+
+      // LocalLLMProvider prompt completion and unloaded error handling
+      final unloadedLlm = LocalLLMProvider(isModelLoaded: false);
+      expect(() async => await unloadedLlm.complete('test'), throwsA(isA<ValidationException>()));
+
+      final localLlm = LocalLLMProvider();
+      final completion = await localLlm.complete(
+        'explain quantum entanglement',
+        systemPrompt: 'You are a physics expert.',
+        maxTokens: 15,
+        temperature: 0.2,
+      );
+      expect(completion, isNotEmpty);
+      expect(localLlm.lastMetrics, isNotNull);
+      expect(localLlm.lastMetrics!.tokensPerSec, greaterThan(0));
+
+      final streamChunks = <String>[];
+      await for (final chunk in localLlm.completeStream('what is energy', maxTokens: 10)) {
+        streamChunks.add(chunk);
+      }
+      expect(streamChunks, isNotEmpty);
     });
   });
 }

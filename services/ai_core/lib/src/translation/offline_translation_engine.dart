@@ -1,18 +1,23 @@
 import 'package:unicom_contracts/contracts.dart';
 import 'offline_language_detector.dart';
+import 'neural_translation_engine.dart';
 import 'phrasebook.dart';
 
 class OfflineTranslationEngine implements TranslationProvider {
   final LanguageDetectionProvider _detector;
+  final NeuralTranslationEngine neuralEngine;
 
-  OfflineTranslationEngine([LanguageDetectionProvider? detector])
-      : _detector = detector ?? OfflineLanguageDetector();
+  OfflineTranslationEngine([
+    LanguageDetectionProvider? detector,
+    NeuralTranslationEngine? neural,
+  ])  : _detector = detector ?? OfflineLanguageDetector(),
+        neuralEngine = neural ?? NeuralTranslationEngine(detector);
 
   @override
   String get id => 'offline_translation_engine';
 
   @override
-  String get name => 'On-Device Linguistic Translation Engine';
+  String get name => 'On-Device Linguistic & Neural Translation Engine';
 
   @override
   bool get isOfflineCapable => true;
@@ -65,7 +70,20 @@ class OfflineTranslationEngine implements TranslationProvider {
       );
     }
 
-    // 1. Phrasebook exact match
+    // 1. Primary: Neural Translation Engine
+    final neuralRes = await neuralEngine.translate(trimmed, options: options);
+    if (neuralRes.translatedText != trimmed) {
+      return TranslationResult(
+        translatedText: _applyCaseAndPunctuation(trimmed, neuralRes.translatedText),
+        sourceLanguage: sourceLang,
+        targetLanguage: targetLang,
+        detectedSourceLanguage: detectedSource,
+        confidence: neuralRes.confidence,
+        provider: id,
+      );
+    }
+
+    // 2. Emergency / Domain Phrasebook Fallback (when neural output unchanged)
     final lowerInput = trimmed.toLowerCase();
     for (final entry in offlinePhrasebook) {
       final src = entry.getForLanguage(sourceLang.toLowerCase());
@@ -76,8 +94,8 @@ class OfflineTranslationEngine implements TranslationProvider {
           sourceLanguage: sourceLang,
           targetLanguage: targetLang,
           detectedSourceLanguage: detectedSource,
-          confidence: 0.98,
-          provider: id,
+          confidence: 0.95,
+          provider: '$id:phrasebook_fallback',
         );
       }
     }

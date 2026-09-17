@@ -485,7 +485,7 @@ void main() {
 
         expect(await provider.retrieve(''), isEmpty);
 
-        final doc1 = const RetrievalDocument(
+        const doc1 = RetrievalDocument(
           id: 'doc1',
           title: 'Kubernetes Pod Scheduling',
           content:
@@ -493,7 +493,7 @@ void main() {
           sourceUri:
               'https://kubernetes.io/docs/concepts/scheduling-eviction/kube-scheduler/',
         );
-        final doc2 = const RetrievalDocument(
+        const doc2 = RetrievalDocument(
           id: 'doc2',
           title: 'Quantum Physics Basics',
           content:
