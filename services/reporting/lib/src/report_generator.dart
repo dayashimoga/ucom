@@ -9,7 +9,8 @@ class ReportGenerator {
     String modelName = 'unicom-local-v1',
     String modelVersion = '1.0.0',
   }) {
-    final reportId = 'rep_${DateTime.now().millisecondsSinceEpoch}_${type.toJson()}';
+    final reportId =
+        'rep_${DateTime.now().millisecondsSinceEpoch}_${type.toJson()}';
     final nowIso = DateTime.now().toUtc().toIso8601String();
     final title = customTitle ?? _defaultTitleForType(type, conversation.title);
     final content = _buildContentForType(
@@ -77,21 +78,26 @@ class ReportGenerator {
     buffer.writeln('### PROVENANCE & EXECUTION AUDIT');
     buffer.writeln('- **Conversation ID**: `${conv.id}`');
     buffer.writeln('- **Timestamp**: `${conv.startedAt}`');
-    buffer.writeln('- **Application Mode**: `${conv.mode.toJson().toUpperCase()}`');
-    buffer.writeln('- **Privacy Execution Tier**: `${conv.executionMode.toJson().toUpperCase()}`');
+    buffer.writeln(
+        '- **Application Mode**: `${conv.mode.toJson().toUpperCase()}`');
+    buffer.writeln(
+        '- **Privacy Execution Tier**: `${conv.executionMode.toJson().toUpperCase()}`');
     buffer.writeln('- **Active Provider**: `$providerId`');
     buffer.writeln('- **Model & Version**: `$modelName (v$modelVersion)`');
-    buffer.writeln('- **Participants**: ${conv.participants.map((p) => "${p.name} (${p.preferredLanguage?.toUpperCase() ?? 'EN'})").join(", ")}\n');
+    buffer.writeln(
+        '- **Participants**: ${conv.participants.map((p) => "${p.name} (${p.preferredLanguage?.toUpperCase() ?? 'EN'})").join(", ")}\n');
     buffer.writeln('---\n');
 
     switch (type) {
       case ReportType.quickSummary:
         buffer.writeln('## AI SUMMARY');
-        buffer.writeln('This conversation encompassed ${conv.segments.length} exchanges with ${conv.participants.length} active participants.');
+        buffer.writeln(
+            'This conversation encompassed ${conv.segments.length} exchanges with ${conv.participants.length} active participants.');
         if (conv.topics.isNotEmpty) {
           buffer.writeln('\n### Primary Focus Areas');
           for (final t in conv.topics) {
-            buffer.writeln('- **${t.name}** (Relevance: ${(t.relevanceScore * 100).round()}%)');
+            buffer.writeln(
+                '- **${t.name}** (Relevance: ${(t.relevanceScore * 100).round()}%)');
           }
         }
         if (conv.decisions.isNotEmpty) {
@@ -104,12 +110,16 @@ class ReportGenerator {
 
       case ReportType.detailedSummary:
         buffer.writeln('## AI SUMMARY & DIALOGUE BREAKDOWN');
-        buffer.writeln('Detailed breakdown across timeline and thematic topics.\n');
+        buffer.writeln(
+            'Detailed breakdown across timeline and thematic topics.\n');
         for (final seg in conv.segments) {
-          buffer.writeln('#### VERBATIM TRANSCRIPT [${seg.speakerName}] (${seg.originalLanguage.toUpperCase()}):');
+          buffer.writeln(
+              '#### VERBATIM TRANSCRIPT [${seg.speakerName}] (${seg.originalLanguage.toUpperCase()}):');
           buffer.writeln('> "${seg.originalText}"');
-          if (seg.translatedText.isNotEmpty && seg.translatedText != seg.originalText) {
-            buffer.writeln('#### TRANSLATION (${seg.targetLanguage.toUpperCase()}):');
+          if (seg.translatedText.isNotEmpty &&
+              seg.translatedText != seg.originalText) {
+            buffer.writeln(
+                '#### TRANSLATION (${seg.targetLanguage.toUpperCase()}):');
             buffer.writeln('> "${seg.translatedText}"');
           }
           buffer.writeln();
@@ -135,7 +145,8 @@ class ReportGenerator {
         } else {
           for (final q in conv.questions) {
             buffer.writeln('### Question: "${q.questionText}"');
-            buffer.writeln('- **Status**: ${q.isAnswered ? "Answered" : "Unresolved"}');
+            buffer.writeln(
+                '- **Status**: ${q.isAnswered ? "Answered" : "Unresolved"}');
             if (q.answerText != null) {
               buffer.writeln('- **AI ANSWER**: ${q.answerText}');
             }
@@ -152,19 +163,23 @@ class ReportGenerator {
 
       case ReportType.learningReport:
         buffer.writeln('## AI EXPLANATION & LINGUISTIC INSIGHTS');
-        buffer.writeln('Key grammatical, cultural, and conceptual learnings from this exchange.\n');
+        buffer.writeln(
+            'Key grammatical, cultural, and conceptual learnings from this exchange.\n');
         for (final seg in conv.segments) {
           if (seg.explanation != null) {
             buffer.writeln('### Concept: "${seg.originalText}"');
             final exp = seg.explanation!.explanations;
             if (exp.containsKey(ExplanationPersona.simple)) {
-              buffer.writeln('- **AI EXPLANATION (Simple)**: ${exp[ExplanationPersona.simple]!.content}');
+              buffer.writeln(
+                  '- **AI EXPLANATION (Simple)**: ${exp[ExplanationPersona.simple]!.content}');
             }
             if (exp.containsKey(ExplanationPersona.grammar)) {
-              buffer.writeln('- **AI EXPLANATION (Grammar)**: ${exp[ExplanationPersona.grammar]!.content}');
+              buffer.writeln(
+                  '- **AI EXPLANATION (Grammar)**: ${exp[ExplanationPersona.grammar]!.content}');
             }
             if (exp.containsKey(ExplanationPersona.culturalContext)) {
-              buffer.writeln('- **AI EXPLANATION (Culture)**: ${exp[ExplanationPersona.culturalContext]!.content}');
+              buffer.writeln(
+                  '- **AI EXPLANATION (Culture)**: ${exp[ExplanationPersona.culturalContext]!.content}');
             }
             buffer.writeln();
           }
@@ -177,7 +192,8 @@ class ReportGenerator {
           buffer.writeln('No outstanding action items recorded.');
         } else {
           for (final item in conv.actionItems) {
-            buffer.writeln('- [ ] **${item.title}** (Assignee: ${item.assignee ?? "Unassigned"})');
+            buffer.writeln(
+                '- [ ] **${item.title}** (Assignee: ${item.assignee ?? "Unassigned"})');
             if (item.dueDate != null) buffer.writeln('  Due: ${item.dueDate}');
           }
         }
@@ -187,8 +203,10 @@ class ReportGenerator {
         buffer.writeln('## FORMAL MEETING MINUTES');
         buffer.writeln('### 1. Attendees');
         for (final p in conv.participants) {
-          final roleStr = (p.role != null && p.role!.isNotEmpty) ? ' (${p.role})' : '';
-          buffer.writeln('- ${p.name}$roleStr ${p.isHost ? "(Host)" : ""}'.trim());
+          final roleStr =
+              (p.role != null && p.role!.isNotEmpty) ? ' (${p.role})' : '';
+          buffer.writeln(
+              '- ${p.name}$roleStr ${p.isHost ? "(Host)" : ""}'.trim());
         }
         buffer.writeln('\n### 2. Decisions Reached & Key Resolutions');
         if (conv.decisions.isEmpty) {
@@ -218,7 +236,8 @@ class ReportGenerator {
             buffer.writeln('**Overall Score**: ${a.overallScore}/10');
             buffer.writeln('### Rubric Breakdown');
             buffer.writeln('**Strengths**: ${a.strengths.join(", ")}');
-            buffer.writeln('**Improvements Needed**: ${a.areasForImprovement.join(", ")}');
+            buffer.writeln(
+                '**Improvements Needed**: ${a.areasForImprovement.join(", ")}');
             if (a.studyPlan.isNotEmpty) {
               buffer.writeln('### Targeted Study Plan');
               buffer.writeln('**Study Plan**: ${a.studyPlan.join(", ")}\n');
@@ -235,7 +254,8 @@ class ReportGenerator {
           for (final w in words) {
             final clean = w.replaceAll(RegExp(r'[^\w]'), '');
             if (clean.length > 4 && recordedWords.add(clean)) {
-              buffer.writeln('- **$clean** (${seg.originalLanguage.toUpperCase()} → ${seg.targetLanguage.toUpperCase()})');
+              buffer.writeln(
+                  '- **$clean** (${seg.originalLanguage.toUpperCase()} → ${seg.targetLanguage.toUpperCase()})');
             }
           }
         }

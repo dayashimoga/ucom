@@ -36,7 +36,9 @@ class ValidationException extends UnicomException {
 class NotFoundException extends UnicomException {
   const NotFoundException(String resource, [String? id])
       : super(
-          id != null ? "$resource with ID '$id' was not found." : "$resource not found.",
+          id != null
+              ? "$resource with ID '$id' was not found."
+              : "$resource not found.",
           code: 'NOT_FOUND',
           statusCode: 404,
         );
@@ -44,7 +46,8 @@ class NotFoundException extends UnicomException {
 
 class OfflineViolationException extends UnicomException {
   const OfflineViolationException(
-      [String message = 'Privacy Violation: Network access attempted while in private_offline mode.'])
+      [String message =
+          'Privacy Violation: Network access attempted while in private_offline mode.'])
       : super(
           message,
           code: 'OFFLINE_POLICY_VIOLATION',
@@ -65,7 +68,8 @@ class ProviderException extends UnicomException {
 }
 
 class ChecksumMismatchException extends UnicomException {
-  const ChecksumMismatchException(String modelId, String expected, String actual)
+  const ChecksumMismatchException(
+      String modelId, String expected, String actual)
       : super(
           "Model '$modelId' checksum mismatch. Expected: $expected, Actual: $actual",
           code: 'CHECKSUM_MISMATCH',
@@ -104,7 +108,8 @@ class PromptInjectionException extends UnicomException {
 }
 
 class ModelCorruptedException extends UnicomException {
-  const ModelCorruptedException(String modelId, String reason, [dynamic details])
+  const ModelCorruptedException(String modelId, String reason,
+      [dynamic details])
       : super(
           "Model '$modelId' corrupted or incompatible: $reason",
           code: 'MODEL_CORRUPTED',
@@ -114,11 +119,11 @@ class ModelCorruptedException extends UnicomException {
 }
 
 class NetworkBlockedException extends UnicomException {
-  const NetworkBlockedException(String destination, [String reason = 'Blocked by defense-in-depth offline network gate.'])
+  const NetworkBlockedException(String destination,
+      [String reason = 'Blocked by defense-in-depth offline network gate.'])
       : super(
           "Network call to '$destination' blocked: $reason",
           code: 'NETWORK_BLOCKED',
           statusCode: 403,
         );
 }
-

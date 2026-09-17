@@ -58,11 +58,13 @@ class LocalStorageProvider implements StorageProvider {
       _delegate.saveReport(report);
 
   @override
-  Future<List<GeneratedReport>> getReportsByConversationId(String conversationId) =>
+  Future<List<GeneratedReport>> getReportsByConversationId(
+          String conversationId) =>
       _delegate.getReportsByConversationId(conversationId);
 
   @override
-  Future<List<Conversation>> searchConversations(String query, {int limit = 20}) =>
+  Future<List<Conversation>> searchConversations(String query,
+          {int limit = 20}) =>
       _delegate.searchConversations(query, limit: limit);
 }
 
@@ -96,12 +98,18 @@ class InMemoryStorageProvider implements StorageProvider {
   }) async {
     var items = _conversations.values.toList();
     if (mode != null) items = items.where((c) => c.mode == mode).toList();
-    if (executionMode != null) items = items.where((c) => c.executionMode == executionMode).toList();
+    if (executionMode != null) {
+      items = items.where((c) => c.executionMode == executionMode).toList();
+    }
     if (query != null && query.isNotEmpty) {
       final q = query.toLowerCase();
-      items = items.where((c) =>
-          c.title.toLowerCase().contains(q) ||
-          c.segments.any((s) => s.originalText.toLowerCase().contains(q) || s.translatedText.toLowerCase().contains(q))).toList();
+      items = items
+          .where((c) =>
+              c.title.toLowerCase().contains(q) ||
+              c.segments.any((s) =>
+                  s.originalText.toLowerCase().contains(q) ||
+                  s.translatedText.toLowerCase().contains(q)))
+          .toList();
     }
     items.sort((a, b) => b.startedAt.compareTo(a.startedAt));
     if (offset >= items.length) return [];
@@ -121,12 +129,14 @@ class InMemoryStorageProvider implements StorageProvider {
   }
 
   @override
-  Future<List<GeneratedReport>> getReportsByConversationId(String conversationId) async {
+  Future<List<GeneratedReport>> getReportsByConversationId(
+      String conversationId) async {
     return _reports.where((r) => r.conversationId == conversationId).toList();
   }
 
   @override
-  Future<List<Conversation>> searchConversations(String query, {int limit = 20}) async {
+  Future<List<Conversation>> searchConversations(String query,
+      {int limit = 20}) async {
     return listConversations(query: query, limit: limit);
   }
 }

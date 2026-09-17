@@ -31,7 +31,8 @@ class CloudTranslationAdapter implements TranslationProvider {
     }
 
     if (apiKey == null || apiKey!.isEmpty) {
-      throw ProviderException(id, 'Missing API credentials for cloud translation.');
+      throw ProviderException(
+          id, 'Missing API credentials for cloud translation.');
     }
 
     return TranslationResult(

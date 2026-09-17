@@ -39,7 +39,8 @@ void main() {
     test('updates application mode and resets session', () {
       controller.setApplicationMode(ApplicationMode.interviewPractice);
       expect(controller.mode, equals(ApplicationMode.interviewPractice));
-      expect(controller.currentConversation.mode, equals(ApplicationMode.interviewPractice));
+      expect(controller.currentConversation.mode,
+          equals(ApplicationMode.interviewPractice));
 
       controller.setApplicationMode(ApplicationMode.meeting);
       expect(controller.mode, equals(ApplicationMode.meeting));
@@ -51,7 +52,9 @@ void main() {
       expect(controller.targetLanguage, equals('de'));
     });
 
-    test('sends text input, translates, explains, and updates conversation segments', () async {
+    test(
+        'sends text input, translates, explains, and updates conversation segments',
+        () async {
       await controller.sendTextInput('Hello');
 
       expect(controller.currentConversation.segments.length, equals(1));
@@ -67,7 +70,8 @@ void main() {
       expect(controller.currentConversation.segments, isEmpty);
     });
 
-    test('asks general knowledge and records structured question response', () async {
+    test('asks general knowledge and records structured question response',
+        () async {
       final response = await controller.askKnowledge('What is Kubernetes?');
       expect(response.question, equals('What is Kubernetes?'));
       expect(response.generativeAnswer, isNotEmpty);
@@ -75,7 +79,9 @@ void main() {
       expect(controller.currentConversation.segments.length, equals(1));
     });
 
-    test('executes voice input workflow and captures actionable errors when uninstalled', () async {
+    test(
+        'executes voice input workflow and captures actionable errors when uninstalled',
+        () async {
       final controllerWithUninstalledSTT = ConversationController(
         sttProvider: LocalSTTProvider(isModelInstalled: false),
       );
@@ -94,7 +100,8 @@ void main() {
     });
 
     test('creates and persists reports of various types', () async {
-      await controller.sendTextInput('What is our target date? We decided on Friday.');
+      await controller
+          .sendTextInput('What is our target date? We decided on Friday.');
       final report = await controller.createReport(ReportType.quickSummary);
 
       expect(report.title, contains('Executive Summary'));

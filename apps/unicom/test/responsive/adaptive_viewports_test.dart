@@ -30,7 +30,8 @@ void main() {
       final name = entry.key;
       final size = entry.value;
 
-      testWidgets('validates viewport $name without overflow or clipping', (tester) async {
+      testWidgets('validates viewport $name without overflow or clipping',
+          (tester) async {
         tester.view.physicalSize = size;
         tester.view.devicePixelRatio = 1.0;
         addTearDown(tester.view.resetPhysicalSize);
@@ -42,11 +43,14 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.byType(UnicomApp), findsOneWidget);
-        expect(tester.takeException(), isNull, reason: 'RenderFlex overflow occurred on viewport $name');
+        expect(tester.takeException(), isNull,
+            reason: 'RenderFlex overflow occurred on viewport $name');
       });
 
-      testWidgets('validates viewport $name in landscape orientation', (tester) async {
-        final landscapeSize = Size(size.height > size.width ? size.height : size.width,
+      testWidgets('validates viewport $name in landscape orientation',
+          (tester) async {
+        final landscapeSize = Size(
+            size.height > size.width ? size.height : size.width,
             size.height > size.width ? size.width : size.height);
         tester.view.physicalSize = landscapeSize;
         tester.view.devicePixelRatio = 1.0;
@@ -58,11 +62,14 @@ void main() {
         ));
         await tester.pumpAndSettle();
 
-        expect(tester.takeException(), isNull, reason: 'RenderFlex overflow in landscape $name');
+        expect(tester.takeException(), isNull,
+            reason: 'RenderFlex overflow in landscape $name');
       });
     }
 
-    testWidgets('validates 100% to 200% text scaling on compact 360x800 phone without overflow', (tester) async {
+    testWidgets(
+        'validates 100% to 200% text scaling on compact 360x800 phone without overflow',
+        (tester) async {
       tester.view.physicalSize = const Size(360, 800);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -88,7 +95,8 @@ void main() {
             debugPrint('DIAG: ${node.name} -> $node');
           }
         }
-        expect(err, isNull, reason: 'RenderFlex overflow at text scale $scaleFactor');
+        expect(err, isNull,
+            reason: 'RenderFlex overflow at text scale $scaleFactor');
       }
     });
   });

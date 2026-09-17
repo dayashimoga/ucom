@@ -52,8 +52,9 @@ class ConversationExtractor {
       if (match != null) {
         final title = match.group(2)?.trim() ?? seg.originalText;
         // Check for assignee like @John or assigned to John
-        final assigneeMatch = RegExp(r'@(\w+)|assigned to (\w+)', caseSensitive: false)
-            .firstMatch(seg.originalText);
+        final assigneeMatch =
+            RegExp(r'@(\w+)|assigned to (\w+)', caseSensitive: false)
+                .firstMatch(seg.originalText);
         final assignee = assigneeMatch?.group(1) ?? assigneeMatch?.group(2);
 
         items.add(ActionItem(
@@ -95,10 +96,56 @@ class ConversationExtractor {
   List<TopicItem> extractTopics(List<ConversationSegment> segments) {
     final wordFreq = <String, int>{};
     final stopWords = {
-      'the', 'be', 'to', 'of', 'and', 'a', 'in', 'that', 'have', 'i', 'it', 'for', 'not',
-      'on', 'with', 'he', 'as', 'you', 'do', 'at', 'this', 'but', 'his', 'by', 'from',
-      'they', 'we', 'say', 'her', 'she', 'or', 'an', 'will', 'my', 'one', 'all', 'would',
-      'there', 'their', 'what', 'so', 'up', 'out', 'if', 'about', 'who', 'get', 'which', 'go', 'me'
+      'the',
+      'be',
+      'to',
+      'of',
+      'and',
+      'a',
+      'in',
+      'that',
+      'have',
+      'i',
+      'it',
+      'for',
+      'not',
+      'on',
+      'with',
+      'he',
+      'as',
+      'you',
+      'do',
+      'at',
+      'this',
+      'but',
+      'his',
+      'by',
+      'from',
+      'they',
+      'we',
+      'say',
+      'her',
+      'she',
+      'or',
+      'an',
+      'will',
+      'my',
+      'one',
+      'all',
+      'would',
+      'there',
+      'their',
+      'what',
+      'so',
+      'up',
+      'out',
+      'if',
+      'about',
+      'who',
+      'get',
+      'which',
+      'go',
+      'me'
     };
 
     for (final seg in segments) {
@@ -125,7 +172,9 @@ class ConversationExtractor {
         id: 'top_${topics.length + 1}',
         name: entry.key.toUpperCase(),
         keywords: [entry.key],
-        relevanceScore: double.parse((entry.value / (segments.length + 1)).clamp(0.1, 1.0).toStringAsFixed(2)),
+        relevanceScore: double.parse((entry.value / (segments.length + 1))
+            .clamp(0.1, 1.0)
+            .toStringAsFixed(2)),
       ));
     }
 

@@ -14,7 +14,8 @@ void main() {
       controller = ConversationController(
         storageProvider: InMemoryStorageProvider(),
       );
-      await controller.sendTextInput('We agreed on the sprint plan and assigned tasks.');
+      await controller
+          .sendTextInput('We agreed on the sprint plan and assigned tasks.');
       await controller.createReport(ReportType.quickSummary);
     });
 
@@ -36,7 +37,8 @@ void main() {
       expect(find.text('Reports & Intelligence Exports'), findsOneWidget);
       expect(find.byType(ChoiceChip), findsWidgets);
       expect(find.byType(SelectableText), findsOneWidget);
-      expect(find.textContaining('PROVENANCE & EXECUTION AUDIT'), findsOneWidget);
+      expect(
+          find.textContaining('PROVENANCE & EXECUTION AUDIT'), findsOneWidget);
     });
 
     testWidgets('switches report types via choice chips', (tester) async {

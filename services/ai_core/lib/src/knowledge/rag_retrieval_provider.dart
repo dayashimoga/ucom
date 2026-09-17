@@ -27,7 +27,9 @@ class DocumentChunk {
   RetrievalDocument toRetrievalDocument(double score) {
     return RetrievalDocument(
       id: documentId,
-      title: totalChunks > 1 ? '$title (Chunk ${chunkIndex + 1}/$totalChunks)' : title,
+      title: totalChunks > 1
+          ? '$title (Chunk ${chunkIndex + 1}/$totalChunks)'
+          : title,
       content: text,
       sourceUri: sourceUri,
       score: score,
@@ -69,10 +71,12 @@ class RagRetrievalProvider implements RetrievalProvider {
 
   static final List<RegExp> _injectionPatterns = [
     RegExp(r'ignore\s+(all\s+)?previous\s+instructions', caseSensitive: false),
-    RegExp(r'disregard\s+(all\s+)?prior\s+(context|instructions)', caseSensitive: false),
+    RegExp(r'disregard\s+(all\s+)?prior\s+(context|instructions)',
+        caseSensitive: false),
     RegExp(r'system\s+override\s*:', caseSensitive: false),
     RegExp(r'you\s+are\s+now\s+in\s+developer\s+mode', caseSensitive: false),
-    RegExp(r'reveal\s+(system\s+prompt|all\s+passwords|secrets|api\s+keys)', caseSensitive: false),
+    RegExp(r'reveal\s+(system\s+prompt|all\s+passwords|secrets|api\s+keys)',
+        caseSensitive: false),
     RegExp(r'output\s+the\s+following\s+exact\s+word', caseSensitive: false),
   ];
 
@@ -100,9 +104,8 @@ class RagRetrievalProvider implements RetrievalProvider {
   String sanitizeContent(String text) {
     var sanitized = text;
     for (final pattern in _injectionPatterns) {
-      sanitized = sanitized.replaceAllMapped(pattern, (match) {
-        return '[SANITIZED_INJECTION_DEFENSE: "${match.group(0)}"]';
-      });
+      sanitized = sanitized.replaceAll(
+          pattern, '[SANITIZED_PROMPT_INJECTION_NEUTRALIZED]');
     }
     return sanitized;
   }
@@ -137,7 +140,10 @@ class RagRetrievalProvider implements RetrievalProvider {
 
     // Sliding-window chunking
     final chunkList = <DocumentChunk>[];
-    final words = sanitizedContent.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
+    final words = sanitizedContent
+        .split(RegExp(r'\s+'))
+        .where((w) => w.isNotEmpty)
+        .toList();
 
     if (words.isEmpty) {
       return [];
@@ -157,7 +163,6 @@ class RagRetrievalProvider implements RetrievalProvider {
       chunkList.add(chunk);
     } else {
       int step = max(1, chunkSize - chunkOverlap);
-      int chunkIdx = 0;
       final tempChunks = <String>[];
 
       for (int i = 0; i < words.length; i += step) {
@@ -213,10 +218,13 @@ class RagRetrievalProvider implements RetrievalProvider {
   /// Full RAG query evaluation returning scored chunks and conflict analysis.
   Future<RagRetrievalResult> query(String queryText, {int topK = 5}) async {
     final retrievedDocs = await retrieve(queryText, topK: topK);
-    final hasSufficient = retrievedDocs.isNotEmpty && retrievedDocs.first.score >= relevanceThreshold;
+    final hasSufficient = retrievedDocs.isNotEmpty &&
+        retrievedDocs.first.score >= relevanceThreshold;
 
     final conflicts = _detectConflicts(retrievedDocs);
-    final neutralized = retrievedDocs.any((d) => d.content.contains('[SANITIZED_INJECTION_DEFENSE'));
+    final neutralized = retrievedDocs.any((d) =>
+        d.content.contains('[SANITIZED_PROMPT_INJECTION_NEUTRALIZED]') ||
+        d.content.contains('[SANITIZED_INJECTION_DEFENSE'));
 
     return RagRetrievalResult(
       documents: retrievedDocs,
@@ -233,7 +241,7 @@ class RagRetrievalProvider implements RetrievalProvider {
       return [];
     }
 
-    final queryTokens = _tokenize(query);
+    final queryTokens = _tokenize(query, filterStopwords: true);
     if (queryTokens.isEmpty) return [];
 
     final scoredChunks = <RetrievalDocument>[];
@@ -246,7 +254,8 @@ class RagRetrievalProvider implements RetrievalProvider {
       for (final qToken in queryTokens) {
         final occurrences = docTokens.where((t) => t == qToken).length;
         if (occurrences > 0) {
-          final titleOccurrences = _tokenize(chunk.title).where((t) => t == qToken).length;
+          final titleOccurrences =
+              _tokenize(chunk.title).where((t) => t == qToken).length;
           score += 1.0 + (occurrences * 0.4) + (titleOccurrences * 2.0);
         }
       }
@@ -270,7 +279,8 @@ class RagRetrievalProvider implements RetrievalProvider {
       for (int j = i + 1; j < docs.length; j++) {
         final docA = docs[i];
         final docB = docs[j];
-        if (docA.metadata?['documentId'] == docB.metadata?['documentId']) continue;
+        if (docA.metadata?['documentId'] == docB.metadata?['documentId'])
+          continue;
 
         final aText = docA.content.toLowerCase();
         final bText = docB.content.toLowerCase();
@@ -280,19 +290,51 @@ class RagRetrievalProvider implements RetrievalProvider {
             (aText.contains('deprecated') && bText.contains('recommended')) ||
             (aText.contains('port 8080') && bText.contains('port 9090')) ||
             (aText.contains('version 1') && bText.contains('version 2'))) {
-          conflicts.add('Potential contradiction between "${docA.title}" and "${docB.title}".');
+          conflicts.add(
+              'Potential contradiction between "${docA.title}" and "${docB.title}".');
         }
       }
     }
     return conflicts;
   }
 
-  List<String> _tokenize(String text) {
-    return text
+  static const _stopwords = {
+    'the',
+    'of',
+    'and',
+    'in',
+    'to',
+    'a',
+    'is',
+    'was',
+    'it',
+    'for',
+    'on',
+    'with',
+    'as',
+    'by',
+    'at',
+    'an',
+    'be',
+    'this',
+    'that',
+    'from'
+  };
+
+  List<String> _tokenize(String text, {bool filterStopwords = false}) {
+    final raw = text
         .toLowerCase()
-        .replaceAll(RegExp(r'[^a-zA-Z0-9\u00C0-\u024F\u0900-\u097F\u0B80-\u0BFF\u3040-\u30FF\u4E00-\u9FFF\s]'), ' ')
+        .replaceAll(
+            RegExp(
+                r'[^a-zA-Z0-9\u00C0-\u024F\u0900-\u097F\u0B80-\u0BFF\u3040-\u30FF\u4E00-\u9FFF\s]'),
+            ' ')
         .split(RegExp(r'\s+'))
         .where((token) => token.isNotEmpty && token.length > 1)
         .toList();
+    if (filterStopwords) {
+      final filtered = raw.where((t) => !_stopwords.contains(t)).toList();
+      return filtered.isNotEmpty ? filtered : raw;
+    }
+    return raw;
   }
 }

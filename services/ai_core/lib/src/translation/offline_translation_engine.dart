@@ -46,12 +46,14 @@ class OfflineTranslationEngine implements TranslationProvider {
       var sameLangResult = trimmed;
       if (options.formality == 'more') {
         if (targetLang == 'es') {
-          sameLangResult = sameLangResult.replaceAll(RegExp(r'(?<=^|\s)(tú|tu)(?=\s|$|[.,!?])', caseSensitive: false), 'usted');
+          sameLangResult = sameLangResult.replaceAll(
+              RegExp(r'(?<=^|\s)(tú|tu)(?=\s|$|[.,!?])', caseSensitive: false),
+              'usted');
         } else if (targetLang == 'de') {
-          sameLangResult = sameLangResult.replaceAll(RegExp(r'(?<=^|\s)du(?=\s|$|[.,!?])', caseSensitive: false), 'Sie');
+          sameLangResult = sameLangResult.replaceAll(
+              RegExp(r'(?<=^|\s)du(?=\s|$|[.,!?])', caseSensitive: false),
+              'Sie');
         }
-
-
       }
       return TranslationResult(
         translatedText: sameLangResult,
@@ -62,7 +64,6 @@ class OfflineTranslationEngine implements TranslationProvider {
         provider: id,
       );
     }
-
 
     // 1. Phrasebook exact match
     final lowerInput = trimmed.toLowerCase();
@@ -98,7 +99,8 @@ class OfflineTranslationEngine implements TranslationProvider {
       String? matched;
 
       // English source
-      if (sourceLang.toLowerCase() == 'en' && offlineLexicon.containsKey(lower)) {
+      if (sourceLang.toLowerCase() == 'en' &&
+          offlineLexicon.containsKey(lower)) {
         matched = offlineLexicon[lower]?[targetLang];
       } else {
         // Reverse check from non-English
@@ -116,7 +118,8 @@ class OfflineTranslationEngine implements TranslationProvider {
 
       if (matched != null) {
         translatedCount++;
-        final isCapitalized = token.isNotEmpty && token[0] == token[0].toUpperCase();
+        final isCapitalized =
+            token.isNotEmpty && token[0] == token[0].toUpperCase();
         if (isCapitalized && matched.isNotEmpty) {
           matched = matched[0].toUpperCase() + matched.substring(1);
         }
@@ -131,14 +134,17 @@ class OfflineTranslationEngine implements TranslationProvider {
     // Formality adjustments
     if (options.formality == 'more') {
       if (targetLang == 'es') {
-        result = result.replaceAll(RegExp(r'\b(tú|tu)\b', caseSensitive: false, unicode: true), 'usted');
+        result = result.replaceAll(
+            RegExp(r'\b(tú|tu)\b', caseSensitive: false, unicode: true),
+            'usted');
       } else if (targetLang == 'de') {
-        result = result.replaceAll(RegExp(r'\bdu\b', caseSensitive: false), 'Sie');
+        result =
+            result.replaceAll(RegExp(r'\bdu\b', caseSensitive: false), 'Sie');
       }
-
     }
 
-    final confidence = wordCount > 0 ? (translatedCount / wordCount).clamp(0.5, 0.95) : 0.8;
+    final confidence =
+        wordCount > 0 ? (translatedCount / wordCount).clamp(0.5, 0.95) : 0.8;
 
     return TranslationResult(
       translatedText: result,
@@ -176,7 +182,8 @@ class OfflineTranslationEngine implements TranslationProvider {
   }
 
   String _applyCaseAndPunctuation(String source, String target) {
-    final isCapitalized = source.isNotEmpty && source[0] == source[0].toUpperCase();
+    final isCapitalized =
+        source.isNotEmpty && source[0] == source[0].toUpperCase();
     var result = isCapitalized && target.isNotEmpty
         ? target[0].toUpperCase() + target.substring(1)
         : target;

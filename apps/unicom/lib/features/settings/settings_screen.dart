@@ -81,7 +81,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 Icon(Icons.security, color: UnicomTheme.successGreen),
                 SizedBox(width: 8),
-                Text('AI Execution Tier & Privacy', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                Text('AI Execution Tier & Privacy',
+                    style:
+                        TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               ],
             ),
             const SizedBox(height: 8),
@@ -91,8 +93,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(height: 16),
             RadioListTile<ExecutionMode>(
-              title: const Text('Offline Only (Strict Privacy Invariant)', style: TextStyle(fontWeight: FontWeight.w600)),
-              subtitle: const Text('Android AICore & local models only. No internet transmission under any circumstance.'),
+              title: const Text('Offline Only (Strict Privacy Invariant)',
+                  style: TextStyle(fontWeight: FontWeight.w600)),
+              subtitle: const Text(
+                  'Android AICore & local models only. No internet transmission under any circumstance.'),
               value: ExecutionMode.privateOffline,
               groupValue: widget.controller.executionMode,
               onChanged: (val) {
@@ -100,8 +104,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               },
             ),
             RadioListTile<ExecutionMode>(
-              title: const Text('Automatic (Capability-Aware Routing)', style: TextStyle(fontWeight: FontWeight.w600)),
-              subtitle: const Text('Prefers fastest on-device AI; routes to local or cloud according to availability.'),
+              title: const Text('Automatic (Capability-Aware Routing)',
+                  style: TextStyle(fontWeight: FontWeight.w600)),
+              subtitle: const Text(
+                  'Prefers fastest on-device AI; routes to local or cloud according to availability.'),
               value: ExecutionMode.auto,
               groupValue: widget.controller.executionMode,
               onChanged: (val) {
@@ -109,8 +115,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               },
             ),
             RadioListTile<ExecutionMode>(
-              title: const Text('Hybrid Mode', style: TextStyle(fontWeight: FontWeight.w600)),
-              subtitle: const Text('Local-first with user-permitted cloud fallback for rare or high-complexity queries.'),
+              title: const Text('Hybrid Mode',
+                  style: TextStyle(fontWeight: FontWeight.w600)),
+              subtitle: const Text(
+                  'Local-first with user-permitted cloud fallback for rare or high-complexity queries.'),
               value: ExecutionMode.hybrid,
               groupValue: widget.controller.executionMode,
               onChanged: (val) {
@@ -118,8 +126,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               },
             ),
             RadioListTile<ExecutionMode>(
-              title: const Text('Cloud Preferred', style: TextStyle(fontWeight: FontWeight.w600)),
-              subtitle: const Text('Routes to configured enterprise cloud LLM with local fallback on network failure.'),
+              title: const Text('Cloud Preferred',
+                  style: TextStyle(fontWeight: FontWeight.w600)),
+              subtitle: const Text(
+                  'Routes to configured enterprise cloud LLM with local fallback on network failure.'),
               value: ExecutionMode.cloud,
               groupValue: widget.controller.executionMode,
               onChanged: (val) {
@@ -149,7 +159,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   children: [
                     Icon(Icons.android, color: UnicomTheme.accentCyan),
                     SizedBox(width: 8),
-                    Text('Android Built-in AI (AICore)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    Text('Android Built-in AI (AICore)',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 16)),
                   ],
                 ),
                 IconButton(
@@ -168,7 +180,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     : UnicomTheme.warningAmber.withOpacity(0.15),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: isAvail ? UnicomTheme.successGreen : UnicomTheme.warningAmber,
+                  color: isAvail
+                      ? UnicomTheme.successGreen
+                      : UnicomTheme.warningAmber,
                 ),
               ),
               child: Row(
@@ -177,7 +191,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   Icon(
                     isAvail ? Icons.check_circle : Icons.info_outline,
                     size: 16,
-                    color: isAvail ? UnicomTheme.successGreen : UnicomTheme.warningAmber,
+                    color: isAvail
+                        ? UnicomTheme.successGreen
+                        : UnicomTheme.warningAmber,
                   ),
                   const SizedBox(width: 6),
                   Text(
@@ -187,7 +203,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 12,
-                      color: isAvail ? UnicomTheme.successGreen : UnicomTheme.warningAmber,
+                      color: isAvail
+                          ? UnicomTheme.successGreen
+                          : UnicomTheme.warningAmber,
                     ),
                   ),
                 ],
@@ -200,9 +218,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 runSpacing: 4,
                 children: status.supportedCapabilities
                     .map((cap) => Chip(
-                          label: Text(cap, style: const TextStyle(fontSize: 10)),
+                          label:
+                              Text(cap, style: const TextStyle(fontSize: 10)),
                           padding: EdgeInsets.zero,
-                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          materialTapTargetSize:
+                              MaterialTapTargetSize.shrinkWrap,
                         ))
                     .toList(),
               ),
@@ -222,9 +242,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
             const Row(
               children: [
-                Icon(Icons.download_for_offline, color: UnicomTheme.primaryBlueLight),
+                Icon(Icons.download_for_offline,
+                    color: UnicomTheme.primaryBlueLight),
                 SizedBox(width: 8),
-                Text('Downloaded Local Models', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                Text('Downloaded Local Models',
+                    style:
+                        TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               ],
             ),
             const SizedBox(height: 8),
@@ -242,23 +265,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       dense: true,
                       contentPadding: EdgeInsets.zero,
                       leading: Icon(
-                        m.isActive ? Icons.radio_button_checked : Icons.radio_button_off,
-                        color: m.isActive ? UnicomTheme.accentCyan : Colors.grey,
+                        m.isActive
+                            ? Icons.radio_button_checked
+                            : Icons.radio_button_off,
+                        color:
+                            m.isActive ? UnicomTheme.accentCyan : Colors.grey,
                       ),
-                      title: Text(m.name, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                      subtitle: Text('${m.type.toUpperCase()} • ${m.quantization ?? "Standard"} • ${(m.sizeBytes / (1024 * 1024)).toStringAsFixed(1)} MB', style: const TextStyle(fontSize: 11)),
+                      title: Text(m.name,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w600, fontSize: 13)),
+                      subtitle: Text(
+                          '${m.type.toUpperCase()} • ${m.quantization ?? "Standard"} • ${(m.sizeBytes / (1024 * 1024)).toStringAsFixed(1)} MB',
+                          style: const TextStyle(fontSize: 11)),
                       trailing: m.isInstalled
-                          ? const Chip(label: Text('Installed', style: TextStyle(fontSize: 10)))
+                          ? const Chip(
+                              label: Text('Installed',
+                                  style: TextStyle(fontSize: 10)))
                           : OutlinedButton(
                               onPressed: () async {
-                                await widget.controller.modelManager.downloadModel(m.id);
+                                await widget.controller.modelManager
+                                    .downloadModel(m.id);
                                 setState(() {});
                               },
-                              child: const Text('Download', style: TextStyle(fontSize: 11)),
+                              child: const Text('Download',
+                                  style: TextStyle(fontSize: 11)),
                             ),
                       onTap: m.isInstalled
                           ? () async {
-                              await widget.controller.modelManager.activateModel(m.id);
+                              await widget.controller.modelManager
+                                  .activateModel(m.id);
                               setState(() {});
                             }
                           : null,
@@ -284,7 +319,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 Icon(Icons.cloud_queue, color: UnicomTheme.accentCyan),
                 SizedBox(width: 8),
-                Text('Cloud AI & Model Configuration', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                Text('Cloud AI & Model Configuration',
+                    style:
+                        TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               ],
             ),
             const SizedBox(height: 8),
@@ -317,25 +354,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       border: OutlineInputBorder(),
                     ),
                     items: const [
-                      DropdownMenuItem(value: 'gemini-1.5-flash', child: Text('Gemini 1.5 Flash (Fast)')),
-                      DropdownMenuItem(value: 'gemini-1.5-pro', child: Text('Gemini 1.5 Pro (Deep Reasoning)')),
+                      DropdownMenuItem(
+                          value: 'gemini-1.5-flash',
+                          child: Text('Gemini 1.5 Flash (Fast)')),
+                      DropdownMenuItem(
+                          value: 'gemini-1.5-pro',
+                          child: Text('Gemini 1.5 Pro (Deep Reasoning)')),
                     ],
                     onChanged: (val) {
-                      if (val != null) widget.controller.setCloudConfig(modelName: val);
+                      if (val != null) {
+                        widget.controller.setCloudConfig(modelName: val);
+                      }
                     },
                   ),
                 ),
                 const SizedBox(width: 12),
                 ElevatedButton.icon(
                   icon: _testingConnection
-                      ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(strokeWidth: 2))
                       : const Icon(Icons.network_check, size: 18),
                   label: const Text('Test'),
                   onPressed: _testingConnection
                       ? null
                       : () async {
                           setState(() => _testingConnection = true);
-                          final result = await widget.controller.testCloudConnection();
+                          final result =
+                              await widget.controller.testCloudConnection();
                           setState(() {
                             _testingConnection = false;
                             _testStatusMessage = result.isSuccessful
@@ -361,29 +408,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(height: 8),
             // Advanced settings progressive disclosure
             ExpansionTile(
-              title: const Text('Advanced LLM Parameters', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+              title: const Text('Advanced LLM Parameters',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
               children: [
                 ListTile(
-                  title: const Text('Temperature', style: TextStyle(fontSize: 13)),
+                  title:
+                      const Text('Temperature', style: TextStyle(fontSize: 13)),
                   subtitle: Slider(
                     value: widget.controller.cloudTemperature,
                     min: 0.0,
                     max: 1.0,
                     divisions: 10,
-                    label: widget.controller.cloudTemperature.toStringAsFixed(1),
-                    onChanged: (v) => widget.controller.setCloudConfig(temperature: v),
+                    label:
+                        widget.controller.cloudTemperature.toStringAsFixed(1),
+                    onChanged: (v) =>
+                        widget.controller.setCloudConfig(temperature: v),
                   ),
-                  trailing: Text(widget.controller.cloudTemperature.toStringAsFixed(1)),
+                  trailing: Text(
+                      widget.controller.cloudTemperature.toStringAsFixed(1)),
                 ),
                 ListTile(
-                  title: const Text('Max Output Tokens', style: TextStyle(fontSize: 13)),
+                  title: const Text('Max Output Tokens',
+                      style: TextStyle(fontSize: 13)),
                   trailing: Text('${widget.controller.cloudMaxTokens}'),
                   subtitle: Slider(
                     value: widget.controller.cloudMaxTokens.toDouble(),
                     min: 256,
                     max: 4096,
                     divisions: 15,
-                    onChanged: (v) => widget.controller.setCloudConfig(maxTokens: v.toInt()),
+                    onChanged: (v) =>
+                        widget.controller.setCloudConfig(maxTokens: v.toInt()),
                   ),
                 ),
               ],
@@ -405,7 +459,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 Icon(Icons.dashboard_customize, color: UnicomTheme.accentCyan),
                 SizedBox(width: 8),
-                Text('Active Intelligence Mode', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                Text('Active Intelligence Mode',
+                    style:
+                        TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               ],
             ),
             const SizedBox(height: 12),
@@ -413,11 +469,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
               value: widget.controller.mode,
               decoration: const InputDecoration(border: OutlineInputBorder()),
               items: const [
-                DropdownMenuItem(value: ApplicationMode.general, child: Text('General Live Translation & Q&A')),
-                DropdownMenuItem(value: ApplicationMode.interviewPractice, child: Text('Interview Practice & Rubric Coaching')),
-                DropdownMenuItem(value: ApplicationMode.meeting, child: Text('Meeting Intelligence & Minutes')),
-                DropdownMenuItem(value: ApplicationMode.education, child: Text('Education & Grammar Learning')),
-                DropdownMenuItem(value: ApplicationMode.travel, child: Text('Travel Survival Mode')),
+                DropdownMenuItem(
+                    value: ApplicationMode.general,
+                    child: Text('General Live Translation & Q&A')),
+                DropdownMenuItem(
+                    value: ApplicationMode.interviewPractice,
+                    child: Text('Interview Practice & Rubric Coaching')),
+                DropdownMenuItem(
+                    value: ApplicationMode.meeting,
+                    child: Text('Meeting Intelligence & Minutes')),
+                DropdownMenuItem(
+                    value: ApplicationMode.education,
+                    child: Text('Education & Grammar Learning')),
+                DropdownMenuItem(
+                    value: ApplicationMode.travel,
+                    child: Text('Travel Survival Mode')),
               ],
               onChanged: (val) {
                 if (val != null) widget.controller.setApplicationMode(val);
@@ -436,16 +502,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Data Hygiene & Retention', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            const Text('Data Hygiene & Retention',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             const SizedBox(height: 8),
-            const Text('Conversation history is retained only on your local device.', style: TextStyle(fontSize: 13, color: Colors.grey)),
+            const Text(
+                'Conversation history is retained only on your local device.',
+                style: TextStyle(fontSize: 13, color: Colors.grey)),
             const SizedBox(height: 12),
             OutlinedButton.icon(
-              icon: const Icon(Icons.delete_outline, color: UnicomTheme.dangerRed),
-              label: const Text('Clear All Local Data', style: TextStyle(color: UnicomTheme.dangerRed)),
+              icon: const Icon(Icons.delete_outline,
+                  color: UnicomTheme.dangerRed),
+              label: const Text('Clear All Local Data',
+                  style: TextStyle(color: UnicomTheme.dangerRed)),
               onPressed: () {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Local cache and conversation records purged.')),
+                  const SnackBar(
+                      content:
+                          Text('Local cache and conversation records purged.')),
                 );
               },
             ),

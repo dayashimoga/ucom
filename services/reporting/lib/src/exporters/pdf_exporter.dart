@@ -45,11 +45,13 @@ class PdfExporter {
 
     // Obj 2: Pages
     offsets.add(buffer.length);
-    buffer.write('2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n');
+    buffer
+        .write('2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n');
 
     // Obj 3: Page
     offsets.add(buffer.length);
-    buffer.write('3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>\nendobj\n');
+    buffer.write(
+        '3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>\nendobj\n');
 
     // Obj 4: Content Stream
     offsets.add(buffer.length);
@@ -59,7 +61,8 @@ class PdfExporter {
 
     // Obj 5: Font
     offsets.add(buffer.length);
-    buffer.write('5 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n');
+    buffer.write(
+        '5 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n');
 
     // XRef Table
     final xrefStart = buffer.length;

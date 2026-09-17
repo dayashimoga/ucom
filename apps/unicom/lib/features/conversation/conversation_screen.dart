@@ -48,7 +48,9 @@ class _ConversationScreenState extends State<ConversationScreen> {
               _buildErrorBanner(context),
               _buildTopStatusBanner(context),
               Expanded(
-                child: isSplit ? _buildSplitLayout(context) : _buildPhoneLayout(context),
+                child: isSplit
+                    ? _buildSplitLayout(context)
+                    : _buildPhoneLayout(context),
               ),
             ],
           ),
@@ -86,7 +88,10 @@ class _ConversationScreenState extends State<ConversationScreen> {
           Expanded(
             child: Text(
               error,
-              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600),
             ),
           ),
           IconButton(
@@ -104,25 +109,28 @@ class _ConversationScreenState extends State<ConversationScreen> {
   Widget _buildTopStatusBanner(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      color: Theme.of(context).cardTheme.color?.withOpacity(0.5),
-      child: Wrap(
-        alignment: WrapAlignment.spaceBetween,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        spacing: 8,
-        runSpacing: 4,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      color: Theme.of(context).cardTheme.color?.withOpacity(0.3),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           StatusBadge(
             executionMode: widget.controller.executionMode,
             state: widget.controller.state,
           ),
-          Text(
-            widget.controller.mode.name.toUpperCase(),
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: UnicomTheme.accentCyan,
-                ),
-          ),
+          if (widget.controller.state != ConversationState.idle)
+            Text(
+              '${widget.controller.sourceLanguage.toUpperCase()} → ${widget.controller.targetLanguage.toUpperCase()}',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: Theme.of(context)
+                    .textTheme
+                    .bodySmall
+                    ?.color
+                    ?.withOpacity(0.7),
+              ),
+            ),
         ],
       ),
     );
@@ -146,12 +154,14 @@ class _ConversationScreenState extends State<ConversationScreen> {
             items: _availableLangs.map((lang) {
               return DropdownMenuItem(
                 value: lang['code'],
-                child: Text(lang['code']!.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.bold)),
+                child: Text(lang['code']!.toUpperCase(),
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
               );
             }).toList(),
             onChanged: (val) {
               if (val != null) {
-                widget.controller.setLanguages(val, widget.controller.targetLanguage);
+                widget.controller
+                    .setLanguages(val, widget.controller.targetLanguage);
               }
             },
           ),
@@ -163,12 +173,14 @@ class _ConversationScreenState extends State<ConversationScreen> {
             items: _availableLangs.map((lang) {
               return DropdownMenuItem(
                 value: lang['code'],
-                child: Text(lang['code']!.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.bold)),
+                child: Text(lang['code']!.toUpperCase(),
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
               );
             }).toList(),
             onChanged: (val) {
               if (val != null) {
-                widget.controller.setLanguages(widget.controller.sourceLanguage, val);
+                widget.controller
+                    .setLanguages(widget.controller.sourceLanguage, val);
               }
             },
           ),
@@ -204,7 +216,8 @@ class _ConversationScreenState extends State<ConversationScreen> {
             constraints: const BoxConstraints(maxHeight: 280),
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: SingleChildScrollView(
-              child: ExplanationCard(explanation: widget.controller.selectedExplanation!),
+              child: ExplanationCard(
+                  explanation: widget.controller.selectedExplanation!),
             ),
           ),
       ],
@@ -221,7 +234,8 @@ class _ConversationScreenState extends State<ConversationScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.record_voice_over, size: 56, color: UnicomTheme.accentCyan.withOpacity(0.5)),
+              Icon(Icons.record_voice_over,
+                  size: 56, color: UnicomTheme.accentCyan.withOpacity(0.5)),
               const SizedBox(height: 16),
               const Text(
                 'Universal Communication Intelligence',
@@ -246,7 +260,8 @@ class _ConversationScreenState extends State<ConversationScreen> {
       itemCount: segments.length,
       itemBuilder: (context, index) {
         final seg = segments[index];
-        final isSelected = widget.controller.selectedExplanation?.segmentId == seg.id;
+        final isSelected =
+            widget.controller.selectedExplanation?.segmentId == seg.id;
 
         return ConversationBubble(
           segment: seg,
@@ -293,7 +308,8 @@ class _ConversationScreenState extends State<ConversationScreen> {
           ),
         const SizedBox(height: 16),
         if (conv.questions.isNotEmpty) ...[
-          const Text('Extracted Questions', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+          const Text('Extracted Questions',
+              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
           const SizedBox(height: 8),
           ...conv.questions.map((q) => Card(
                 margin: const EdgeInsets.only(bottom: 6),
@@ -304,11 +320,14 @@ class _ConversationScreenState extends State<ConversationScreen> {
                       Icon(
                         q.isAnswered ? Icons.check_circle : Icons.help_outline,
                         size: 16,
-                        color: q.isAnswered ? UnicomTheme.successGreen : UnicomTheme.warningAmber,
+                        color: q.isAnswered
+                            ? UnicomTheme.successGreen
+                            : UnicomTheme.warningAmber,
                       ),
                       const SizedBox(width: 8),
                       Expanded(
-                        child: Text(q.questionText, style: const TextStyle(fontSize: 13)),
+                        child: Text(q.questionText,
+                            style: const TextStyle(fontSize: 13)),
                       ),
                     ],
                   ),
@@ -317,13 +336,15 @@ class _ConversationScreenState extends State<ConversationScreen> {
         ],
         if (conv.actionItems.isNotEmpty) ...[
           const SizedBox(height: 12),
-          const Text('Action Items', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+          const Text('Action Items',
+              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
           const SizedBox(height: 8),
           ...conv.actionItems.map((a) => Card(
                 margin: const EdgeInsets.only(bottom: 6),
                 child: Padding(
                   padding: const EdgeInsets.all(10),
-                  child: Text('• [${a.assignee}] ${a.title}', style: const TextStyle(fontSize: 13)),
+                  child: Text('• [${a.assignee}] ${a.title}',
+                      style: const TextStyle(fontSize: 13)),
                 ),
               )),
         ],
@@ -332,70 +353,214 @@ class _ConversationScreenState extends State<ConversationScreen> {
   }
 
   Widget _buildBottomActionBar(BuildContext context) {
+    final segments = widget.controller.currentConversation.segments;
+    final hasSegments = segments.isNotEmpty;
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
       decoration: BoxDecoration(
         color: Theme.of(context).cardTheme.color,
-        border: const Border(top: BorderSide(color: UnicomTheme.darkSurfaceVariant)),
+        border: const Border(
+            top: BorderSide(color: UnicomTheme.darkSurfaceVariant)),
       ),
       child: SafeArea(
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // Voice Mic Button
-            IconButton.filled(
-              icon: Icon(
-                widget.controller.state == ConversationState.listening
-                    ? Icons.stop
-                    : Icons.mic,
-                color: Colors.white,
-              ),
-              style: IconButton.styleFrom(
-                backgroundColor: widget.controller.state == ConversationState.listening
-                    ? UnicomTheme.dangerRed
-                    : UnicomTheme.primaryBlue,
-              ),
-              tooltip: 'Speak',
-              onPressed: () {
-                if (widget.controller.state == ConversationState.listening) {
-                  widget.controller.cancel();
-                } else {
-                  widget.controller.startVoiceInput();
-                }
-              },
-            ),
-            const SizedBox(width: 12),
-            // Text Input Field
-            Expanded(
-              child: TextField(
-                controller: _textController,
-                decoration: InputDecoration(
-                  hintText: 'Type message to translate...',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(24),
-                    borderSide: const BorderSide(color: UnicomTheme.darkSurfaceVariant),
+            // Contextual Action Row: Speak | Listen | Explain | Translate | Report | More
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  _buildActionChip(
+                    context,
+                    label:
+                        widget.controller.state == ConversationState.listening
+                            ? 'Stop'
+                            : 'Speak',
+                    icon: widget.controller.state == ConversationState.listening
+                        ? Icons.stop
+                        : Icons.mic,
+                    color:
+                        widget.controller.state == ConversationState.listening
+                            ? UnicomTheme.dangerRed
+                            : UnicomTheme.primaryBlue,
+                    onTap: () {
+                      if (widget.controller.state ==
+                          ConversationState.listening) {
+                        widget.controller.cancel();
+                      } else {
+                        widget.controller.startVoiceInput();
+                      }
+                    },
                   ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  isDense: true,
-                ),
-                onSubmitted: (val) {
-                  if (val.trim().isNotEmpty) {
-                    widget.controller.sendTextInput(val);
-                    _textController.clear();
-                  }
-                },
+                  const SizedBox(width: 8),
+                  _buildActionChip(
+                    context,
+                    label: 'Listen',
+                    icon: Icons.volume_up_outlined,
+                    onTap: hasSegments
+                        ? () => widget.controller
+                            .speakText(segments.last.translatedText)
+                        : null,
+                  ),
+                  const SizedBox(width: 8),
+                  _buildActionChip(
+                    context,
+                    label: 'Explain',
+                    icon: Icons.lightbulb_outline,
+                    onTap: hasSegments && segments.last.explanation != null
+                        ? () => widget.controller
+                            .selectExplanation(segments.last.explanation)
+                        : null,
+                  ),
+                  const SizedBox(width: 8),
+                  _buildActionChip(
+                    context,
+                    label: 'Translate',
+                    icon: Icons.translate,
+                    onTap: () {
+                      final text = _textController.text.trim();
+                      if (text.isNotEmpty) {
+                        widget.controller.sendTextInput(text);
+                        _textController.clear();
+                      }
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                  _buildActionChip(
+                    context,
+                    label: 'Report',
+                    icon: Icons.summarize_outlined,
+                    onTap: () async {
+                      await widget.controller
+                          .createReport(ReportType.quickSummary);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content:
+                                  Text('Summary report generated and saved.')),
+                        );
+                      }
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                  PopupMenuButton<String>(
+                    tooltip: 'More options',
+                    child: _buildActionChip(
+                      context,
+                      label: 'More',
+                      icon: Icons.more_horiz,
+                      onTap: null, // Tap handled by PopupMenuButton
+                    ),
+                    onSelected: (val) {
+                      if (val == 'clear') {
+                        widget.controller.clearSession();
+                      }
+                    },
+                    itemBuilder: (context) => const [
+                      PopupMenuItem(
+                        value: 'clear',
+                        child: Row(
+                          children: [
+                            Icon(Icons.delete_outline, size: 16),
+                            SizedBox(width: 8),
+                            Text('Clear Session'),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
-            const SizedBox(width: 8),
-            IconButton(
-              icon: const Icon(Icons.send, color: UnicomTheme.primaryBlueLight),
-              tooltip: 'Translate and Explain',
-              onPressed: () {
-                final text = _textController.text.trim();
-                if (text.isNotEmpty) {
-                  widget.controller.sendTextInput(text);
-                  _textController.clear();
-                }
-              },
+            const SizedBox(height: 8),
+            // Input Row
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _textController,
+                    decoration: InputDecoration(
+                      hintText: 'Type question or message...',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(24),
+                        borderSide: const BorderSide(
+                            color: UnicomTheme.darkSurfaceVariant),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
+                      isDense: true,
+                    ),
+                    onSubmitted: (val) {
+                      if (val.trim().isNotEmpty) {
+                        widget.controller.sendTextInput(val);
+                        _textController.clear();
+                      }
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
+                IconButton.filled(
+                  icon: const Icon(Icons.send, size: 24),
+                  tooltip: 'Send',
+                  onPressed: () {
+                    final text = _textController.text.trim();
+                    if (text.isNotEmpty) {
+                      widget.controller.sendTextInput(text);
+                      _textController.clear();
+                    }
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionChip(
+    BuildContext context, {
+    required String label,
+    required IconData icon,
+    Color? color,
+    VoidCallback? onTap,
+  }) {
+    final chipColor = color ??
+        Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.8) ??
+        Colors.white;
+    final isEnabled = onTap != null || label == 'More';
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color:
+              (color ?? Theme.of(context).cardTheme.color)?.withOpacity(0.15),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: (color ?? UnicomTheme.darkSurfaceVariant).withOpacity(0.4),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: (icon == Icons.mic || icon == Icons.stop) ? 24 : 18,
+              color: isEnabled ? chipColor : Colors.grey,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: isEnabled ? chipColor : Colors.grey,
+              ),
             ),
           ],
         ),

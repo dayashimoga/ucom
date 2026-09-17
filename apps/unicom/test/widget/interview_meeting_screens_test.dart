@@ -17,7 +17,9 @@ void main() {
       );
     });
 
-    testWidgets('InterviewPracticeScreen renders question and evaluates candidate answer', (tester) async {
+    testWidgets(
+        'InterviewPracticeScreen renders question and evaluates candidate answer',
+        (tester) async {
       tester.view.physicalSize = const Size(1280, 1600);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -40,7 +42,8 @@ void main() {
 
       // Submit an answer
       final answerField = find.byType(TextField);
-      await tester.enterText(answerField, 'In my previous project, we faced high latency so I migrated to an asynchronous event pipeline.');
+      await tester.enterText(answerField,
+          'In my previous project, we faced high latency so I migrated to an asynchronous event pipeline.');
       await tester.pumpAndSettle();
 
       final evalBtn = find.text('Evaluate Answer & Study Plan');
@@ -53,7 +56,9 @@ void main() {
       expect(find.text('Rubric Breakdown'), findsOneWidget);
     });
 
-    testWidgets('MeetingScreen renders participants, adds statement, and generates minutes', (tester) async {
+    testWidgets(
+        'MeetingScreen renders participants, adds statement, and generates minutes',
+        (tester) async {
       tester.view.physicalSize = const Size(1280, 1600);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -72,11 +77,13 @@ void main() {
 
       // Add a meeting statement
       final inputField = find.byType(TextField);
-      await tester.enterText(inputField, 'We decided to deploy on Friday. Action item: Bob will verify testing.');
+      await tester.enterText(inputField,
+          'We decided to deploy on Friday. Action item: Bob will verify testing.');
       await tester.tap(find.byIcon(Icons.send));
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('We decided to deploy on Friday'), findsWidgets);
+      expect(
+          find.textContaining('We decided to deploy on Friday'), findsWidgets);
 
       // Generate Minutes
       final minutesBtn = find.text('Minutes');

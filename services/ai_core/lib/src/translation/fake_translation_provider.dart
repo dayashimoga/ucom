@@ -22,7 +22,8 @@ class DeterministicFakeTranslationProvider implements TranslationProvider {
     required TranslationOptions options,
   }) async {
     final directKey = text.toLowerCase().trim();
-    final specificKey = '${options.sourceLanguage ?? "auto"}->${options.targetLanguage}:$directKey';
+    final specificKey =
+        '${options.sourceLanguage ?? "auto"}->${options.targetLanguage}:$directKey';
 
     final translated = _customTranslations[specificKey] ??
         _customTranslations[directKey] ??

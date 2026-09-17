@@ -75,7 +75,8 @@ class CloudLLMProvider implements LLMProvider {
         providerId: id,
         modelName: modelName,
         latencyMs: 0,
-        errorMessage: 'Cannot test cloud connection while in private_offline mode.',
+        errorMessage:
+            'Cannot test cloud connection while in private_offline mode.',
       );
     }
 
@@ -85,7 +86,8 @@ class CloudLLMProvider implements LLMProvider {
         providerId: id,
         modelName: modelName,
         latencyMs: 0,
-        errorMessage: 'Missing API key. Please configure a valid API key in settings.',
+        errorMessage:
+            'Missing API key. Please configure a valid API key in settings.',
       );
     }
 
@@ -101,12 +103,17 @@ class CloudLLMProvider implements LLMProvider {
     final sw = Stopwatch()..start();
     try {
       // Defense-in-depth network gate verification
-      NetworkGate().checkOutboundAccess('$endpoint/models/$modelName:countTokens', method: 'POST');
+      NetworkGate().checkOutboundAccess(
+          '$endpoint/models/$modelName:countTokens',
+          method: 'POST');
 
       final client = _createClient();
       try {
-        final uri = Uri.parse('$endpoint/models/$modelName:countTokens?key=${Uri.encodeQueryComponent(apiKey!)}');
-        final request = await client.postUrl(uri).timeout(Duration(milliseconds: timeoutMs));
+        final uri = Uri.parse(
+            '$endpoint/models/$modelName:countTokens?key=${Uri.encodeQueryComponent(apiKey!)}');
+        final request = await client
+            .postUrl(uri)
+            .timeout(Duration(milliseconds: timeoutMs));
         request.headers.set(HttpHeaders.contentTypeHeader, 'application/json');
 
         final payload = jsonEncode({
@@ -119,7 +126,8 @@ class CloudLLMProvider implements LLMProvider {
           ]
         });
         request.write(payload);
-        final response = await request.close().timeout(Duration(milliseconds: timeoutMs));
+        final response =
+            await request.close().timeout(Duration(milliseconds: timeoutMs));
         final responseBody = await response.transform(utf8.decoder).join();
         sw.stop();
 
@@ -244,12 +252,16 @@ class CloudLLMProvider implements LLMProvider {
       attempts++;
       final client = _createClient();
       try {
-        final uri = Uri.parse('$endpoint/models/$modelName:generateContent?key=${Uri.encodeQueryComponent(apiKey!)}');
-        final request = await client.postUrl(uri).timeout(Duration(milliseconds: timeoutMs));
+        final uri = Uri.parse(
+            '$endpoint/models/$modelName:generateContent?key=${Uri.encodeQueryComponent(apiKey!)}');
+        final request = await client
+            .postUrl(uri)
+            .timeout(Duration(milliseconds: timeoutMs));
         request.headers.set(HttpHeaders.contentTypeHeader, 'application/json');
         request.write(payload);
 
-        final response = await request.close().timeout(Duration(milliseconds: timeoutMs));
+        final response =
+            await request.close().timeout(Duration(milliseconds: timeoutMs));
         final responseBody = await response.transform(utf8.decoder).join();
 
         if (response.statusCode == HttpStatus.ok) {
@@ -268,20 +280,25 @@ class CloudLLMProvider implements LLMProvider {
         }
 
         // Retry on 429 (rate limit) or 503 (service unavailable)
-        if ((response.statusCode == 429 || response.statusCode == HttpStatus.serviceUnavailable) && attempts <= maxRetries) {
-          _logger.warn('Gemini API rate limited/unavailable, retrying attempt $attempts');
+        if ((response.statusCode == 429 ||
+                response.statusCode == HttpStatus.serviceUnavailable) &&
+            attempts <= maxRetries) {
+          _logger.warn(
+              'Gemini API rate limited/unavailable, retrying attempt $attempts');
           await Future.delayed(Duration(milliseconds: 300 * attempts));
           continue;
         }
 
         final errorMsg = _parseError(responseBody);
-        throw ProviderException(id, 'Gemini API error (HTTP ${response.statusCode}): $errorMsg');
+        throw ProviderException(
+            id, 'Gemini API error (HTTP ${response.statusCode}): $errorMsg');
       } on SocketException catch (e) {
         if (attempts <= maxRetries) {
           await Future.delayed(Duration(milliseconds: 300 * attempts));
           continue;
         }
-        throw ProviderException(id, 'Network error reaching Gemini service: ${e.message}');
+        throw ProviderException(
+            id, 'Network error reaching Gemini service: ${e.message}');
       } finally {
         client.close();
       }

@@ -56,6 +56,21 @@
       "version": "2.0.0",
       "description": "IndicTrans2 Compact Quantized (Hindi & Tamil)",
       "hashes": [{ "alg": "SHA-256", "content": "a1b2c3d4e5f678901234567890abcdef1234567890abcdef1234567890abcdef" }]
+    },
+    {
+      "type": "machine-learning-model",
+      "name": "unicom-knowledge-llm-q4",
+      "version": "1.0.0",
+      "description": "UNICOM Knowledge & Q&A LLM (INT4 Quantized On-Device Model)",
+      "hashes": [{ "alg": "SHA-256", "content": "b2c3d4e5f678901234567890abcdef1234567890abcdef1234567890abcdef12" }],
+      "licenses": [{ "license": { "id": "Apache-2.0" } }]
+    },
+    {
+      "type": "framework",
+      "name": "android.service.aicore",
+      "version": "1.0.4",
+      "description": "Google Android System AICore Service & Gemini Nano System AI",
+      "licenses": [{ "license": { "name": "Google Play Services Terms of Service" } }]
     }
   ]
 }

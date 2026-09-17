@@ -9,12 +9,14 @@ class InterviewPracticeScreen extends StatefulWidget {
   const InterviewPracticeScreen({super.key, required this.controller});
 
   @override
-  State<InterviewPracticeScreen> createState() => _InterviewPracticeScreenState();
+  State<InterviewPracticeScreen> createState() =>
+      _InterviewPracticeScreenState();
 }
 
 class _InterviewPracticeScreenState extends State<InterviewPracticeScreen> {
   final TextEditingController _answerController = TextEditingController();
-  String _activeQuestion = 'Describe an architectural decision you made and how you balanced trade-offs under high concurrency.';
+  String _activeQuestion =
+      'Describe an architectural decision you made and how you balanced trade-offs under high concurrency.';
   InterviewAssessment? _latestAssessment;
   bool _isEvaluating = false;
 
@@ -40,7 +42,8 @@ class _InterviewPracticeScreenState extends State<InterviewPracticeScreen> {
             decoration: BoxDecoration(
               color: UnicomTheme.warningAmber.withOpacity(0.12),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: UnicomTheme.warningAmber.withOpacity(0.4)),
+              border:
+                  Border.all(color: UnicomTheme.warningAmber.withOpacity(0.4)),
             ),
             child: const Row(
               children: [
@@ -65,22 +68,31 @@ class _InterviewPracticeScreenState extends State<InterviewPracticeScreen> {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.quiz, color: UnicomTheme.accentCyan, size: 20),
+                      const Icon(Icons.quiz,
+                          color: UnicomTheme.accentCyan, size: 20),
                       const SizedBox(width: 8),
-                      const Text('Active Prompt', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+                      const Text('Active Prompt',
+                          style: TextStyle(
+                              fontWeight: FontWeight.w700, fontSize: 14)),
                       const Spacer(),
                       PopupMenuButton<String>(
                         icon: const Icon(Icons.swap_horiz, size: 20),
                         tooltip: 'Switch Question',
                         onSelected: (q) => setState(() => _activeQuestion = q),
                         itemBuilder: (context) => _sampleQuestions
-                            .map((q) => PopupMenuItem(value: q, child: Text(q, maxLines: 1, overflow: TextOverflow.ellipsis)))
+                            .map((q) => PopupMenuItem(
+                                value: q,
+                                child: Text(q,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis)))
                             .toList(),
                       ),
                     ],
                   ),
                   const SizedBox(height: 10),
-                  Text(_activeQuestion, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                  Text(_activeQuestion,
+                      style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.w600)),
                 ],
               ),
             ),
@@ -91,8 +103,10 @@ class _InterviewPracticeScreenState extends State<InterviewPracticeScreen> {
             controller: _answerController,
             maxLines: 5,
             decoration: InputDecoration(
-              hintText: 'Type or dictate your response (e.g. using STAR method: Situation, Task, Action, Result)...',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+              hintText:
+                  'Type or dictate your response (e.g. using STAR method: Situation, Task, Action, Result)...',
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
               filled: true,
               fillColor: Theme.of(context).cardTheme.color,
             ),
@@ -101,7 +115,13 @@ class _InterviewPracticeScreenState extends State<InterviewPracticeScreen> {
           Row(
             children: [
               FilledButton.icon(
-                icon: _isEvaluating ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Icon(Icons.analytics),
+                icon: _isEvaluating
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white))
+                    : const Icon(Icons.analytics),
                 label: const Text('Evaluate Answer & Study Plan'),
                 onPressed: _isEvaluating ? null : _evaluateCurrentAnswer,
               ),
@@ -111,8 +131,10 @@ class _InterviewPracticeScreenState extends State<InterviewPracticeScreen> {
                 label: const Text('Speak Response'),
                 onPressed: () {
                   widget.controller.startVoiceInput().then((_) {
-                    if (widget.controller.currentConversation.segments.isNotEmpty) {
-                      _answerController.text = widget.controller.currentConversation.segments.last.originalText;
+                    if (widget
+                        .controller.currentConversation.segments.isNotEmpty) {
+                      _answerController.text = widget.controller
+                          .currentConversation.segments.last.originalText;
                     }
                   });
                 },
@@ -134,7 +156,8 @@ class _InterviewPracticeScreenState extends State<InterviewPracticeScreen> {
     if (ans.isEmpty) return;
 
     setState(() => _isEvaluating = true);
-    final assessment = await widget.controller.interviewEvaluator.evaluateAnswer(
+    final assessment =
+        await widget.controller.interviewEvaluator.evaluateAnswer(
       question: _activeQuestion,
       candidateAnswer: ans,
     );
@@ -155,39 +178,70 @@ class _InterviewPracticeScreenState extends State<InterviewPracticeScreen> {
               children: [
                 const Icon(Icons.verified, color: UnicomTheme.successGreen),
                 const SizedBox(width: 8),
-                const Text('Overall Score', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                const Text('Overall Score',
+                    style:
+                        TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                 const Spacer(),
-                Text('${a.overallScore} / 10', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 20, color: UnicomTheme.primaryBlueLight)),
+                Text('${a.overallScore} / 10',
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 20,
+                        color: UnicomTheme.primaryBlueLight)),
               ],
             ),
             const Divider(height: 24),
-            const Text('Rubric Breakdown', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+            const Text('Rubric Breakdown',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
             const SizedBox(height: 8),
             ...a.rubrics.map((r) => Padding(
                   padding: const EdgeInsets.symmetric(vertical: 4),
                   child: Row(
                     children: [
-                      SizedBox(width: 120, child: Text(r.criterion.toUpperCase(), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600))),
+                      SizedBox(
+                          width: 120,
+                          child: Text(r.criterion.toUpperCase(),
+                              style: const TextStyle(
+                                  fontSize: 12, fontWeight: FontWeight.w600))),
                       Expanded(
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(4),
-                          child: LinearProgressIndicator(value: r.score / 10.0, minHeight: 8, color: UnicomTheme.accentCyan),
+                          child: LinearProgressIndicator(
+                              value: r.score / 10.0,
+                              minHeight: 8,
+                              color: UnicomTheme.accentCyan),
                         ),
                       ),
                       const SizedBox(width: 10),
-                      Text('${r.score}/10', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                      Text('${r.score}/10',
+                          style: const TextStyle(
+                              fontSize: 12, fontWeight: FontWeight.bold)),
                     ],
                   ),
                 )),
             const SizedBox(height: 16),
-            const Text('Identified Strengths', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: UnicomTheme.successGreen)),
-            ...a.strengths.map((s) => Text('• $s', style: const TextStyle(fontSize: 13, height: 1.4))),
+            const Text('Identified Strengths',
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: UnicomTheme.successGreen)),
+            ...a.strengths.map((s) => Text('• $s',
+                style: const TextStyle(fontSize: 13, height: 1.4))),
             const SizedBox(height: 12),
-            const Text('Areas for Improvement', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: UnicomTheme.warningAmber)),
-            ...a.areasForImprovement.map((imp) => Text('• $imp', style: const TextStyle(fontSize: 13, height: 1.4))),
+            const Text('Areas for Improvement',
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: UnicomTheme.warningAmber)),
+            ...a.areasForImprovement.map((imp) => Text('• $imp',
+                style: const TextStyle(fontSize: 13, height: 1.4))),
             const SizedBox(height: 12),
-            const Text('Targeted Study Plan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: UnicomTheme.primaryBlueLight)),
-            ...a.studyPlan.map((p) => Text('• $p', style: const TextStyle(fontSize: 13, height: 1.4))),
+            const Text('Targeted Study Plan',
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: UnicomTheme.primaryBlueLight)),
+            ...a.studyPlan.map((p) => Text('• $p',
+                style: const TextStyle(fontSize: 13, height: 1.4))),
           ],
         ),
       ),

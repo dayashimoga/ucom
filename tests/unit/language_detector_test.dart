@@ -10,25 +10,29 @@ void main() {
     });
 
     test('detects English text accurately', () async {
-      final res = await detector.detectLanguage('Hello, how are you today? This is a great project.');
+      final res = await detector
+          .detectLanguage('Hello, how are you today? This is a great project.');
       expect(res.language, equals('en'));
       expect(res.confidence, greaterThanOrEqualTo(0.7));
     });
 
     test('detects Spanish text accurately', () async {
-      final res = await detector.detectLanguage('Hola, ¿cómo estás? Muchas gracias por su ayuda con el proyecto.');
+      final res = await detector.detectLanguage(
+          'Hola, ¿cómo estás? Muchas gracias por su ayuda con el proyecto.');
       expect(res.language, equals('es'));
       expect(res.confidence, greaterThanOrEqualTo(0.7));
     });
 
     test('detects French text accurately', () async {
-      final res = await detector.detectLanguage('Bonjour, comment allez-vous? Merci beaucoup pour votre travail.');
+      final res = await detector.detectLanguage(
+          'Bonjour, comment allez-vous? Merci beaucoup pour votre travail.');
       expect(res.language, equals('fr'));
       expect(res.confidence, greaterThanOrEqualTo(0.7));
     });
 
     test('detects German text accurately', () async {
-      final res = await detector.detectLanguage('Guten Tag, wie geht es Ihnen? Vielen Dank für das Treffen.');
+      final res = await detector.detectLanguage(
+          'Guten Tag, wie geht es Ihnen? Vielen Dank für das Treffen.');
       expect(res.language, equals('de'));
       expect(res.confidence, greaterThanOrEqualTo(0.7));
     });
@@ -58,7 +62,8 @@ void main() {
     });
 
     test('detects Russian script accurately', () async {
-      final res = await detector.detectLanguage('Здравствуйте, спасибо большое.');
+      final res =
+          await detector.detectLanguage('Здравствуйте, спасибо большое.');
       expect(res.language, equals('ru'));
       expect(res.confidence, greaterThanOrEqualTo(0.95));
     });

@@ -27,7 +27,8 @@ class _ExplanationCardState extends State<ExplanationCard> {
           children: [
             Row(
               children: [
-                const Icon(Icons.psychology, color: UnicomTheme.accentCyan, size: 20),
+                const Icon(Icons.psychology,
+                    color: UnicomTheme.accentCyan, size: 20),
                 const SizedBox(width: 8),
                 const Flexible(
                   child: Text(
@@ -59,7 +60,8 @@ class _ExplanationCardState extends State<ExplanationCard> {
                         _personaLabel(persona),
                         style: TextStyle(
                           fontSize: 12,
-                          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                          fontWeight:
+                              isSelected ? FontWeight.w700 : FontWeight.w500,
                         ),
                       ),
                       selected: isSelected,
@@ -85,7 +87,8 @@ class _ExplanationCardState extends State<ExplanationCard> {
                   runSpacing: 4,
                   children: expEntry.keyPoints.map((point) {
                     return Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
                         color: UnicomTheme.primaryBlue.withOpacity(0.12),
                         borderRadius: BorderRadius.circular(6),
@@ -103,7 +106,8 @@ class _ExplanationCardState extends State<ExplanationCard> {
                 ),
               ],
             ] else ...[
-              const Text('Explanation unavailable for this persona.', style: TextStyle(fontStyle: FontStyle.italic)),
+              const Text('Explanation unavailable for this persona.',
+                  style: TextStyle(fontStyle: FontStyle.italic)),
             ],
           ],
         ),
@@ -113,13 +117,20 @@ class _ExplanationCardState extends State<ExplanationCard> {
 
   String _personaLabel(ExplanationPersona persona) {
     switch (persona) {
-      case ExplanationPersona.simple: return 'Simple';
-      case ExplanationPersona.detailed: return 'Detailed';
-      case ExplanationPersona.terminology: return 'Terms';
-      case ExplanationPersona.grammar: return 'Grammar';
-      case ExplanationPersona.culturalContext: return 'Culture';
-      case ExplanationPersona.examples: return 'Examples';
-      case ExplanationPersona.childFriendly: return 'Child-Friendly';
+      case ExplanationPersona.simple:
+        return 'Simple';
+      case ExplanationPersona.detailed:
+        return 'Detailed';
+      case ExplanationPersona.terminology:
+        return 'Terms';
+      case ExplanationPersona.grammar:
+        return 'Grammar';
+      case ExplanationPersona.culturalContext:
+        return 'Culture';
+      case ExplanationPersona.examples:
+        return 'Examples';
+      case ExplanationPersona.childFriendly:
+        return 'Child-Friendly';
     }
   }
 }

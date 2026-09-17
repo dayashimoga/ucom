@@ -7,7 +7,8 @@ class InterviewEvaluator {
     String? roleOrTopic,
   }) async {
     final trimmedAnswer = candidateAnswer.trim();
-    final wordCount = trimmedAnswer.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).length;
+    final wordCount =
+        trimmedAnswer.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).length;
 
     // Evaluate rubrics (1-10)
     final clarityScore = _scoreClarity(trimmedAnswer, wordCount);
@@ -46,26 +47,35 @@ class InterviewEvaluator {
       InterviewRubricScore(
         criterion: 'correctness',
         score: correctnessScore,
-        feedback: 'Concepts referenced are aligned with modern industry best practices.',
+        feedback:
+            'Concepts referenced are aligned with modern industry best practices.',
       ),
     ];
 
-    final overall = ((clarityScore + depthScore + structureScore + deliveryScore + correctnessScore) / 5).round();
+    final overall = ((clarityScore +
+                depthScore +
+                structureScore +
+                deliveryScore +
+                correctnessScore) /
+            5)
+        .round();
 
     final strengths = <String>[
       if (clarityScore >= 7) 'Articulated core message directly.',
-      if (depthScore >= 7) 'Incorporated specific technical concepts and terminology.',
+      if (depthScore >= 7)
+        'Incorporated specific technical concepts and terminology.',
       if (structureScore >= 7) 'Maintained logical progression and flow.',
     ];
     if (strengths.isEmpty) {
       strengths.add('Addressed the question promptly.');
     }
 
-
     final areasForImprovement = <String>[
-      if (wordCount < 40) 'Expand upon real-world examples and measurable outcomes.',
+      if (wordCount < 40)
+        'Expand upon real-world examples and measurable outcomes.',
       if (depthScore < 8) 'Mention potential failure modes and trade-offs.',
-      if (structureScore < 8) 'Explicitly outline the Situation, Action taken, and Business Result.',
+      if (structureScore < 8)
+        'Explicitly outline the Situation, Action taken, and Business Result.',
     ];
 
     final recommendedFollowUps = [
@@ -104,7 +114,17 @@ class InterviewEvaluator {
     if (wordCount < 25) return 5;
     final lower = answer.toLowerCase();
     int techTerms = 0;
-    final terms = ['architecture', 'scale', 'database', 'latency', 'tradeoff', 'security', 'cache', 'test', 'api'];
+    final terms = [
+      'architecture',
+      'scale',
+      'database',
+      'latency',
+      'tradeoff',
+      'security',
+      'cache',
+      'test',
+      'api'
+    ];
     for (final t in terms) {
       if (lower.contains(t)) techTerms++;
     }
@@ -113,7 +133,10 @@ class InterviewEvaluator {
 
   int _scoreStructure(String answer) {
     final lower = answer.toLowerCase();
-    bool hasTransitions = lower.contains('first') || lower.contains('then') || lower.contains('because') || lower.contains('result');
+    bool hasTransitions = lower.contains('first') ||
+        lower.contains('then') ||
+        lower.contains('because') ||
+        lower.contains('result');
     return hasTransitions ? 9 : 7;
   }
 

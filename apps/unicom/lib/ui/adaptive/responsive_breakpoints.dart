@@ -13,9 +13,12 @@ class ResponsiveLayout {
     return DeviceType.desktop;
   }
 
-  static bool isPhone(BuildContext context) => getDeviceType(context) == DeviceType.phone;
-  static bool isTablet(BuildContext context) => getDeviceType(context) == DeviceType.tablet;
-  static bool isDesktop(BuildContext context) => getDeviceType(context) == DeviceType.desktop;
+  static bool isPhone(BuildContext context) =>
+      getDeviceType(context) == DeviceType.phone;
+  static bool isTablet(BuildContext context) =>
+      getDeviceType(context) == DeviceType.tablet;
+  static bool isDesktop(BuildContext context) =>
+      getDeviceType(context) == DeviceType.desktop;
 
   static double contentPadding(BuildContext context) {
     final type = getDeviceType(context);

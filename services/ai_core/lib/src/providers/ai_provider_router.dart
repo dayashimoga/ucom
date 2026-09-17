@@ -26,7 +26,8 @@ class AIProviderRouter implements LLMProvider {
     required this.cloudProvider,
     this.executionMode = ExecutionMode.privateOffline,
   }) {
-    NetworkGate().setOfflineEnforcement(executionMode == ExecutionMode.privateOffline);
+    NetworkGate()
+        .setOfflineEnforcement(executionMode == ExecutionMode.privateOffline);
   }
 
   @override
@@ -58,7 +59,8 @@ class AIProviderRouter implements LLMProvider {
         'id': cloudProvider.id,
         'name': cloudProvider.name,
         'model': cloudProvider.modelName,
-        'hasKey': cloudProvider.apiKey != null && cloudProvider.apiKey!.isNotEmpty,
+        'hasKey':
+            cloudProvider.apiKey != null && cloudProvider.apiKey!.isNotEmpty,
       },
     };
   }
@@ -106,7 +108,8 @@ class AIProviderRouter implements LLMProvider {
         }
         if (aicoreStatus.isAvailable) return androidProvider;
         if (localProvider.isModelLoaded) return localProvider;
-        throw const ProviderException('cloud_provider', 'No cloud or local provider available.');
+        throw const ProviderException(
+            'cloud_provider', 'No cloud or local provider available.');
 
       case ExecutionMode.auto:
         // Capability-aware priority: AICore (zero latency/cost) -> Local -> Cloud
@@ -115,7 +118,8 @@ class AIProviderRouter implements LLMProvider {
         if (cloudProvider.apiKey != null && cloudProvider.apiKey!.isNotEmpty) {
           return cloudProvider;
         }
-        throw const OfflineInferenceUnavailableException('No AI provider available in auto mode.');
+        throw const OfflineInferenceUnavailableException(
+            'No AI provider available in auto mode.');
     }
   }
 

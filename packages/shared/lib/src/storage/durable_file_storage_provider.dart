@@ -16,7 +16,7 @@ class DurableFileStorageProvider implements StorageProvider {
   final Directory baseDirectory;
   final int? maxStorageBytes;
   final int schemaVersion;
-  final PrivacyLogger _logger = PrivacyLogger();
+  final PrivacyLogger _logger = const PrivacyLogger();
 
   static const int currentSchemaVersion = 1;
 
@@ -34,16 +34,19 @@ class DurableFileStorageProvider implements StorageProvider {
   @override
   String get name => 'Durable Local File Storage';
 
-  Directory get _conversationsDir => Directory('${baseDirectory.path}/conversations');
+  Directory get _conversationsDir =>
+      Directory('${baseDirectory.path}/conversations');
   Directory get _reportsDir => Directory('${baseDirectory.path}/reports');
   Directory get _quarantineDir => Directory('${baseDirectory.path}/quarantine');
   File get _metadataFile => File('${baseDirectory.path}/metadata.json');
 
   void _ensureDirectories() {
     if (!baseDirectory.existsSync()) baseDirectory.createSync(recursive: true);
-    if (!_conversationsDir.existsSync()) _conversationsDir.createSync(recursive: true);
+    if (!_conversationsDir.existsSync())
+      _conversationsDir.createSync(recursive: true);
     if (!_reportsDir.existsSync()) _reportsDir.createSync(recursive: true);
-    if (!_quarantineDir.existsSync()) _quarantineDir.createSync(recursive: true);
+    if (!_quarantineDir.existsSync())
+      _quarantineDir.createSync(recursive: true);
 
     if (!_metadataFile.existsSync()) {
       _metadataFile.writeAsStringSync(jsonEncode({
@@ -76,7 +79,8 @@ class DurableFileStorageProvider implements StorageProvider {
 
     await _checkStorageQuota(bytes.length);
 
-    final targetFile = File('${_conversationsDir.path}/${conversation.id}.json');
+    final targetFile =
+        File('${_conversationsDir.path}/${conversation.id}.json');
     final tempFile = File('${_conversationsDir.path}/${conversation.id}.tmp');
 
     // Atomic write
@@ -103,10 +107,12 @@ class DurableFileStorageProvider implements StorageProvider {
 
       // Migrate if older schema
       final migratedData = _applyMigrations(map);
-      return Conversation.fromJson(migratedData['data'] as Map<String, dynamic>);
+      return Conversation.fromJson(
+          migratedData['data'] as Map<String, dynamic>);
     } catch (e) {
       // Quarantine corrupt record
-      final quarantinePath = '${_quarantineDir.path}/${id}_${DateTime.now().millisecondsSinceEpoch}.corrupt';
+      final quarantinePath =
+          '${_quarantineDir.path}/${id}_${DateTime.now().millisecondsSinceEpoch}.corrupt';
       await file.rename(quarantinePath);
 
       _logger.warn(
@@ -153,7 +159,8 @@ class DurableFileStorageProvider implements StorageProvider {
       filtered = filtered.where((c) => c.mode == mode).toList();
     }
     if (executionMode != null) {
-      filtered = filtered.where((c) => c.executionMode == executionMode).toList();
+      filtered =
+          filtered.where((c) => c.executionMode == executionMode).toList();
     }
     if (query != null && query.trim().isNotEmpty) {
       final q = query.trim().toLowerCase();
@@ -185,7 +192,8 @@ class DurableFileStorageProvider implements StorageProvider {
     if (await _reportsDir.exists()) {
       final reportFiles = await _reportsDir
           .list()
-          .where((e) => e is File && e.uri.pathSegments.last.startsWith('${id}_'))
+          .where(
+              (e) => e is File && e.uri.pathSegments.last.startsWith('${id}_'))
           .cast<File>()
           .toList();
       for (final rf in reportFiles) {
@@ -208,8 +216,10 @@ class DurableFileStorageProvider implements StorageProvider {
 
     await _checkStorageQuota(bytes.length);
 
-    final targetFile = File('${_reportsDir.path}/${report.conversationId}_${report.id}.json');
-    final tempFile = File('${_reportsDir.path}/${report.conversationId}_${report.id}.tmp');
+    final targetFile =
+        File('${_reportsDir.path}/${report.conversationId}_${report.id}.json');
+    final tempFile =
+        File('${_reportsDir.path}/${report.conversationId}_${report.id}.tmp');
 
     await tempFile.writeAsBytes(bytes, flush: true);
     if (await targetFile.exists()) {
@@ -219,12 +229,16 @@ class DurableFileStorageProvider implements StorageProvider {
   }
 
   @override
-  Future<List<GeneratedReport>> getReportsByConversationId(String conversationId) async {
+  Future<List<GeneratedReport>> getReportsByConversationId(
+      String conversationId) async {
     if (!await _reportsDir.exists()) return [];
 
     final files = await _reportsDir
         .list()
-        .where((e) => e is File && e.uri.pathSegments.last.startsWith('${conversationId}_') && e.path.endsWith('.json'))
+        .where((e) =>
+            e is File &&
+            e.uri.pathSegments.last.startsWith('${conversationId}_') &&
+            e.path.endsWith('.json'))
         .cast<File>()
         .toList();
 
@@ -233,11 +247,13 @@ class DurableFileStorageProvider implements StorageProvider {
       try {
         final content = await file.readAsString();
         final map = jsonDecode(content) as Map<String, dynamic>;
-        final reportData = map.containsKey('data') ? map['data'] as Map<String, dynamic> : map;
+        final reportData =
+            map.containsKey('data') ? map['data'] as Map<String, dynamic> : map;
         reports.add(GeneratedReport.fromJson(reportData));
       } catch (e) {
         // Quarantine corrupt report
-        final qPath = '${_quarantineDir.path}/${file.uri.pathSegments.last}.corrupt';
+        final qPath =
+            '${_quarantineDir.path}/${file.uri.pathSegments.last}.corrupt';
         await file.rename(qPath);
       }
     }
@@ -247,7 +263,8 @@ class DurableFileStorageProvider implements StorageProvider {
   }
 
   @override
-  Future<List<Conversation>> searchConversations(String query, {int limit = 20}) async {
+  Future<List<Conversation>> searchConversations(String query,
+      {int limit = 20}) async {
     return listConversations(query: query, limit: limit);
   }
 
@@ -284,7 +301,8 @@ class DurableFileStorageProvider implements StorageProvider {
     var total = 0;
     for (final dir in [_conversationsDir, _reportsDir, _quarantineDir]) {
       if (await dir.exists()) {
-        await for (final entity in dir.list(recursive: true, followLinks: false)) {
+        await for (final entity
+            in dir.list(recursive: true, followLinks: false)) {
           if (entity is File) {
             total += await entity.length();
           }

@@ -13,12 +13,14 @@ void main() {
     test('generates all 7 distinct explanation personas', () async {
       final res = await engine.generateExplanations(
         'Can we deploy the new architecture to staging tomorrow?',
-        translatedText: '¿Podemos desplegar la nueva arquitectura en staging mañana?',
+        translatedText:
+            '¿Podemos desplegar la nueva arquitectura en staging mañana?',
         targetLanguage: 'es',
         context: 'technical_planning',
       );
 
-      expect(res.originalText, equals('Can we deploy the new architecture to staging tomorrow?'));
+      expect(res.originalText,
+          equals('Can we deploy the new architecture to staging tomorrow?'));
       expect(res.explanations.length, equals(7));
 
       // 1. Simple

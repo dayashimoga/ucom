@@ -9,7 +9,8 @@ import 'package:unicom_app/ui/adaptive/responsive_breakpoints.dart';
 
 void main() {
   group('UI Components & Widgets Tests', () {
-    testWidgets('StatusBadge renders for all execution modes and states', (tester) async {
+    testWidgets('StatusBadge renders for all execution modes and states',
+        (tester) async {
       for (final mode in ExecutionMode.values) {
         for (final state in ConversationState.values) {
           await tester.pumpWidget(MaterialApp(
@@ -25,7 +26,9 @@ void main() {
       }
     });
 
-    testWidgets('ConversationBubble renders speaker, original, and translated text', (tester) async {
+    testWidgets(
+        'ConversationBubble renders speaker, original, and translated text',
+        (tester) async {
       final segment = ConversationSegment(
         id: 'seg_1',
         speakerId: 'p1',
@@ -56,7 +59,8 @@ void main() {
       expect(find.text('Hola mundo'), findsOneWidget);
     });
 
-    testWidgets('ExplanationCard renders personas and allows persona switching', (tester) async {
+    testWidgets('ExplanationCard renders personas and allows persona switching',
+        (tester) async {
       final expResult = ExplanationResult(
         id: 'exp_1',
         originalText: 'Architecture',
@@ -87,11 +91,14 @@ void main() {
       if (detailedChip.evaluate().isNotEmpty) {
         await tester.tap(detailedChip);
         await tester.pumpAndSettle();
-        expect(find.textContaining('Detailed technical explanation'), findsOneWidget);
+        expect(find.textContaining('Detailed technical explanation'),
+            findsOneWidget);
       }
     });
 
-    testWidgets('ResponsiveLayout correctly identifies phone, tablet, and desktop', (tester) async {
+    testWidgets(
+        'ResponsiveLayout correctly identifies phone, tablet, and desktop',
+        (tester) async {
       await tester.pumpWidget(MaterialApp(
         home: MediaQuery(
           data: const MediaQueryData(size: Size(390, 844)),

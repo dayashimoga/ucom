@@ -7,7 +7,9 @@ import 'package:unicom_reporting/reporting.dart';
 
 void main() {
   group('Offline Privacy Invariant Tests', () {
-    test('proves full conversation pipeline works completely offline without network', () async {
+    test(
+        'proves full conversation pipeline works completely offline without network',
+        () async {
       // 1. STT completely on-device
       final stt = DeterministicFakeSTTProvider();
       final transcript = await stt.transcribe(Uint8List(50));
@@ -22,7 +24,8 @@ void main() {
       final translator = OfflineTranslationEngine(detector);
       final trans = await translator.translate(
         'hello world',
-        options: const TranslationOptions(sourceLanguage: 'en', targetLanguage: 'es'),
+        options: const TranslationOptions(
+            sourceLanguage: 'en', targetLanguage: 'es'),
       );
       expect(trans.translatedText, contains('hola'));
 
@@ -61,11 +64,14 @@ void main() {
       );
 
       final reportGen = ReportGenerator();
-      final rep = reportGen.generateReport(conversation: conv, type: ReportType.quickSummary);
+      final rep = reportGen.generateReport(
+          conversation: conv, type: ReportType.quickSummary);
       expect(rep.content, contains('Offline Session'));
     });
 
-    test('strictly enforces OfflineViolationException when cloud adapter is invoked in private_offline mode', () async {
+    test(
+        'strictly enforces OfflineViolationException when cloud adapter is invoked in private_offline mode',
+        () async {
       final cloudTranslator = CloudTranslationAdapter(
         executionMode: ExecutionMode.privateOffline,
         apiKey: 'test-key',
@@ -74,7 +80,8 @@ void main() {
       expect(
         () async => await cloudTranslator.translate(
           'Secret conversation data',
-          options: const TranslationOptions(sourceLanguage: 'en', targetLanguage: 'es'),
+          options: const TranslationOptions(
+              sourceLanguage: 'en', targetLanguage: 'es'),
         ),
         throwsA(isA<OfflineViolationException>()),
       );

@@ -37,7 +37,8 @@ void main() {
       expect(find.text('Data Hygiene & Retention'), findsOneWidget);
     });
 
-    testWidgets('switches AI execution modes via radio buttons', (tester) async {
+    testWidgets('switches AI execution modes via radio buttons',
+        (tester) async {
       tester.view.physicalSize = const Size(1280, 2400);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -64,7 +65,8 @@ void main() {
       expect(controller.executionMode, equals(ExecutionMode.privateOffline));
     });
 
-    testWidgets('enters API key and tests connection in settings', (tester) async {
+    testWidgets('enters API key and tests connection in settings',
+        (tester) async {
       tester.view.physicalSize = const Size(1280, 2400);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -86,7 +88,8 @@ void main() {
       expect(controller.cloudApiKey, equals('ai_key_test_12345'));
     });
 
-    testWidgets('changes application mode to interview practice', (tester) async {
+    testWidgets('changes application mode to interview practice',
+        (tester) async {
       tester.view.physicalSize = const Size(1280, 2400);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -99,7 +102,8 @@ void main() {
       await tester.tap(dropdown);
       await tester.pumpAndSettle();
 
-      final interviewChoice = find.text('Interview Practice & Rubric Coaching').last;
+      final interviewChoice =
+          find.text('Interview Practice & Rubric Coaching').last;
       await tester.tap(interviewChoice);
       await tester.pumpAndSettle();
 

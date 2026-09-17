@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:test/test.dart';
-import 'package:unicom_contracts/contracts.dart';
 import 'package:unicom_model_runtime/model_runtime.dart';
 import 'package:unicom_shared/shared.dart';
 
@@ -20,10 +19,12 @@ void main() {
       }
     });
 
-    test('initializes default catalog with valid models and capabilities', () async {
+    test('initializes default catalog with valid models and capabilities',
+        () async {
       final models = await manager.listModels();
       expect(models.length, greaterThanOrEqualTo(4));
-      expect(models.any((m) => m.id == 'unicom-lexicon-v1' && m.isInstalled), isTrue);
+      expect(models.any((m) => m.id == 'unicom-lexicon-v1' && m.isInstalled),
+          isTrue);
 
       final indic = models.firstWhere((m) => m.id == 'indic-trans-v2-compact');
       expect(indic.supportedLanguages, contains('ta'));
@@ -35,7 +36,8 @@ void main() {
       expect(isValid, isTrue);
     });
 
-    test('downloads model, creates physical file, and reports progress', () async {
+    test('downloads model, creates physical file, and reports progress',
+        () async {
       double lastProgress = 0.0;
       final downloaded = await manager.downloadModel(
         'whisper-tiny-quantized',
@@ -48,20 +50,29 @@ void main() {
       expect(lastProgress, equals(1.0));
     });
 
-    test('enforces disk space verification and rejects download if insufficient space', () async {
+    test(
+        'enforces disk space verification and rejects download if insufficient space',
+        () async {
       final lowDiskManager = LocalModelManager(
         storageDirectory: tempDir,
         availableDiskSpaceBytes: 1024, // Only 1 KB available
       );
 
       expect(
-        () async => await lowDiskManager.downloadModel('whisper-tiny-quantized'),
+        () async =>
+            await lowDiskManager.downloadModel('whisper-tiny-quantized'),
         throwsA(isA<StorageFullException>()),
       );
     });
 
     test('rejects download when SHA256 checksum mismatches', () async {
-      final badBytes = [1, 2, 3, 4, 5]; // Checksum won't match model's expected sha256
+      final badBytes = [
+        1,
+        2,
+        3,
+        4,
+        5
+      ]; // Checksum won't match model's expected sha256
 
       await expectLater(
         () => manager.downloadModel(
@@ -72,11 +83,13 @@ void main() {
       );
 
       // Verify no leftover .part file was orphaned
-      final partFiles = tempDir.listSync().where((f) => f.path.endsWith('.part'));
+      final partFiles =
+          tempDir.listSync().where((f) => f.path.endsWith('.part'));
       expect(partFiles, isEmpty);
     });
 
-    test('supports download cancellation cleanly without leaving artifacts', () async {
+    test('supports download cancellation cleanly without leaving artifacts',
+        () async {
       // Trigger cancellation immediately
       manager.cancelDownload('whisper-tiny-quantized');
 
@@ -89,7 +102,8 @@ void main() {
       expect(model?.isInstalled, isFalse);
     });
 
-    test('manages lazy memory loading and unloading for power/RAM optimization', () async {
+    test('manages lazy memory loading and unloading for power/RAM optimization',
+        () async {
       await manager.downloadModel('whisper-tiny-quantized');
 
       // Load into memory
@@ -113,7 +127,8 @@ void main() {
       expect(model?.isLoadedInMemory, isTrue);
     });
 
-    test('removes model, deletes physical file, and resets catalog state', () async {
+    test('removes model, deletes physical file, and resets catalog state',
+        () async {
       final downloaded = await manager.downloadModel('whisper-tiny-quantized');
       final path = downloaded.installPath!;
       expect(File(path).existsSync(), isTrue);

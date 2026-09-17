@@ -50,13 +50,18 @@ void main() {
       );
     }
 
-    test('Persists and retrieves conversations across simulated process restarts', () async {
-      final conv = makeSampleConversation(id: 'conv_durability_1', title: 'Critical Strategy');
+    test(
+        'Persists and retrieves conversations across simulated process restarts',
+        () async {
+      final conv = makeSampleConversation(
+          id: 'conv_durability_1', title: 'Critical Strategy');
       await storage.saveConversation(conv);
 
       // Simulate app restart by creating a new provider instance pointing to the same folder
-      final restartedStorage = DurableFileStorageProvider(baseDirectory: tempDir);
-      final retrieved = await restartedStorage.getConversation('conv_durability_1');
+      final restartedStorage =
+          DurableFileStorageProvider(baseDirectory: tempDir);
+      final retrieved =
+          await restartedStorage.getConversation('conv_durability_1');
 
       expect(retrieved, isNotNull);
       expect(retrieved!.id, equals('conv_durability_1'));
@@ -77,12 +82,14 @@ void main() {
       expect(files.any((f) => f.path.endsWith('.tmp')), isFalse);
     });
 
-    test('Quarantines corrupted files and maintains graceful degradation', () async {
+    test('Quarantines corrupted files and maintains graceful degradation',
+        () async {
       final conv1 = makeSampleConversation(id: 'conv_good');
       await storage.saveConversation(conv1);
 
       // Artificially create a corrupted, malformed file in the conversations directory
-      final corruptFile = File('${tempDir.path}/conversations/conv_corrupt.json');
+      final corruptFile =
+          File('${tempDir.path}/conversations/conv_corrupt.json');
       await corruptFile.writeAsString('{"corrupted_data": [UNTERMINATED_JSON');
 
       // The corrupt file should not crash listConversations
@@ -121,7 +128,8 @@ void main() {
     test('Enforces storage quota and throws StorageFullException', () async {
       final smallQuotaStorage = DurableFileStorageProvider(
         baseDirectory: tempDir,
-        maxStorageBytes: 1200, // Enough for 1 conversation (~830 bytes), but 2 exceeds quota
+        maxStorageBytes:
+            1200, // Enough for 1 conversation (~830 bytes), but 2 exceeds quota
       );
 
       final conv1 = makeSampleConversation(id: 'conv_q1');
@@ -136,10 +144,12 @@ void main() {
 
     test('Purges expired records according to data retention policy', () async {
       final oldDate = DateTime.now().toUtc().subtract(const Duration(days: 45));
-      final recentDate = DateTime.now().toUtc().subtract(const Duration(days: 2));
+      final recentDate =
+          DateTime.now().toUtc().subtract(const Duration(days: 2));
 
       final oldConv = makeSampleConversation(id: 'conv_old', time: oldDate);
-      final recentConv = makeSampleConversation(id: 'conv_recent', time: recentDate);
+      final recentConv =
+          makeSampleConversation(id: 'conv_recent', time: recentDate);
 
       await storage.saveConversation(oldConv);
       await storage.saveConversation(recentConv);
@@ -173,7 +183,9 @@ void main() {
       expect(remaining.length, equals(3));
     });
 
-    test('Saves and retrieves reports, and cascades report deletion on conversation delete', () async {
+    test(
+        'Saves and retrieves reports, and cascades report deletion on conversation delete',
+        () async {
       final conv = makeSampleConversation(id: 'conv_with_rep');
       await storage.saveConversation(conv);
 
@@ -201,7 +213,8 @@ void main() {
       expect(deleted, isTrue);
 
       expect(await storage.getConversation('conv_with_rep'), isNull);
-      expect(await storage.getReportsByConversationId('conv_with_rep'), isEmpty);
+      expect(
+          await storage.getReportsByConversationId('conv_with_rep'), isEmpty);
     });
   });
 }

@@ -1,7 +1,6 @@
 import 'package:test/test.dart';
 import 'package:unicom_contracts/contracts.dart';
 import 'package:unicom_ai_core/ai_core.dart';
-import 'package:unicom_reporting/reporting.dart';
 
 void main() {
   group('Performance & Latency Budget Tests', () {
@@ -10,7 +9,8 @@ void main() {
       final stopwatch = Stopwatch()..start();
 
       for (int i = 0; i < 20; i++) {
-        await detector.detectLanguage('This is a performance budget verification test.');
+        await detector
+            .detectLanguage('This is a performance budget verification test.');
       }
 
       stopwatch.stop();
@@ -25,7 +25,8 @@ void main() {
       for (int i = 0; i < 20; i++) {
         await translator.translate(
           'hello how are you?',
-          options: const TranslationOptions(sourceLanguage: 'en', targetLanguage: 'es'),
+          options: const TranslationOptions(
+              sourceLanguage: 'en', targetLanguage: 'es'),
         );
       }
 
@@ -34,7 +35,8 @@ void main() {
       expect(avgMs, lessThan(30.0));
     });
 
-    test('multi-persona explanation engine executes within 50ms budget', () async {
+    test('multi-persona explanation engine executes within 50ms budget',
+        () async {
       final engine = ExplanationEngine();
       final stopwatch = Stopwatch()..start();
 

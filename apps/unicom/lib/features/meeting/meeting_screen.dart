@@ -33,10 +33,13 @@ class _MeetingScreenState extends State<MeetingScreen> {
                 icon: const Icon(Icons.description, size: 18),
                 label: const Text('Minutes'),
                 onPressed: () async {
-                  await widget.controller.createReport(ReportType.meetingMinutes);
+                  await widget.controller
+                      .createReport(ReportType.meetingMinutes);
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Meeting Minutes generated and saved to Reports.')),
+                      const SnackBar(
+                          content: Text(
+                              'Meeting Minutes generated and saved to Reports.')),
                     );
                   }
                 },
@@ -66,13 +69,22 @@ class _MeetingScreenState extends State<MeetingScreen> {
                                 children: [
                                   Row(
                                     children: [
-                                      Text(seg.speakerName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: UnicomTheme.primaryBlueLight)),
+                                      Text(seg.speakerName,
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 13,
+                                              color: UnicomTheme
+                                                  .primaryBlueLight)),
                                       const Spacer(),
-                                      Text(seg.originalLanguage.toUpperCase(), style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                                      Text(seg.originalLanguage.toUpperCase(),
+                                          style: const TextStyle(
+                                              fontSize: 11,
+                                              color: Colors.grey)),
                                     ],
                                   ),
                                   const SizedBox(height: 4),
-                                  Text(seg.originalText, style: const TextStyle(fontSize: 14)),
+                                  Text(seg.originalText,
+                                      style: const TextStyle(fontSize: 14)),
                                 ],
                               ),
                             ),
@@ -85,16 +97,23 @@ class _MeetingScreenState extends State<MeetingScreen> {
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: Theme.of(context).cardTheme.color,
-                        border: const Border(top: BorderSide(color: UnicomTheme.darkSurfaceVariant)),
+                        border: const Border(
+                            top: BorderSide(
+                                color: UnicomTheme.darkSurfaceVariant)),
                       ),
                       child: Row(
                         children: [
                           DropdownButton<String>(
                             value: _selectedSpeaker,
                             underline: const SizedBox(),
-                            items: _speakers.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
+                            items: _speakers
+                                .map((s) =>
+                                    DropdownMenuItem(value: s, child: Text(s)))
+                                .toList(),
                             onChanged: (val) {
-                              if (val != null) setState(() => _selectedSpeaker = val);
+                              if (val != null) {
+                                setState(() => _selectedSpeaker = val);
+                              }
                             },
                           ),
                           const SizedBox(width: 8),
@@ -109,8 +128,10 @@ class _MeetingScreenState extends State<MeetingScreen> {
                             ),
                           ),
                           IconButton(
-                            icon: const Icon(Icons.send, color: UnicomTheme.accentCyan),
-                            onPressed: () => _addStatement(_statementController.text),
+                            icon: const Icon(Icons.send,
+                                color: UnicomTheme.accentCyan),
+                            onPressed: () =>
+                                _addStatement(_statementController.text),
                           ),
                         ],
                       ),
@@ -118,17 +139,21 @@ class _MeetingScreenState extends State<MeetingScreen> {
                   ],
                 ),
               ),
-              const VerticalDivider(width: 1, color: UnicomTheme.darkSurfaceVariant),
+              const VerticalDivider(
+                  width: 1, color: UnicomTheme.darkSurfaceVariant),
               // Right: Real-time Agenda, Decisions, and Action Items
               Expanded(
                 flex: 4,
                 child: ListView(
                   padding: const EdgeInsets.all(16),
                   children: [
-                    const Text('Decisions Reached', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                    const Text('Decisions Reached',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 15)),
                     const SizedBox(height: 8),
                     if (conv.decisions.isEmpty)
-                      const Text('No formal decisions recorded yet.', style: TextStyle(fontSize: 13, color: Colors.grey))
+                      const Text('No formal decisions recorded yet.',
+                          style: TextStyle(fontSize: 13, color: Colors.grey))
                     else
                       ...conv.decisions.map((d) => Card(
                             margin: const EdgeInsets.only(bottom: 6),
@@ -136,18 +161,26 @@ class _MeetingScreenState extends State<MeetingScreen> {
                               padding: const EdgeInsets.all(10),
                               child: Row(
                                 children: [
-                                  const Icon(Icons.check_box, color: UnicomTheme.successGreen, size: 18),
+                                  const Icon(Icons.check_box,
+                                      color: UnicomTheme.successGreen,
+                                      size: 18),
                                   const SizedBox(width: 8),
-                                  Expanded(child: Text(d.decisionText, style: const TextStyle(fontSize: 13))),
+                                  Expanded(
+                                      child: Text(d.decisionText,
+                                          style:
+                                              const TextStyle(fontSize: 13))),
                                 ],
                               ),
                             ),
                           )),
                     const SizedBox(height: 16),
-                    const Text('Action Items & Deliverables', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                    const Text('Action Items & Deliverables',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 15)),
                     const SizedBox(height: 8),
                     if (conv.actionItems.isEmpty)
-                      const Text('No action items assigned yet.', style: TextStyle(fontSize: 13, color: Colors.grey))
+                      const Text('No action items assigned yet.',
+                          style: TextStyle(fontSize: 13, color: Colors.grey))
                     else
                       ...conv.actionItems.map((a) => Card(
                             margin: const EdgeInsets.only(bottom: 6),
@@ -156,9 +189,16 @@ class _MeetingScreenState extends State<MeetingScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(a.title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                                  Text(a.title,
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 13)),
                                   const SizedBox(height: 4),
-                                  Text('Assignee: ${a.assignee ?? "Unassigned"}', style: const TextStyle(fontSize: 12, color: UnicomTheme.accentCyan)),
+                                  Text(
+                                      'Assignee: ${a.assignee ?? "Unassigned"}',
+                                      style: const TextStyle(
+                                          fontSize: 12,
+                                          color: UnicomTheme.accentCyan)),
                                 ],
                               ),
                             ),

@@ -40,7 +40,8 @@ class LocalSTTProvider implements STTProvider {
     }
 
     if (!isModelInstalled) {
-      _logger.warn('Transcription requested but on-device STT model is not installed.');
+      _logger.warn(
+          'Transcription requested but on-device STT model is not installed.');
       throw const ValidationException(
         'Offline speech recognition requires the Whisper on-device model. Please download Whisper Tiny INT8 via the Model Manager or enter text directly.',
       );
@@ -100,7 +101,11 @@ class LocalSTTProvider implements STTProvider {
 
     final pcmBytes = bytes.sublist(pcmOffset);
     if (pcmBytes.length < 2) {
-      return _AudioAnalysis(rmsEnergy: 0, durationMs: 0, isSpeechDetected: false, confidence: 0.0);
+      return const _AudioAnalysis(
+          rmsEnergy: 0,
+          durationMs: 0,
+          isSpeechDetected: false,
+          confidence: 0.0);
     }
 
     // Read 16-bit PCM samples
@@ -124,38 +129,56 @@ class LocalSTTProvider implements STTProvider {
     // 22.05 kHz mono 16-bit
     final durationMs = ((sampleCount / 22050.0) * 1000).round();
     final isSpeech = rmsEnergy > 50.0; // Audio energy above silence threshold
-    final confidence = isSpeech ? min(0.98, 0.70 + (rmsEnergy / 32767.0) * 0.28) : 0.0;
+    final confidence =
+        isSpeech ? min(0.98, 0.70 + (rmsEnergy / 32767.0) * 0.28) : 0.0;
 
     return _AudioAnalysis(
       rmsEnergy: rmsEnergy,
       durationMs: durationMs,
       isSpeechDetected: isSpeech,
       confidence: confidence,
+      zeroCrossings: zeroCrossings,
     );
   }
 
   String _decodeAcousticFeatures(_AudioAnalysis analysis, String language) {
     if (analysis.durationMs < 800) {
       switch (language.toLowerCase()) {
-        case 'es': return 'Hola';
-        case 'fr': return 'Bonjour';
-        case 'de': return 'Hallo';
-        case 'zh': return '你好';
-        case 'ja': return 'こんにちは';
-        case 'hi': return 'नमस्ते';
-        case 'ta': return 'வணக்கம்';
-        default: return 'Hello';
+        case 'es':
+          return 'Hola';
+        case 'fr':
+          return 'Bonjour';
+        case 'de':
+          return 'Hallo';
+        case 'zh':
+          return '你好';
+        case 'ja':
+          return 'こんにちは';
+        case 'hi':
+          return 'नमस्ते';
+        case 'ta':
+          return 'வணக்கம்';
+        default:
+          return 'Hello';
       }
     } else {
       switch (language.toLowerCase()) {
-        case 'es': return '¿Cómo estás?';
-        case 'fr': return 'Comment allez-vous?';
-        case 'de': return 'Wie geht es Ihnen?';
-        case 'zh': return '你好吗？';
-        case 'ja': return 'お元気ですか？';
-        case 'hi': return 'आप कैसे हैं?';
-        case 'ta': return 'நீங்கள் எப்படி இருக்கிறீர்கள்?';
-        default: return 'How are you?';
+        case 'es':
+          return '¿Cómo estás?';
+        case 'fr':
+          return 'Comment allez-vous?';
+        case 'de':
+          return 'Wie geht es Ihnen?';
+        case 'zh':
+          return '你好吗？';
+        case 'ja':
+          return 'お元気ですか？';
+        case 'hi':
+          return 'आप कैसे हैं?';
+        case 'ta':
+          return 'நீங்கள் எப்படி இருக்கிறீர்கள்?';
+        default:
+          return 'How are you?';
       }
     }
   }
@@ -166,11 +189,13 @@ class _AudioAnalysis {
   final int durationMs;
   final bool isSpeechDetected;
   final double confidence;
+  final int zeroCrossings;
 
   const _AudioAnalysis({
     required this.rmsEnergy,
     required this.durationMs,
     required this.isSpeechDetected,
     required this.confidence,
+    this.zeroCrossings = 0,
   });
 }

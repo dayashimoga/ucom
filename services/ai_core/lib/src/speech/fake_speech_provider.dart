@@ -77,7 +77,8 @@ class DeterministicFakeTTSProvider implements TTSProvider {
     byteData.setUint16(20, 1, Endian.little); // PCM
     byteData.setUint16(22, numChannels, Endian.little);
     byteData.setUint32(24, sampleRate, Endian.little);
-    byteData.setUint32(28, sampleRate * numChannels * (bitsPerSample ~/ 8), Endian.little);
+    byteData.setUint32(
+        28, sampleRate * numChannels * (bitsPerSample ~/ 8), Endian.little);
     byteData.setUint16(32, numChannels * (bitsPerSample ~/ 8), Endian.little);
     byteData.setUint16(34, bitsPerSample, Endian.little);
 

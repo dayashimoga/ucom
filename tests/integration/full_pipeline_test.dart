@@ -22,7 +22,8 @@ void main() {
       final translator = OfflineTranslationEngine(detector);
       final transResult = await translator.translate(
         transcript.text,
-        options: const TranslationOptions(sourceLanguage: 'en', targetLanguage: 'es'),
+        options: const TranslationOptions(
+            sourceLanguage: 'en', targetLanguage: 'es'),
       );
       expect(transResult.translatedText, isNotEmpty);
 

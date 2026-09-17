@@ -19,13 +19,16 @@ void main() {
       );
     }
 
-    testWidgets('renders model list with metadata chips and actions', (tester) async {
+    testWidgets('renders model list with metadata chips and actions',
+        (tester) async {
       await tester.pumpWidget(createTestApp());
       await tester.pumpAndSettle();
 
       expect(find.text('Model & Language Pack Manager'), findsOneWidget);
-      expect(find.textContaining('UNICOM Multilingual Compact Lexicon'), findsOneWidget);
-      expect(find.textContaining('Whisper Tiny INT8 On-Device STT'), findsOneWidget);
+      expect(find.textContaining('UNICOM Multilingual Compact Lexicon'),
+          findsOneWidget);
+      expect(find.textContaining('Whisper Tiny INT8 On-Device STT'),
+          findsOneWidget);
       expect(find.byIcon(Icons.refresh), findsOneWidget);
     });
 
@@ -38,7 +41,8 @@ void main() {
       await tester.pumpAndSettle();
 
       // Find Download Pack button for Whisper
-      final downloadBtn = find.widgetWithText(FilledButton, 'Download Pack').first;
+      final downloadBtn =
+          find.widgetWithText(FilledButton, 'Download Pack').first;
       await tester.tap(downloadBtn);
       await tester.pump();
       await tester.runAsync(() async {

@@ -39,7 +39,8 @@ class _ModelManagerScreenState extends State<ModelManagerScreen> {
       appBar: AppBar(
         title: const Text('Model & Language Pack Manager'),
         actions: [
-          IconButton(icon: const Icon(Icons.refresh), onPressed: _refreshModels),
+          IconButton(
+              icon: const Icon(Icons.refresh), onPressed: _refreshModels),
           const SizedBox(width: 8),
         ],
       ),
@@ -59,16 +60,24 @@ class _ModelManagerScreenState extends State<ModelManagerScreen> {
                       children: [
                         Row(
                           children: [
-                            Text(m.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                            Text(m.name,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 15)),
                             const Spacer(),
                             if (m.isActive)
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: UnicomTheme.successGreen.withOpacity(0.2),
+                                  color:
+                                      UnicomTheme.successGreen.withOpacity(0.2),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
-                                child: const Text('ACTIVE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: UnicomTheme.successGreen)),
+                                child: const Text('ACTIVE',
+                                    style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                        color: UnicomTheme.successGreen)),
                               ),
                           ],
                         ),
@@ -78,15 +87,23 @@ class _ModelManagerScreenState extends State<ModelManagerScreen> {
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                         const SizedBox(height: 8),
-                        Text('SHA256: ${m.sha256.substring(0, 16)}...', style: const TextStyle(fontSize: 11, fontFamily: 'monospace', color: Colors.grey)),
+                        Text('SHA256: ${m.sha256.substring(0, 16)}...',
+                            style: const TextStyle(
+                                fontSize: 11,
+                                fontFamily: 'monospace',
+                                color: Colors.grey)),
                         const SizedBox(height: 12),
                         Wrap(
                           spacing: 6,
-                          children: m.capabilities.map((c) => Chip(
-                                label: Text(c, style: const TextStyle(fontSize: 10)),
-                                padding: EdgeInsets.zero,
-                                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              )).toList(),
+                          children: m.capabilities
+                              .map((c) => Chip(
+                                    label: Text(c,
+                                        style: const TextStyle(fontSize: 10)),
+                                    padding: EdgeInsets.zero,
+                                    materialTapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                  ))
+                              .toList(),
                         ),
                         const SizedBox(height: 12),
                         Row(
@@ -102,7 +119,8 @@ class _ModelManagerScreenState extends State<ModelManagerScreen> {
                               )
                             else if (!m.isActive)
                               FilledButton.tonalIcon(
-                                icon: const Icon(Icons.power_settings_new, size: 16),
+                                icon: const Icon(Icons.power_settings_new,
+                                    size: 16),
                                 label: const Text('Activate'),
                                 onPressed: () async {
                                   await widget.modelManager.activateModel(m.id);
@@ -110,7 +128,11 @@ class _ModelManagerScreenState extends State<ModelManagerScreen> {
                                 },
                               )
                             else
-                              const Text('Default Active Engine', style: TextStyle(fontSize: 12, color: UnicomTheme.successGreen, fontWeight: FontWeight.w600)),
+                              const Text('Default Active Engine',
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      color: UnicomTheme.successGreen,
+                                      fontWeight: FontWeight.w600)),
                           ],
                         ),
                       ],

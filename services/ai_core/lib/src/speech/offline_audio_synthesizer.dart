@@ -19,7 +19,8 @@ class OfflineAudioSynthesizer implements TTSProvider {
   }) async {
     const sampleRate = 22050;
     final baseFreq = 220.0 * options.pitch;
-    final durationSeconds = (text.length * (0.05 / options.rate.clamp(0.5, 2.0))).clamp(0.3, 60.0);
+    final durationSeconds =
+        (text.length * (0.05 / options.rate.clamp(0.5, 2.0))).clamp(0.3, 60.0);
     final numSamples = (sampleRate * durationSeconds).floor();
 
     final byteData = ByteData(44 + numSamples * 2);
@@ -47,7 +48,8 @@ class OfflineAudioSynthesizer implements TTSProvider {
     for (int i = 0; i < numSamples; i++) {
       final t = i / sampleRate;
       double env = 1.0;
-      if (i < attack) env = i / attack;
+      if (i < attack)
+        env = i / attack;
       else if (i > numSamples - decay) env = (numSamples - i) / decay;
 
       final sample = (0.6 * sin(2 * pi * baseFreq * t) +

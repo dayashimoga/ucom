@@ -197,8 +197,10 @@ abstract class StorageProvider {
   });
   Future<bool> deleteConversation(String id);
   Future<void> saveReport(GeneratedReport report);
-  Future<List<GeneratedReport>> getReportsByConversationId(String conversationId);
-  Future<List<Conversation>> searchConversations(String query, {int limit = 20});
+  Future<List<GeneratedReport>> getReportsByConversationId(
+      String conversationId);
+  Future<List<Conversation>> searchConversations(String query,
+      {int limit = 20});
 }
 
 abstract class ModelManagerProvider {
@@ -259,4 +261,3 @@ abstract class RetrievalProvider {
   Future<void> indexDocument(RetrievalDocument doc);
   Future<bool> deleteDocument(String id);
 }
-

@@ -62,30 +62,52 @@ class _UnicomAppState extends State<UnicomApp> {
                   builder: (context, constraints) {
                     return SingleChildScrollView(
                       child: ConstrainedBox(
-                        constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                        constraints:
+                            BoxConstraints(minHeight: constraints.maxHeight),
                         child: IntrinsicHeight(
                           child: NavigationRail(
                             selectedIndex: _currentIndex,
-                            onDestinationSelected: (idx) => setState(() => _currentIndex = idx),
+                            onDestinationSelected: (idx) =>
+                                setState(() => _currentIndex = idx),
                             labelType: constraints.maxHeight < 550
                                 ? NavigationRailLabelType.none
                                 : NavigationRailLabelType.all,
                             leading: Padding(
                               padding: EdgeInsets.symmetric(
-                                  vertical: constraints.maxHeight < 550 ? 8 : 16),
+                                  vertical:
+                                      constraints.maxHeight < 550 ? 8 : 16),
                               child: const CircleAvatar(
                                 radius: 18,
                                 backgroundColor: UnicomTheme.primaryBlue,
-                                child: Icon(Icons.hub, color: Colors.white, size: 20),
+                                child: Icon(Icons.hub,
+                                    color: Colors.white, size: 20),
                               ),
                             ),
                             destinations: const [
-                              NavigationRailDestination(icon: Icon(Icons.chat_bubble_outline), selectedIcon: Icon(Icons.chat_bubble), label: Text('Live')),
-                              NavigationRailDestination(icon: Icon(Icons.school_outlined), selectedIcon: Icon(Icons.school), label: Text('Interview')),
-                              NavigationRailDestination(icon: Icon(Icons.groups_outlined), selectedIcon: Icon(Icons.groups), label: Text('Meeting')),
-                              NavigationRailDestination(icon: Icon(Icons.description_outlined), selectedIcon: Icon(Icons.description), label: Text('Reports')),
-                              NavigationRailDestination(icon: Icon(Icons.memory_outlined), selectedIcon: Icon(Icons.memory), label: Text('Models')),
-                              NavigationRailDestination(icon: Icon(Icons.settings_outlined), selectedIcon: Icon(Icons.settings), label: Text('Settings')),
+                              NavigationRailDestination(
+                                  icon: Icon(Icons.chat_bubble_outline),
+                                  selectedIcon: Icon(Icons.chat_bubble),
+                                  label: Text('Live')),
+                              NavigationRailDestination(
+                                  icon: Icon(Icons.school_outlined),
+                                  selectedIcon: Icon(Icons.school),
+                                  label: Text('Interview')),
+                              NavigationRailDestination(
+                                  icon: Icon(Icons.groups_outlined),
+                                  selectedIcon: Icon(Icons.groups),
+                                  label: Text('Meeting')),
+                              NavigationRailDestination(
+                                  icon: Icon(Icons.description_outlined),
+                                  selectedIcon: Icon(Icons.description),
+                                  label: Text('Reports')),
+                              NavigationRailDestination(
+                                  icon: Icon(Icons.memory_outlined),
+                                  selectedIcon: Icon(Icons.memory),
+                                  label: Text('Models')),
+                              NavigationRailDestination(
+                                  icon: Icon(Icons.settings_outlined),
+                                  selectedIcon: Icon(Icons.settings),
+                                  label: Text('Settings')),
                             ],
                           ),
                         ),
@@ -108,12 +130,30 @@ class _UnicomAppState extends State<UnicomApp> {
             onDestinationSelected: (idx) => setState(() => _currentIndex = idx),
             labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
             destinations: const [
-              NavigationDestination(icon: Icon(Icons.chat_bubble_outline), selectedIcon: Icon(Icons.chat_bubble), label: 'Live'),
-              NavigationDestination(icon: Icon(Icons.school_outlined), selectedIcon: Icon(Icons.school), label: 'Interview'),
-              NavigationDestination(icon: Icon(Icons.groups_outlined), selectedIcon: Icon(Icons.groups), label: 'Meeting'),
-              NavigationDestination(icon: Icon(Icons.description_outlined), selectedIcon: Icon(Icons.description), label: 'Reports'),
-              NavigationDestination(icon: Icon(Icons.memory_outlined), selectedIcon: Icon(Icons.memory), label: 'Models'),
-              NavigationDestination(icon: Icon(Icons.settings_outlined), selectedIcon: Icon(Icons.settings), label: 'Settings'),
+              NavigationDestination(
+                  icon: Icon(Icons.chat_bubble_outline),
+                  selectedIcon: Icon(Icons.chat_bubble),
+                  label: 'Live'),
+              NavigationDestination(
+                  icon: Icon(Icons.school_outlined),
+                  selectedIcon: Icon(Icons.school),
+                  label: 'Interview'),
+              NavigationDestination(
+                  icon: Icon(Icons.groups_outlined),
+                  selectedIcon: Icon(Icons.groups),
+                  label: 'Meeting'),
+              NavigationDestination(
+                  icon: Icon(Icons.description_outlined),
+                  selectedIcon: Icon(Icons.description),
+                  label: 'Reports'),
+              NavigationDestination(
+                  icon: Icon(Icons.memory_outlined),
+                  selectedIcon: Icon(Icons.memory),
+                  label: 'Models'),
+              NavigationDestination(
+                  icon: Icon(Icons.settings_outlined),
+                  selectedIcon: Icon(Icons.settings),
+                  label: 'Settings'),
             ],
           ),
         );

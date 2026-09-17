@@ -61,7 +61,8 @@ class KnowledgeResponse {
         'createdAt': createdAt.toIso8601String(),
       };
 
-  factory KnowledgeResponse.fromJson(Map<String, dynamic> json) => KnowledgeResponse(
+  factory KnowledgeResponse.fromJson(Map<String, dynamic> json) =>
+      KnowledgeResponse(
         id: json['id'] as String,
         question: json['question'] as String,
         generativeAnswer: json['generativeAnswer'] as String,
@@ -70,17 +71,25 @@ class KnowledgeResponse {
         targetLanguage: json['targetLanguage'] as String?,
         aiSummary: json['aiSummary'] as String?,
         groundedSources: (json['groundedSources'] as List<dynamic>?)
-                ?.map((e) => RetrievalDocument.fromJson(e as Map<String, dynamic>))
+                ?.map((e) =>
+                    RetrievalDocument.fromJson(e as Map<String, dynamic>))
                 .toList() ??
             const [],
-        citations: (json['citations'] as List<dynamic>?)?.map((e) => e as String).toList() ?? const [],
+        citations: (json['citations'] as List<dynamic>?)
+                ?.map((e) => e as String)
+                .toList() ??
+            const [],
         hasSufficientContext: json['hasSufficientContext'] as bool? ?? true,
         hasConflictingSources: json['hasConflictingSources'] as bool? ?? false,
-        conflicts: (json['conflicts'] as List<dynamic>?)?.map((e) => e as String).toList() ?? const [],
+        conflicts: (json['conflicts'] as List<dynamic>?)
+                ?.map((e) => e as String)
+                .toList() ??
+            const [],
         providerId: json['providerId'] as String,
         executionMode: json['executionMode'] as String,
         latencyMs: (json['latencyMs'] as num?)?.toInt() ?? 0,
-        createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '') ?? DateTime.now(),
+        createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '') ??
+            DateTime.now(),
       );
 
   /// Formatted text output with clear visual separation
@@ -117,7 +126,8 @@ class KnowledgeResponse {
     }
 
     if (translatedAnswer != null && translatedAnswer!.isNotEmpty) {
-      buffer.writeln('### TRANSLATION (${targetLanguage?.toUpperCase() ?? "TARGET"})');
+      buffer.writeln(
+          '### TRANSLATION (${targetLanguage?.toUpperCase() ?? "TARGET"})');
       buffer.writeln(translatedAnswer);
       buffer.writeln();
     }
@@ -131,14 +141,16 @@ class KnowledgeResponse {
     if (groundedSources.isNotEmpty) {
       buffer.writeln('### GROUNDED SOURCES');
       for (final src in groundedSources) {
-        buffer.writeln('- **${src.title}** (relevance: ${(src.score * 100).toStringAsFixed(1)}%)');
+        buffer.writeln(
+            '- **${src.title}** (relevance: ${(src.score * 100).toStringAsFixed(1)}%)');
         if (src.sourceUri != null) buffer.writeln('  Source: ${src.sourceUri}');
       }
       buffer.writeln();
     }
 
     buffer.writeln('---');
-    buffer.writeln('*Provenance: Provider `$providerId` | Mode `$executionMode` | Latency `${latencyMs}ms`*');
+    buffer.writeln(
+        '*Provenance: Provider `$providerId` | Mode `$executionMode` | Latency `${latencyMs}ms`*');
     return buffer.toString();
   }
 }
@@ -150,7 +162,8 @@ class KnowledgeEngine {
   final RagRetrievalProvider? retrievalProvider;
   final TranslationProvider? translationProvider;
   final LanguageDetectionProvider? detectionProvider;
-  final PrivacyLogger _logger = const PrivacyLogger(context: 'KNOWLEDGE_ENGINE');
+  final PrivacyLogger _logger =
+      const PrivacyLogger(context: 'KNOWLEDGE_ENGINE');
 
   KnowledgeEngine({
     required this.router,
@@ -169,7 +182,8 @@ class KnowledgeEngine {
     final sw = Stopwatch()..start();
     final id = 'qa-${DateTime.now().millisecondsSinceEpoch}';
 
-    _logger.info('Processing knowledge query', {'questionLength': question.length});
+    _logger.info(
+        'Processing knowledge query', {'questionLength': question.length});
 
     // 1. Context retrieval / RAG
     List<RetrievalDocument> groundedSources = [];
@@ -187,7 +201,11 @@ class KnowledgeEngine {
       conflicts = ragResult.detectedConflicts;
 
       if (groundedSources.isNotEmpty) {
-        citations = groundedSources.map((d) => '[Source: ${d.title}]').toList();
+        citations = groundedSources
+            .map((d) => d.sourceUri != null
+                ? '[Source: ${d.title}] (${d.sourceUri})'
+                : '[Source: ${d.title}]')
+            .toList();
         final contextSnippet = groundedSources
             .map((d) => 'Source [${d.title}]:\n${d.content}')
             .join('\n\n');
@@ -203,26 +221,34 @@ class KnowledgeEngine {
     String generativeAnswer;
 
     // Check if sources completely lack an answer
-    if (retrieveContext && retrievalProvider != null && groundedSources.isNotEmpty && !hasSufficient) {
-      generativeAnswer = 'The provided reference documents do not contain sufficient information to answer the question: "$question".';
+    if (retrieveContext &&
+        retrievalProvider != null &&
+        groundedSources.isNotEmpty &&
+        !hasSufficient) {
+      generativeAnswer =
+          'The provided reference documents do not contain sufficient information to answer the question: "$question".';
     } else {
       generativeAnswer = await provider.complete(prompt);
     }
 
     // Append conflict disclaimer if detected
     if (hasConflicts && conflicts.isNotEmpty) {
-      generativeAnswer += '\n\n*Note: Conflicting information detected across sources: ${conflicts.join("; ")}*';
+      generativeAnswer +=
+          '\n\n*Note: Conflicting information detected across sources: ${conflicts.join("; ")}*';
     }
 
     // 3. Optional Explanation
     String? explanation;
     if (persona != null) {
-      explanation = await _generateExplanation(question, generativeAnswer, persona, provider);
+      explanation = await _generateExplanation(
+          question, generativeAnswer, persona, provider);
     }
 
     // 4. Optional Translation
     String? translatedAnswer;
-    if (targetLanguage != null && targetLanguage.isNotEmpty && translationProvider != null) {
+    if (targetLanguage != null &&
+        targetLanguage.isNotEmpty &&
+        translationProvider != null) {
       final transResult = await translationProvider!.translate(
         generativeAnswer,
         options: TranslationOptions(targetLanguage: targetLanguage),
@@ -283,9 +309,11 @@ class KnowledgeEngine {
     ExplanationPersona persona,
     LLMProvider provider,
   ) async {
-    final expPrompt = 'Explain the following in "${persona.toJson()}" persona:\n'
+    final expPrompt =
+        'Explain the following in "${persona.toJson()}" persona:\n'
         'Question: $question\n'
         'Answer: $answer';
-    return provider.complete(expPrompt, systemPrompt: 'You are an adaptive educational tutor.');
+    return provider.complete(expPrompt,
+        systemPrompt: 'You are an adaptive educational tutor.');
   }
 }

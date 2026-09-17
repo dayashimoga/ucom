@@ -3,8 +3,10 @@ import 'package:unicom_shared/shared.dart';
 
 void main() {
   group('Security & Privacy Sanitization Tests', () {
-    test('PrivacyLogger redacts sensitive conversation fields from metadata', () {
-      const logger = PrivacyLogger(context: 'SecurityTest', minLevel: LogLevel.debug);
+    test('PrivacyLogger redacts sensitive conversation fields from metadata',
+        () {
+      const logger =
+          PrivacyLogger(context: 'SecurityTest', minLevel: LogLevel.debug);
 
       // We test the logger by verifying that sensitive data structures are properly masked
       final sensitiveMetadata = {

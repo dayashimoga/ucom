@@ -52,10 +52,14 @@ class _ReportScreenState extends State<ReportScreen> {
             tooltip: 'Export',
             onSelected: _handleExport,
             itemBuilder: (context) => [
-              const PopupMenuItem(value: 'pdf', child: Text('Export PDF Document (.pdf)')),
-              const PopupMenuItem(value: 'md', child: Text('Export Markdown (.md)')),
-              const PopupMenuItem(value: 'json', child: Text('Export Structured Data (.json)')),
-              const PopupMenuItem(value: 'txt', child: Text('Export Plain Text (.txt)')),
+              const PopupMenuItem(
+                  value: 'pdf', child: Text('Export PDF Document (.pdf)')),
+              const PopupMenuItem(
+                  value: 'md', child: Text('Export Markdown (.md)')),
+              const PopupMenuItem(
+                  value: 'json', child: Text('Export Structured Data (.json)')),
+              const PopupMenuItem(
+                  value: 'txt', child: Text('Export Plain Text (.txt)')),
             ],
           ),
           const SizedBox(width: 8),
@@ -97,7 +101,8 @@ class _ReportScreenState extends State<ReportScreen> {
                     children: [
                       SelectableText(
                         _activeReport!.content,
-                        style: const TextStyle(fontSize: 14, height: 1.6, fontFamily: 'monospace'),
+                        style: const TextStyle(
+                            fontSize: 14, height: 1.6, fontFamily: 'monospace'),
                       ),
                     ],
                   )
@@ -111,7 +116,8 @@ class _ReportScreenState extends State<ReportScreen> {
   void _handleExport(String format) {
     if (_activeReport == null) return;
 
-    String filename = 'unicom_${_activeReport!.reportType.toJson()}_${DateTime.now().millisecondsSinceEpoch}';
+    String filename =
+        'unicom_${_activeReport!.reportType.toJson()}_${DateTime.now().millisecondsSinceEpoch}';
     String message;
 
     switch (format) {
@@ -143,15 +149,24 @@ class _ReportScreenState extends State<ReportScreen> {
 
   String _formatReportTypeName(ReportType type) {
     switch (type) {
-      case ReportType.quickSummary: return 'Quick Summary';
-      case ReportType.detailedSummary: return 'Detailed';
-      case ReportType.fullTranscript: return 'Full Transcript';
-      case ReportType.questionsReport: return 'Questions';
-      case ReportType.learningReport: return 'Learning';
-      case ReportType.actionItems: return 'Action Items';
-      case ReportType.meetingMinutes: return 'Minutes';
-      case ReportType.interviewReport: return 'Interview Evaluation';
-      case ReportType.vocabularyReport: return 'Vocabulary';
+      case ReportType.quickSummary:
+        return 'Quick Summary';
+      case ReportType.detailedSummary:
+        return 'Detailed';
+      case ReportType.fullTranscript:
+        return 'Full Transcript';
+      case ReportType.questionsReport:
+        return 'Questions';
+      case ReportType.learningReport:
+        return 'Learning';
+      case ReportType.actionItems:
+        return 'Action Items';
+      case ReportType.meetingMinutes:
+        return 'Minutes';
+      case ReportType.interviewReport:
+        return 'Interview Evaluation';
+      case ReportType.vocabularyReport:
+        return 'Vocabulary';
     }
   }
 }

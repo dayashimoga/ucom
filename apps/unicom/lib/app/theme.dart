@@ -38,7 +38,7 @@ class UnicomTheme {
         onSurface: darkTextPrimary,
         onError: Colors.white,
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: darkSurface,
         elevation: 0,
         shape: RoundedRectangleBorder(
@@ -58,12 +58,23 @@ class UnicomTheme {
         ),
       ),
       textTheme: const TextTheme(
-        headlineLarge: TextStyle(color: darkTextPrimary, fontWeight: FontWeight.w800, fontSize: 32, letterSpacing: -1.0),
-        headlineMedium: TextStyle(color: darkTextPrimary, fontWeight: FontWeight.w700, fontSize: 24, letterSpacing: -0.5),
-        titleLarge: TextStyle(color: darkTextPrimary, fontWeight: FontWeight.w600, fontSize: 18),
-        titleMedium: TextStyle(color: darkTextPrimary, fontWeight: FontWeight.w600, fontSize: 16),
+        headlineLarge: TextStyle(
+            color: darkTextPrimary,
+            fontWeight: FontWeight.w800,
+            fontSize: 32,
+            letterSpacing: -1.0),
+        headlineMedium: TextStyle(
+            color: darkTextPrimary,
+            fontWeight: FontWeight.w700,
+            fontSize: 24,
+            letterSpacing: -0.5),
+        titleLarge: TextStyle(
+            color: darkTextPrimary, fontWeight: FontWeight.w600, fontSize: 18),
+        titleMedium: TextStyle(
+            color: darkTextPrimary, fontWeight: FontWeight.w600, fontSize: 16),
         bodyLarge: TextStyle(color: darkTextPrimary, fontSize: 16, height: 1.5),
-        bodyMedium: TextStyle(color: darkTextSecondary, fontSize: 14, height: 1.4),
+        bodyMedium:
+            TextStyle(color: darkTextSecondary, fontSize: 14, height: 1.4),
         bodySmall: TextStyle(color: darkTextSecondary, fontSize: 12),
       ),
     );
@@ -84,7 +95,7 @@ class UnicomTheme {
         onSurface: lightTextPrimary,
         onError: Colors.white,
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: lightSurface,
         elevation: 0,
         shape: RoundedRectangleBorder(
@@ -104,12 +115,24 @@ class UnicomTheme {
         ),
       ),
       textTheme: const TextTheme(
-        headlineLarge: TextStyle(color: lightTextPrimary, fontWeight: FontWeight.w800, fontSize: 32, letterSpacing: -1.0),
-        headlineMedium: TextStyle(color: lightTextPrimary, fontWeight: FontWeight.w700, fontSize: 24, letterSpacing: -0.5),
-        titleLarge: TextStyle(color: lightTextPrimary, fontWeight: FontWeight.w600, fontSize: 18),
-        titleMedium: TextStyle(color: lightTextPrimary, fontWeight: FontWeight.w600, fontSize: 16),
-        bodyLarge: TextStyle(color: lightTextPrimary, fontSize: 16, height: 1.5),
-        bodyMedium: TextStyle(color: lightTextSecondary, fontSize: 14, height: 1.4),
+        headlineLarge: TextStyle(
+            color: lightTextPrimary,
+            fontWeight: FontWeight.w800,
+            fontSize: 32,
+            letterSpacing: -1.0),
+        headlineMedium: TextStyle(
+            color: lightTextPrimary,
+            fontWeight: FontWeight.w700,
+            fontSize: 24,
+            letterSpacing: -0.5),
+        titleLarge: TextStyle(
+            color: lightTextPrimary, fontWeight: FontWeight.w600, fontSize: 18),
+        titleMedium: TextStyle(
+            color: lightTextPrimary, fontWeight: FontWeight.w600, fontSize: 16),
+        bodyLarge:
+            TextStyle(color: lightTextPrimary, fontSize: 16, height: 1.5),
+        bodyMedium:
+            TextStyle(color: lightTextSecondary, fontSize: 14, height: 1.4),
         bodySmall: TextStyle(color: lightTextSecondary, fontSize: 12),
       ),
     );

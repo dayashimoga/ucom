@@ -4,7 +4,8 @@ import 'package:unicom_contracts/contracts.dart';
 void main() {
   group('Domain Models & Contract Serialization Tests', () {
     test('Participant serialization round-trip', () {
-      final p = Participant(id: 'p1', name: 'Alice', role: 'Architect', isHost: true);
+      final p =
+          Participant(id: 'p1', name: 'Alice', role: 'Architect', isHost: true);
       final json = p.toJson();
       final restored = Participant.fromJson(json);
 
@@ -47,9 +48,12 @@ void main() {
     });
 
     test('ReportType and ExplanationPersona parsing', () {
-      expect(ReportType.fromJson('quick_summary'), equals(ReportType.quickSummary));
-      expect(ReportType.fromJson('interview_report'), equals(ReportType.interviewReport));
-      expect(ExplanationPersona.fromJson('child_friendly'), equals(ExplanationPersona.childFriendly));
+      expect(ReportType.fromJson('quick_summary'),
+          equals(ReportType.quickSummary));
+      expect(ReportType.fromJson('interview_report'),
+          equals(ReportType.interviewReport));
+      expect(ExplanationPersona.fromJson('child_friendly'),
+          equals(ExplanationPersona.childFriendly));
     });
   });
 }

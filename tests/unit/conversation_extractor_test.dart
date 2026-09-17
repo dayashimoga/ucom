@@ -17,7 +17,8 @@ void main() {
           speakerId: 'p1',
           speakerName: 'Alice',
           startTime: 1000,
-          originalText: 'What is our primary latency target for offline translation?',
+          originalText:
+              'What is our primary latency target for offline translation?',
           originalLanguage: 'en',
           translatedText: '¿Cuál es nuestro objetivo de latencia principal?',
           targetLanguage: 'es',
@@ -27,9 +28,11 @@ void main() {
           speakerId: 'p2',
           speakerName: 'Bob',
           startTime: 3000,
-          originalText: 'Our target is strictly sub-50 milliseconds on modern CPUs.',
+          originalText:
+              'Our target is strictly sub-50 milliseconds on modern CPUs.',
           originalLanguage: 'en',
-          translatedText: 'Nuestro objetivo es estrictamente inferior a 50 milisegundos.',
+          translatedText:
+              'Nuestro objetivo es estrictamente inferior a 50 milisegundos.',
           targetLanguage: 'es',
         ),
       ];
@@ -49,7 +52,8 @@ void main() {
           speakerId: 'p1',
           speakerName: 'Alice',
           startTime: 1000,
-          originalText: 'Action item: @Bob please ensure all unit tests achieve 90% branch coverage before release.',
+          originalText:
+              'Action item: @Bob please ensure all unit tests achieve 90% branch coverage before release.',
           originalLanguage: 'en',
           translatedText: 'Elemento de acción...',
           targetLanguage: 'es',
@@ -70,7 +74,8 @@ void main() {
           speakerId: 'p1',
           speakerName: 'Alice',
           startTime: 1000,
-          originalText: 'We decided to use Podman as the mandatory rootless container runtime.',
+          originalText:
+              'We decided to use Podman as the mandatory rootless container runtime.',
           originalLanguage: 'en',
           translatedText: 'Decidimos usar Podman...',
           targetLanguage: 'es',
@@ -79,7 +84,8 @@ void main() {
 
       final decisions = extractor.extractDecisions(segments);
       expect(decisions.length, equals(1));
-      expect(decisions.first.decisionText, contains('Podman as the mandatory rootless container runtime'));
+      expect(decisions.first.decisionText,
+          contains('Podman as the mandatory rootless container runtime'));
     });
 
     test('extracts high-relevance topics from conversation', () {
@@ -89,7 +95,8 @@ void main() {
           speakerId: 'p1',
           speakerName: 'Alice',
           startTime: 1000,
-          originalText: 'The architecture must prioritize offline-first privacy.',
+          originalText:
+              'The architecture must prioritize offline-first privacy.',
           originalLanguage: 'en',
           translatedText: '...',
           targetLanguage: 'es',
@@ -107,7 +114,11 @@ void main() {
       ];
 
       final topics = extractor.extractTopics(segments);
-      expect(topics.any((t) => t.name.toLowerCase() == 'architecture' || t.name.toLowerCase() == 'offline'), isTrue);
+      expect(
+          topics.any((t) =>
+              t.name.toLowerCase() == 'architecture' ||
+              t.name.toLowerCase() == 'offline'),
+          isTrue);
     });
   });
 }

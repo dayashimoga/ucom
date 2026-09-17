@@ -22,7 +22,9 @@ void main() {
       );
     }
 
-    testWidgets('renders phone layout with app bar, language selector and action bar', (tester) async {
+    testWidgets(
+        'renders phone layout with app bar, language selector and action bar',
+        (tester) async {
       tester.view.physicalSize = const Size(390, 844);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -68,7 +70,8 @@ void main() {
       expect(controller.currentConversation.segments, isNotEmpty);
     });
 
-    testWidgets('renders split layout on tablet / desktop viewports', (tester) async {
+    testWidgets('renders split layout on tablet / desktop viewports',
+        (tester) async {
       tester.view.physicalSize = const Size(1280, 800);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -80,7 +83,8 @@ void main() {
       expect(find.text('Active Intelligence & Nuance'), findsOneWidget);
     });
 
-    testWidgets('displays actionable error snackbar when error occurs', (tester) async {
+    testWidgets('displays actionable error snackbar when error occurs',
+        (tester) async {
       tester.view.physicalSize = const Size(390, 844);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -88,10 +92,12 @@ void main() {
       await tester.pumpWidget(createTestApp());
       await tester.pumpAndSettle();
 
-      controller.setActionableError('Microphone permission denied. Grant access in system settings.');
+      controller.setActionableError(
+          'Microphone permission denied. Grant access in system settings.');
       await tester.pump();
 
-      expect(find.textContaining('Microphone permission denied'), findsOneWidget);
+      expect(
+          find.textContaining('Microphone permission denied'), findsOneWidget);
     });
   });
 }

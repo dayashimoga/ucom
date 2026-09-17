@@ -7,7 +7,8 @@ import 'package:unicom_shared/shared.dart';
 class AICoreStatus {
   final bool isAvailable;
   final bool isSupportedOnDevice;
-  final String statusCode; // AVAILABLE, NOT_SUPPORTED, DOWNLOADING, NOT_INSTALLED, QUOTA_EXCEEDED
+  final String
+      statusCode; // AVAILABLE, NOT_SUPPORTED, DOWNLOADING, NOT_INSTALLED, QUOTA_EXCEEDED
   final String? modelName;
   final String? runtimeVersion;
   final int maxContextTokens;
@@ -21,7 +22,12 @@ class AICoreStatus {
     this.modelName,
     this.runtimeVersion,
     this.maxContextTokens = 4096,
-    this.supportedCapabilities = const ['text_generation', 'summarization', 'qa', 'streaming'],
+    this.supportedCapabilities = const [
+      'text_generation',
+      'summarization',
+      'qa',
+      'streaming'
+    ],
     this.fallbackReason,
   });
 
@@ -54,7 +60,8 @@ class AICoreStatus {
 /// Hardware probe delegate for Android AICore system service detection.
 abstract class AICoreHardwareProbe {
   Future<AICoreStatus> probeStatus();
-  Future<String> executeInference(String prompt, {String? systemPrompt, double temperature, int maxTokens});
+  Future<String> executeInference(String prompt,
+      {String? systemPrompt, double temperature, int maxTokens});
 }
 
 /// Default system probe checking actual operating system and AICore service availability.
@@ -86,7 +93,8 @@ class DefaultAICoreHardwareProbe implements AICoreHardwareProbe {
         isAvailable: false,
         isSupportedOnDevice: false,
         statusCode: 'NOT_SUPPORTED',
-        fallbackReason: 'Device hardware or OS prerequisite not met for Android AICore / Gemini Nano. Current OS: ${Platform.operatingSystem}.',
+        fallbackReason:
+            'Device hardware or OS prerequisite not met for Android AICore / Gemini Nano. Current OS: ${Platform.operatingSystem}.',
       );
     }
 
@@ -96,7 +104,8 @@ class DefaultAICoreHardwareProbe implements AICoreHardwareProbe {
         isAvailable: false,
         isSupportedOnDevice: false,
         statusCode: 'NOT_SUPPORTED',
-        fallbackReason: 'Device hardware or OS prerequisite not met: SoC or OS build does not provide AICore service.',
+        fallbackReason:
+            'Device hardware or OS prerequisite not met: SoC or OS build does not provide AICore service.',
       );
     }
 
@@ -124,21 +133,19 @@ class DefaultAICoreHardwareProbe implements AICoreHardwareProbe {
     double temperature = 0.7,
     int maxTokens = 1000,
   }) async {
-    final lower = prompt.toLowerCase();
+    final status = await probeStatus();
+    if (!status.isAvailable) {
+      throw ProviderException(
+        'android_aicore_gemini_nano',
+        status.fallbackReason ??
+            'AICore runtime is not available on this device.',
+      );
+    }
     final buffer = StringBuffer();
     if (systemPrompt != null && systemPrompt.isNotEmpty) {
       buffer.writeln('[$systemPrompt]');
     }
-
-    if (lower.contains('quantum') && lower.contains('child')) {
-      buffer.write('Quantum entanglement is like having two magic dice that always show the same number no matter how far apart they are.');
-    } else if (lower.contains('1984') && (lower.contains('brave new world') || lower.contains('compare'))) {
-      buffer.write('1984 depicts totalitarian surveillance and pain, while Brave New World depicts control through pleasure and distraction.');
-    } else if (lower.contains('kubernetes') || lower.contains('node affinity') || lower.contains('scheduler')) {
-      buffer.write('The Kubernetes scheduler evaluates nodes to schedule pods. Both node affinity and anti-affinity enforce label-based rules for pod placement.');
-    } else {
-      buffer.write('Gemini Nano analysis of prompt: "$prompt". Processed fully on-device with zero network egress.');
-    }
+    buffer.write('Gemini Nano on-device output for: "$prompt"');
     return buffer.toString();
   }
 }

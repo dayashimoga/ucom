@@ -23,7 +23,8 @@ class ConversationBubble extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Semantics(
-      label: 'Speech segment from ${segment.speakerName}. Original: ${segment.originalText}. Translation: ${segment.translatedText}',
+      label:
+          'Speech segment from ${segment.speakerName}. Original: ${segment.originalText}. Translation: ${segment.translatedText}',
       container: true,
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 8),
@@ -31,7 +32,10 @@ class ConversationBubble extends StatelessWidget {
         decoration: BoxDecoration(
           color: isMe
               ? UnicomTheme.primaryBlue.withOpacity(0.08)
-              : (Theme.of(context).cardTheme.color ?? (isDark ? UnicomTheme.darkSurface : UnicomTheme.lightSurface)),
+              : (Theme.of(context).cardTheme.color ??
+                  (isDark
+                      ? UnicomTheme.darkSurface
+                      : UnicomTheme.lightSurface)),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isMe
@@ -48,10 +52,16 @@ class ConversationBubble extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 12,
-                  backgroundColor: isMe ? UnicomTheme.primaryBlue : UnicomTheme.accentCyan,
+                  backgroundColor:
+                      isMe ? UnicomTheme.primaryBlue : UnicomTheme.accentCyan,
                   child: Text(
-                    segment.speakerName.isNotEmpty ? segment.speakerName[0].toUpperCase() : 'P',
-                    style: const TextStyle(fontSize: 12, color: Colors.white, fontWeight: FontWeight.bold),
+                    segment.speakerName.isNotEmpty
+                        ? segment.speakerName[0].toUpperCase()
+                        : 'P',
+                    style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -63,10 +73,12 @@ class ConversationBubble extends StatelessWidget {
                     children: [
                       Text(
                         segment.speakerName,
-                        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w700, fontSize: 13),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
                           color: isDark ? Colors.white10 : Colors.black12,
                           borderRadius: BorderRadius.circular(4),
@@ -88,11 +100,13 @@ class ConversationBubble extends StatelessWidget {
                   tooltip: 'Copy text',
                   onPressed: () {
                     Clipboard.setData(ClipboardData(
-                      text: '${segment.originalText}\n${segment.translatedText}',
+                      text:
+                          '${segment.originalText}\n${segment.translatedText}',
                     ));
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('Copied transcript and translation to clipboard'),
+                        content: Text(
+                            'Copied transcript and translation to clipboard'),
                         duration: Duration(seconds: 1),
                       ),
                     );
@@ -122,37 +136,50 @@ class ConversationBubble extends StatelessWidget {
             // ORIGINAL SECTION
             const Text(
               'ORIGINAL',
-              style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.8, color: Colors.grey),
+              style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.8,
+                  color: Colors.grey),
             ),
             const SizedBox(height: 2),
             SelectableText(
               segment.originalText,
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500, height: 1.4),
+              style: const TextStyle(
+                  fontSize: 15, fontWeight: FontWeight.w500, height: 1.4),
             ),
 
             // TRANSLATION SECTION
-            if (segment.translatedText.isNotEmpty && segment.translatedText != segment.originalText) ...[
+            if (segment.translatedText.isNotEmpty &&
+                segment.translatedText != segment.originalText) ...[
               const SizedBox(height: 10),
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
                   color: isDark
                       ? Colors.black.withOpacity(0.25)
                       : Colors.blueGrey.withOpacity(0.06),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: UnicomTheme.accentCyan.withOpacity(0.25)),
+                  border: Border.all(
+                      color: UnicomTheme.accentCyan.withOpacity(0.25)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Row(
                       children: [
-                        Icon(Icons.translate, size: 12, color: UnicomTheme.accentCyan),
+                        Icon(Icons.translate,
+                            size: 12, color: UnicomTheme.accentCyan),
                         SizedBox(width: 4),
                         Text(
                           'TRANSLATION',
-                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.8, color: UnicomTheme.accentCyan),
+                          style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.8,
+                              color: UnicomTheme.accentCyan),
                         ),
                       ],
                     ),

@@ -22,7 +22,9 @@ void main() {
       );
     }
 
-    testWidgets('meets minimum 48x48 dp touch target dimensions on primary controls', (tester) async {
+    testWidgets(
+        'meets minimum 48x48 dp touch target dimensions on primary controls',
+        (tester) async {
       await tester.pumpWidget(createTestApp());
       await tester.pumpAndSettle();
 
@@ -41,7 +43,9 @@ void main() {
       expect(sendSize.height, greaterThanOrEqualTo(24.0));
     });
 
-    testWidgets('verifies semantic nodes exist for assistive technologies and screen readers', (tester) async {
+    testWidgets(
+        'verifies semantic nodes exist for assistive technologies and screen readers',
+        (tester) async {
       final handle = tester.ensureSemantics();
 
       await tester.pumpWidget(createTestApp());
@@ -54,7 +58,9 @@ void main() {
       handle.dispose();
     });
 
-    testWidgets('keyboard focus traversal moves between input and interactive actions', (tester) async {
+    testWidgets(
+        'keyboard focus traversal moves between input and interactive actions',
+        (tester) async {
       await tester.pumpWidget(createTestApp());
       await tester.pumpAndSettle();
 
@@ -68,7 +74,8 @@ void main() {
     test('theme verifies high-contrast color values for readability', () {
       final darkTheme = UnicomTheme.darkTheme;
       expect(darkTheme.scaffoldBackgroundColor, equals(UnicomTheme.darkBg));
-      expect(darkTheme.colorScheme.primary, equals(UnicomTheme.primaryBlueLight));
+      expect(
+          darkTheme.colorScheme.primary, equals(UnicomTheme.primaryBlueLight));
 
       // Light theme contrast
       final lightTheme = UnicomTheme.lightTheme;

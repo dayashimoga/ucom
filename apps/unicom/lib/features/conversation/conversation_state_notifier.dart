@@ -17,12 +17,12 @@ class ConversationController extends ChangeNotifier {
   final StorageProvider storage;
   final LocalModelManager modelManager;
 
-  late final AndroidAICoreProvider androidAICore;
-  late final LocalLLMProvider localLLM;
-  late final CloudLLMProvider cloudLLM;
-  late final AIProviderRouter router;
-  late final RagRetrievalProvider ragRetrieval;
-  late final KnowledgeEngine knowledgeEngine;
+  late AndroidAICoreProvider androidAICore;
+  late LocalLLMProvider localLLM;
+  late CloudLLMProvider cloudLLM;
+  late AIProviderRouter router;
+  late RagRetrievalProvider ragRetrieval;
+  late KnowledgeEngine knowledgeEngine;
 
   ConversationState _state = ConversationState.idle;
   ConversationState get state => _state;
@@ -145,8 +145,13 @@ class ConversationController extends ChangeNotifier {
       executionMode: _executionMode,
       startedAt: now,
       participants: [
-        Participant(id: 'p1', name: 'You', isHost: true, preferredLanguage: _sourceLanguage),
-        Participant(id: 'p2', name: 'Partner', preferredLanguage: _targetLanguage),
+        Participant(
+            id: 'p1',
+            name: 'You',
+            isHost: true,
+            preferredLanguage: _sourceLanguage),
+        Participant(
+            id: 'p2', name: 'Partner', preferredLanguage: _targetLanguage),
       ],
     );
   }
@@ -174,6 +179,12 @@ class ConversationController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void clearSession() {
+    _startNewSession();
+    _selectedExplanation = null;
+    notifyListeners();
+  }
+
   void setCloudConfig({
     String? apiKey,
     String? modelName,
@@ -181,11 +192,36 @@ class ConversationController extends ChangeNotifier {
     int? maxTokens,
     int? timeoutMs,
   }) {
-    if (apiKey != null) _cloudApiKey = apiKey;
+    if (apiKey != null) {
+      _cloudApiKey = apiKey;
+      // Asynchronously persist to secure encrypted vault
+      SecureKeyStorage().saveKey('gemini_api_key', apiKey);
+    }
     if (modelName != null) _cloudModelName = modelName;
     if (temperature != null) _cloudTemperature = temperature;
     if (maxTokens != null) _cloudMaxTokens = maxTokens;
     if (timeoutMs != null) _cloudTimeoutMs = timeoutMs;
+
+    cloudLLM = CloudLLMProvider(
+      executionMode: _executionMode,
+      apiKey: _cloudApiKey,
+      modelName: _cloudModelName,
+      timeoutMs: _cloudTimeoutMs,
+    );
+
+    router = AIProviderRouter(
+      androidProvider: androidAICore,
+      localProvider: localLLM,
+      cloudProvider: cloudLLM,
+      executionMode: _executionMode,
+    );
+
+    knowledgeEngine = KnowledgeEngine(
+      router: router,
+      retrievalProvider: ragRetrieval,
+      translationProvider: translator,
+    );
+
     notifyListeners();
   }
 
@@ -239,7 +275,9 @@ class ConversationController extends ChangeNotifier {
       isFinal: true,
     );
 
-    final updatedSegments = List<ConversationSegment>.from(_currentConversation.segments)..add(newSegment);
+    final updatedSegments =
+        List<ConversationSegment>.from(_currentConversation.segments)
+          ..add(newSegment);
     _currentConversation = Conversation(
       id: _currentConversation.id,
       title: _currentConversation.title,
@@ -263,7 +301,8 @@ class ConversationController extends ChangeNotifier {
     return response;
   }
 
-  Future<void> sendTextInput(String text, {String speakerName = 'You', String? speakerId}) async {
+  Future<void> sendTextInput(String text,
+      {String speakerName = 'You', String? speakerId}) async {
     final trimmed = text.trim();
     if (trimmed.isEmpty) return;
 
@@ -305,7 +344,9 @@ class ConversationController extends ChangeNotifier {
       isFinal: true,
     );
 
-    final updatedSegments = List<ConversationSegment>.from(_currentConversation.segments)..add(newSegment);
+    final updatedSegments =
+        List<ConversationSegment>.from(_currentConversation.segments)
+          ..add(newSegment);
 
     // 4. Extract Questions, Decisions, Topics, Action Items
     final questions = extractor.extractQuestions(updatedSegments);
@@ -315,9 +356,13 @@ class ConversationController extends ChangeNotifier {
     final unresolved = extractor.extractUnresolvedQuestions(questions);
 
     // 5. If Interview Mode, evaluate answer
-    List<InterviewAssessment> assessments = List.from(_currentConversation.assessments);
-    if (_mode == ApplicationMode.interviewPractice && updatedSegments.length >= 2) {
-      final lastQ = questions.isNotEmpty ? questions.last.questionText : 'Tell me about a complex project.';
+    List<InterviewAssessment> assessments =
+        List.from(_currentConversation.assessments);
+    if (_mode == ApplicationMode.interviewPractice &&
+        updatedSegments.length >= 2) {
+      final lastQ = questions.isNotEmpty
+          ? questions.last.questionText
+          : 'Tell me about a complex project.';
       final assessment = await interviewEvaluator.evaluateAnswer(
         question: lastQ,
         candidateAnswer: trimmed,
@@ -380,7 +425,8 @@ class ConversationController extends ChangeNotifier {
         notifyListeners();
       }
     } catch (e) {
-      _actionableError = 'Voice transcription error: ${e is UnicomException ? e.message : e.toString()}';
+      _actionableError =
+          'Voice transcription error: ${e is UnicomException ? e.message : e.toString()}';
       _state = ConversationState.idle;
       notifyListeners();
     }
@@ -390,7 +436,8 @@ class ConversationController extends ChangeNotifier {
     _state = ConversationState.speaking;
     notifyListeners();
 
-    await tts.synthesize(text, options: SynthesisOptions(language: _targetLanguage));
+    await tts.synthesize(text,
+        options: SynthesisOptions(language: _targetLanguage));
 
     _state = ConversationState.idle;
     notifyListeners();

@@ -55,9 +55,13 @@ void main() {
       expect(deletedAgain, isFalse);
     });
 
-    test('lists conversations with filtering, searching, and pagination', () async {
-      final t1 = DateTime.now().subtract(const Duration(minutes: 10)).toIso8601String();
-      final t2 = DateTime.now().subtract(const Duration(minutes: 5)).toIso8601String();
+    test('lists conversations with filtering, searching, and pagination',
+        () async {
+      final t1 = DateTime.now()
+          .subtract(const Duration(minutes: 10))
+          .toIso8601String();
+      final t2 =
+          DateTime.now().subtract(const Duration(minutes: 5)).toIso8601String();
       final t3 = DateTime.now().toIso8601String();
 
       final c1 = Conversation(
@@ -121,12 +125,14 @@ void main() {
       expect(all[2].id, equals('c1'));
 
       // Filter by mode
-      final meetings = await storage.listConversations(mode: ApplicationMode.meeting);
+      final meetings =
+          await storage.listConversations(mode: ApplicationMode.meeting);
       expect(meetings.length, equals(1));
       expect(meetings.first.id, equals('c1'));
 
       // Filter by executionMode
-      final cloudOnly = await storage.listConversations(executionMode: ExecutionMode.cloud);
+      final cloudOnly =
+          await storage.listConversations(executionMode: ExecutionMode.cloud);
       expect(cloudOnly.length, equals(1));
       expect(cloudOnly.first.id, equals('c2'));
 
@@ -158,7 +164,8 @@ void main() {
       expect(outOfBounds, isEmpty);
     });
 
-    test('saves and retrieves reports, and cleans up on conversation deletion', () async {
+    test('saves and retrieves reports, and cleans up on conversation deletion',
+        () async {
       final report1 = GeneratedReport(
         id: 'rep_1',
         conversationId: 'c_rep',
@@ -239,8 +246,10 @@ void main() {
       expect(deleted, isTrue);
     });
 
-    test('default constructor creates provider with custom temp directory', () async {
-      final tempDir = Directory.systemTemp.createTempSync('unicom_test_storage_');
+    test('default constructor creates provider with custom temp directory',
+        () async {
+      final tempDir =
+          Directory.systemTemp.createTempSync('unicom_test_storage_');
       try {
         final provider = LocalStorageProvider(tempDir);
         expect(provider.id, isNotEmpty);

@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'package:test/test.dart';
 import 'package:unicom_contracts/contracts.dart';
 import 'package:unicom_ai_core/ai_core.dart';
@@ -16,7 +15,8 @@ void main() {
       // Translate
       final trans = await translator.translate(
         'hello world',
-        options: const TranslationOptions(sourceLanguage: 'en', targetLanguage: 'es'),
+        options: const TranslationOptions(
+            sourceLanguage: 'en', targetLanguage: 'es'),
       );
       expect(trans.translatedText, contains('hola'));
 
@@ -62,13 +62,15 @@ void main() {
     });
 
     // Flow 2: Offline → Translate → Report (Network Disabled, 0 Leaks)
-    test('E2E Flow 2: Network disabled -> offline translate -> report', () async {
+    test('E2E Flow 2: Network disabled -> offline translate -> report',
+        () async {
       final translator = OfflineTranslationEngine();
       final reportGenerator = ReportGenerator();
 
       final trans = await translator.translate(
         'system architecture',
-        options: const TranslationOptions(sourceLanguage: 'en', targetLanguage: 'de'),
+        options: const TranslationOptions(
+            sourceLanguage: 'en', targetLanguage: 'de'),
       );
       expect(trans.translatedText.toLowerCase(), contains('systemarchitektur'));
 
@@ -100,9 +102,13 @@ void main() {
     });
 
     // Flow 3: Interview Practice → Question → Answer → Feedback → Report
-    test('E2E Flow 3: Interview Practice -> question -> answer -> feedback -> report', () async {
-      const question = 'How do you design a scalable event-driven messaging system?';
-      const candidateAnswer = 'First, I analyze throughput and delivery guarantees. Then, I configure partitioned topics with idempotency keys and consumers organized into consumer groups. Because of this structure, the system scales horizontally under load while guaranteeing at-least-once delivery.';
+    test(
+        'E2E Flow 3: Interview Practice -> question -> answer -> feedback -> report',
+        () async {
+      const question =
+          'How do you design a scalable event-driven messaging system?';
+      const candidateAnswer =
+          'First, I analyze throughput and delivery guarantees. Then, I configure partitioned topics with idempotency keys and consumers organized into consumer groups. Because of this structure, the system scales horizontally under load while guaranteeing at-least-once delivery.';
 
       final evaluator = InterviewEvaluator();
       final assessment = await evaluator.evaluateAnswer(
@@ -134,7 +140,8 @@ void main() {
     });
 
     // Flow 4: Meeting → Segments → Questions/Actions → Minutes Report
-    test('E2E Flow 4: Meeting -> segments -> questions/actions -> report', () async {
+    test('E2E Flow 4: Meeting -> segments -> questions/actions -> report',
+        () async {
       final segments = [
         ConversationSegment(
           id: 's1',
@@ -151,7 +158,8 @@ void main() {
           speakerId: 'p2',
           speakerName: 'Lead Engineer',
           startTime: 200,
-          originalText: 'Yes, we decided to run all tests in Podman and action item: @DevSecOps will generate the SBOM and release checksums.',
+          originalText:
+              'Yes, we decided to run all tests in Podman and action item: @DevSecOps will generate the SBOM and release checksums.',
           originalLanguage: 'en',
           translatedText: 'Sí, decidimos ejecutar...',
           targetLanguage: 'es',
@@ -195,7 +203,9 @@ void main() {
     });
 
     // Flow 5: Multi-Platform / Model Lifecycle E2E
-    test('E2E Flow 5: Model Manager catalog verification, download & activation', () async {
+    test(
+        'E2E Flow 5: Model Manager catalog verification, download & activation',
+        () async {
       final modelManager = LocalModelManager();
       final models = await modelManager.listModels();
       expect(models, isNotEmpty);
@@ -205,11 +215,13 @@ void main() {
       expect(valid, isTrue);
 
       // Download new pack
-      final downloaded = await modelManager.downloadModel('whisper-tiny-quantized');
+      final downloaded =
+          await modelManager.downloadModel('whisper-tiny-quantized');
       expect(downloaded.isInstalled, isTrue);
 
       // Activate pack
-      final activated = await modelManager.activateModel('whisper-tiny-quantized');
+      final activated =
+          await modelManager.activateModel('whisper-tiny-quantized');
       expect(activated, isTrue);
     });
   });

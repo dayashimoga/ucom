@@ -85,8 +85,8 @@ class ExplanationResult {
         'originalText': originalText,
         if (translatedText != null) 'translatedText': translatedText,
         if (targetLanguage != null) 'targetLanguage': targetLanguage,
-        'explanations': explanations.map(
-            (key, value) => MapEntry(key.toJson(), value.toJson())),
+        'explanations': explanations
+            .map((key, value) => MapEntry(key.toJson(), value.toJson())),
         'createdAt': createdAt,
       };
 
@@ -96,8 +96,7 @@ class ExplanationResult {
       final raw = json['explanations'] as Map<String, dynamic>;
       raw.forEach((k, v) {
         final persona = ExplanationPersona.fromJson(k);
-        expMap[persona] =
-            ExplanationEntry.fromJson(v as Map<String, dynamic>);
+        expMap[persona] = ExplanationEntry.fromJson(v as Map<String, dynamic>);
       });
     }
     return ExplanationResult(
@@ -311,8 +310,7 @@ class TopicItem {
                 ?.map((e) => e as String)
                 .toList() ??
             const [],
-        relevanceScore:
-            (json['relevanceScore'] as num?)?.toDouble() ?? 1.0,
+        relevanceScore: (json['relevanceScore'] as num?)?.toDouble() ?? 1.0,
       );
 }
 
@@ -398,11 +396,10 @@ class InterviewAssessment {
                 ?.map((e) => e as String)
                 .toList() ??
             const [],
-        recommendedFollowUps:
-            (json['recommendedFollowUps'] as List<dynamic>?)
-                    ?.map((e) => e as String)
-                    .toList() ??
-                const [],
+        recommendedFollowUps: (json['recommendedFollowUps'] as List<dynamic>?)
+                ?.map((e) => e as String)
+                .toList() ??
+            const [],
         studyPlan: (json['studyPlan'] as List<dynamic>?)
                 ?.map((e) => e as String)
                 .toList() ??

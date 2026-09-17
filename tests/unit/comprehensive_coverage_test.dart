@@ -14,36 +14,46 @@ void main() {
       for (final mode in ExecutionMode.values) {
         expect(ExecutionMode.fromJson(mode.toJson()), equals(mode));
       }
-      expect(ExecutionMode.fromJson('invalid_mode'), equals(ExecutionMode.privateOffline));
+      expect(ExecutionMode.fromJson('invalid_mode'),
+          equals(ExecutionMode.privateOffline));
 
       // ApplicationMode
       for (final mode in ApplicationMode.values) {
         expect(ApplicationMode.fromJson(mode.toJson()), equals(mode));
       }
-      expect(ApplicationMode.fromJson('unknown_mode'), equals(ApplicationMode.general));
+      expect(ApplicationMode.fromJson('unknown_mode'),
+          equals(ApplicationMode.general));
 
       // ExplanationPersona
       for (final persona in ExplanationPersona.values) {
         expect(ExplanationPersona.fromJson(persona.toJson()), equals(persona));
       }
-      expect(ExplanationPersona.fromJson('unknown_persona'), equals(ExplanationPersona.simple));
+      expect(ExplanationPersona.fromJson('unknown_persona'),
+          equals(ExplanationPersona.simple));
 
       // ConversationState
       for (final state in ConversationState.values) {
         expect(ConversationState.fromJson(state.toJson()), equals(state));
       }
-      expect(ConversationState.fromJson('UNKNOWN'), equals(ConversationState.idle));
+      expect(ConversationState.fromJson('UNKNOWN'),
+          equals(ConversationState.idle));
 
       // ReportType
       for (final type in ReportType.values) {
         expect(ReportType.fromJson(type.toJson()), equals(type));
       }
-      expect(ReportType.fromJson('unknown_report'), equals(ReportType.quickSummary));
+      expect(ReportType.fromJson('unknown_report'),
+          equals(ReportType.quickSummary));
     });
 
     test('all domain models toJson and fromJson full coverage', () {
       // Participant
-      final p = Participant(id: 'p1', name: 'Alice', role: 'Architect', isHost: true, preferredLanguage: 'en');
+      final p = Participant(
+          id: 'p1',
+          name: 'Alice',
+          role: 'Architect',
+          isHost: true,
+          preferredLanguage: 'en');
       final pJson = p.toJson();
       final pRestored = Participant.fromJson(pJson);
       expect(pRestored.id, equals('p1'));
@@ -51,7 +61,10 @@ void main() {
       expect(pRestored.preferredLanguage, equals('en'));
 
       // ExplanationEntry & ExplanationResult
-      final entry = ExplanationEntry(persona: ExplanationPersona.simple, content: 'Simple text', keyPoints: ['point1']);
+      final entry = ExplanationEntry(
+          persona: ExplanationPersona.simple,
+          content: 'Simple text',
+          keyPoints: ['point1']);
       final entryJson = entry.toJson();
       final entryRestored = ExplanationEntry.fromJson(entryJson);
       expect(entryRestored.persona, equals(ExplanationPersona.simple));
@@ -70,7 +83,8 @@ void main() {
       final expRestored = ExplanationResult.fromJson(expJson);
       expect(expRestored.id, equals('exp1'));
       expect(expRestored.segmentId, equals('seg1'));
-      expect(expRestored.explanations[ExplanationPersona.simple]?.content, equals('Simple text'));
+      expect(expRestored.explanations[ExplanationPersona.simple]?.content,
+          equals('Simple text'));
 
       // ConversationSegment
       final seg = ConversationSegment(
@@ -137,14 +151,19 @@ void main() {
       expect(decRestored.context, equals('Meeting context'));
 
       // TopicItem
-      final top = TopicItem(id: 't1', name: 'Security', keywords: ['auth', 'crypto'], relevanceScore: 0.9);
+      final top = TopicItem(
+          id: 't1',
+          name: 'Security',
+          keywords: ['auth', 'crypto'],
+          relevanceScore: 0.9);
       final topJson = top.toJson();
       final topRestored = TopicItem.fromJson(topJson);
       expect(topRestored.id, equals('t1'));
       expect(topRestored.keywords.length, equals(2));
 
       // InterviewRubricScore & InterviewAssessment
-      final rubric = InterviewRubricScore(criterion: 'clarity', score: 9, feedback: 'Great');
+      final rubric = InterviewRubricScore(
+          criterion: 'clarity', score: 9, feedback: 'Great');
       final rubricJson = rubric.toJson();
       final rubricRestored = InterviewRubricScore.fromJson(rubricJson);
       expect(rubricRestored.score, equals(9));
@@ -263,7 +282,8 @@ void main() {
     });
 
     test('exceptions hierarchy coverage: toString and toJson', () {
-      const err = UnicomException('Base error', code: 'BASE_ERR', statusCode: 500, details: {'key': 'val'});
+      const err = UnicomException('Base error',
+          code: 'BASE_ERR', statusCode: 500, details: {'key': 'val'});
       expect(err.toString(), contains('BASE_ERR'));
       expect(err.toJson()['statusCode'], equals(500));
 
@@ -284,7 +304,8 @@ void main() {
       expect(provErr.providerId, equals('p_id'));
       expect(provErr.statusCode, equals(502));
 
-      const checkErr = ChecksumMismatchException('m1', 'expected_hash', 'actual_hash');
+      const checkErr =
+          ChecksumMismatchException('m1', 'expected_hash', 'actual_hash');
       expect(checkErr.statusCode, equals(422));
     });
 
@@ -299,10 +320,12 @@ void main() {
       expect(TextUtils.countWords('  three   words  here '), equals(3));
       expect(TextUtils.estimateReadingTimeMinutes('word ' * 360), equals(2));
       expect(TextUtils.truncate('Short', 10), equals('Short'));
-      expect(TextUtils.truncate('Longer text that needs truncation', 15), endsWith('...'));
+      expect(TextUtils.truncate('Longer text that needs truncation', 15),
+          endsWith('...'));
     });
 
-    test('exporters coverage: MarkdownExporter, TextExporter, JsonExporter', () {
+    test('exporters coverage: MarkdownExporter, TextExporter, JsonExporter',
+        () {
       final rep = GeneratedReport(
         id: 'rep_exp',
         conversationId: 'c1',
@@ -357,19 +380,32 @@ void main() {
               originalText: 'System architecture review',
               createdAt: '2026-09-17T00:00:00Z',
               explanations: {
-                ExplanationPersona.simple: ExplanationEntry(persona: ExplanationPersona.simple, content: 'Simple'),
-                ExplanationPersona.grammar: ExplanationEntry(persona: ExplanationPersona.grammar, content: 'Grammar'),
-                ExplanationPersona.culturalContext: ExplanationEntry(persona: ExplanationPersona.culturalContext, content: 'Culture'),
-                ExplanationPersona.terminology: ExplanationEntry(persona: ExplanationPersona.terminology, content: 'Terms'),
+                ExplanationPersona.simple: ExplanationEntry(
+                    persona: ExplanationPersona.simple, content: 'Simple'),
+                ExplanationPersona.grammar: ExplanationEntry(
+                    persona: ExplanationPersona.grammar, content: 'Grammar'),
+                ExplanationPersona.culturalContext: ExplanationEntry(
+                    persona: ExplanationPersona.culturalContext,
+                    content: 'Culture'),
+                ExplanationPersona.terminology: ExplanationEntry(
+                    persona: ExplanationPersona.terminology, content: 'Terms'),
               },
             ),
           ),
         ],
         questions: [
-          ExtractedQuestion(id: 'q1', questionText: 'Is the release ready?', isAnswered: false, followUpQuestions: ['When?']),
+          ExtractedQuestion(
+              id: 'q1',
+              questionText: 'Is the release ready?',
+              isAnswered: false,
+              followUpQuestions: ['When?']),
         ],
         actionItems: [
-          ActionItem(id: 'a1', title: 'Verify test coverage', status: 'completed', assignee: 'Bob'),
+          ActionItem(
+              id: 'a1',
+              title: 'Verify test coverage',
+              status: 'completed',
+              assignee: 'Bob'),
           ActionItem(id: 'a2', title: 'Deploy artifacts', status: 'pending'),
         ],
         decisions: [
@@ -422,7 +458,8 @@ void main() {
       expect(res1.translatedText, equals('Respuesta personalizada'));
 
       final fakeTTS = DeterministicFakeTTSProvider();
-      final audio = await fakeTTS.synthesize('Synthesize deterministic speech text');
+      final audio =
+          await fakeTTS.synthesize('Synthesize deterministic speech text');
       expect(audio.mimeType, equals('audio/wav'));
       expect(audio.durationMs, greaterThan(0));
     });
@@ -431,16 +468,20 @@ void main() {
       final manager = LocalModelManager();
 
       // Download non-existent model throws NotFoundException
-      expect(() async => await manager.downloadModel('non-existent'), throwsA(isA<NotFoundException>()));
+      expect(() async => await manager.downloadModel('non-existent'),
+          throwsA(isA<NotFoundException>()));
 
       // Checksum non-existent model throws NotFoundException
-      expect(() async => await manager.verifyChecksum('non-existent'), throwsA(isA<NotFoundException>()));
+      expect(() async => await manager.verifyChecksum('non-existent'),
+          throwsA(isA<NotFoundException>()));
 
       // Activate uninstalled model throws ValidationException
-      expect(() async => await manager.activateModel('whisper-tiny-quantized'), throwsA(isA<ValidationException>()));
+      expect(() async => await manager.activateModel('whisper-tiny-quantized'),
+          throwsA(isA<ValidationException>()));
 
       // Remove non-existent model throws NotFoundException
-      expect(() async => await manager.removeModel('non-existent'), throwsA(isA<NotFoundException>()));
+      expect(() async => await manager.removeModel('non-existent'),
+          throwsA(isA<NotFoundException>()));
 
       // Remove uninstalled model returns false
       final removed = await manager.removeModel('piper-neural-voice-en');
@@ -465,13 +506,15 @@ void main() {
       final engine = OfflineTranslationEngine();
 
       // Empty text
-      final emptyRes = await engine.translate('   ', options: const TranslationOptions(targetLanguage: 'es'));
+      final emptyRes = await engine.translate('   ',
+          options: const TranslationOptions(targetLanguage: 'es'));
       expect(emptyRes.translatedText, isEmpty);
 
       // Auto source language detection
       final autoRes = await engine.translate(
         'வணக்கம்',
-        options: const TranslationOptions(sourceLanguage: 'auto', targetLanguage: 'en'),
+        options: const TranslationOptions(
+            sourceLanguage: 'auto', targetLanguage: 'en'),
       );
       expect(autoRes.translatedText.toLowerCase(), equals('hello'));
       expect(autoRes.detectedSourceLanguage, equals('ta'));
@@ -479,73 +522,84 @@ void main() {
       // Same language without formality
       final sameLang = await engine.translate(
         'Hola amigo',
-        options: const TranslationOptions(sourceLanguage: 'es', targetLanguage: 'es'),
+        options: const TranslationOptions(
+            sourceLanguage: 'es', targetLanguage: 'es'),
       );
       expect(sameLang.translatedText, equals('Hola amigo'));
 
       // Same language with formality in Spanish
       final sameLangEs = await engine.translate(
         'tú eres genial',
-        options: const TranslationOptions(sourceLanguage: 'es', targetLanguage: 'es', formality: 'more'),
+        options: const TranslationOptions(
+            sourceLanguage: 'es', targetLanguage: 'es', formality: 'more'),
       );
       expect(sameLangEs.translatedText, contains('usted'));
 
       // Same language with formality in German
       final sameLangDe = await engine.translate(
         'du bist nett',
-        options: const TranslationOptions(sourceLanguage: 'de', targetLanguage: 'de', formality: 'more'),
+        options: const TranslationOptions(
+            sourceLanguage: 'de', targetLanguage: 'de', formality: 'more'),
       );
       expect(sameLangDe.translatedText, contains('Sie'));
 
       // Non-English source to English via lexical lookup
       final esToEn = await engine.translate(
         'mundo proyecto',
-        options: const TranslationOptions(sourceLanguage: 'es', targetLanguage: 'en'),
+        options: const TranslationOptions(
+            sourceLanguage: 'es', targetLanguage: 'en'),
       );
       expect(esToEn.translatedText.toLowerCase(), contains('world'));
 
       // Non-English source to another non-English language
       final esToDe = await engine.translate(
         'mundo',
-        options: const TranslationOptions(sourceLanguage: 'es', targetLanguage: 'de'),
+        options: const TranslationOptions(
+            sourceLanguage: 'es', targetLanguage: 'de'),
       );
       expect(esToDe.translatedText.toLowerCase(), contains('welt'));
 
       // Capitalized lexical token
       final capRes = await engine.translate(
         'World',
-        options: const TranslationOptions(sourceLanguage: 'en', targetLanguage: 'es'),
+        options: const TranslationOptions(
+            sourceLanguage: 'en', targetLanguage: 'es'),
       );
       expect(capRes.translatedText, startsWith('Mundo'));
 
       // Translated text with formality in Spanish and German
       final transFormEs = await engine.translate(
         'hello tú',
-        options: const TranslationOptions(sourceLanguage: 'en', targetLanguage: 'es', formality: 'more'),
+        options: const TranslationOptions(
+            sourceLanguage: 'en', targetLanguage: 'es', formality: 'more'),
       );
       expect(transFormEs.translatedText, isNotEmpty);
 
       final transFormDe = await engine.translate(
         'hello du',
-        options: const TranslationOptions(sourceLanguage: 'en', targetLanguage: 'de', formality: 'more'),
+        options: const TranslationOptions(
+            sourceLanguage: 'en', targetLanguage: 'de', formality: 'more'),
       );
       expect(transFormDe.translatedText, isNotEmpty);
 
       // Phrasebook match with trailing punctuation (!, ?, .)
       final pExcl = await engine.translate(
         'hello!',
-        options: const TranslationOptions(sourceLanguage: 'en', targetLanguage: 'es'),
+        options: const TranslationOptions(
+            sourceLanguage: 'en', targetLanguage: 'es'),
       );
       expect(pExcl.translatedText, endsWith('!'));
 
       final pQues = await engine.translate(
         'how are you??',
-        options: const TranslationOptions(sourceLanguage: 'en', targetLanguage: 'es'),
+        options: const TranslationOptions(
+            sourceLanguage: 'en', targetLanguage: 'es'),
       );
       expect(pQues.translatedText, endsWith('?'));
     });
 
-    test('deterministic fake STT cancel beforehand returns empty result', () async {
+    test('deterministic fake STT cancel beforehand returns empty result',
+        () async {
       final fakeStt = DeterministicFakeSTTProvider();
       fakeStt.cancel();
       final res = await fakeStt.transcribe(Uint8List(10));
@@ -553,14 +607,18 @@ void main() {
       expect(res.confidence, equals(0));
     });
 
-    test('cloud translation and speech adapters handle null and empty apiKey', () async {
-      final cloudTransNull = CloudTranslationAdapter(executionMode: ExecutionMode.hybrid, apiKey: null);
+    test('cloud translation and speech adapters handle null and empty apiKey',
+        () async {
+      final cloudTransNull = CloudTranslationAdapter(
+          executionMode: ExecutionMode.hybrid, apiKey: null);
       expect(
-        () async => await cloudTransNull.translate('hello', options: const TranslationOptions(targetLanguage: 'es')),
+        () async => await cloudTransNull.translate('hello',
+            options: const TranslationOptions(targetLanguage: 'es')),
         throwsA(isA<ProviderException>()),
       );
 
-      final cloudSpeechNull = CloudSpeechAdapter(executionMode: ExecutionMode.hybrid, apiKey: null);
+      final cloudSpeechNull =
+          CloudSpeechAdapter(executionMode: ExecutionMode.hybrid, apiKey: null);
       expect(
         () async => await cloudSpeechNull.transcribe(Uint8List(10)),
         throwsA(isA<ProviderException>()),
@@ -571,7 +629,8 @@ void main() {
       );
     });
 
-    test('additional branch coverage for exceptions, logger, and models', () async {
+    test('additional branch coverage for exceptions, logger, and models',
+        () async {
       const cErr = CorruptedDataException('Data corrupted', 'byte_offset_42');
       expect(cErr.code, equals('CORRUPTED_DATA'));
       expect(cErr.statusCode, equals(422));
@@ -645,7 +704,8 @@ void main() {
       expect(cSpeech.id, isNotEmpty);
       expect(cSpeech.name, isNotEmpty);
 
-      final cTrans = CloudTranslationAdapter(executionMode: ExecutionMode.hybrid);
+      final cTrans =
+          CloudTranslationAdapter(executionMode: ExecutionMode.hybrid);
       expect(cTrans.id, isNotEmpty);
       expect(cTrans.name, isNotEmpty);
 
@@ -658,7 +718,8 @@ void main() {
       expect(det.name, isNotEmpty);
 
       final expEngine = ExplanationEngine();
-      final expRes = await expEngine.generateExplanations('What is a neural network?');
+      final expRes =
+          await expEngine.generateExplanations('What is a neural network?');
       expect(expRes.explanations, isNotEmpty);
 
       final rag = RagRetrievalProvider();
@@ -674,17 +735,22 @@ void main() {
       expect(router.name, isNotEmpty);
 
       final pdfExp = PdfExporter();
-      expect(pdfExp.exportPdf(GeneratedReport(
-        id: 'r_long',
-        conversationId: 'c1',
-        reportType: ReportType.detailedSummary,
-        title: 'Long Report',
-        content: List.generate(60, (i) => 'Line $i of the detailed audit report.').join('\n'),
-        createdAt: '2026-09-17T00:00:00Z',
-      )), isNotEmpty);
+      expect(
+          pdfExp.exportPdf(GeneratedReport(
+            id: 'r_long',
+            conversationId: 'c1',
+            reportType: ReportType.detailedSummary,
+            title: 'Long Report',
+            content: List.generate(
+                60, (i) => 'Line $i of the detailed audit report.').join('\n'),
+            createdAt: '2026-09-17T00:00:00Z',
+          )),
+          isNotEmpty);
     });
 
-    test('branch coverage for empty reports, long interview answers, and non-letter language detection', () async {
+    test(
+        'branch coverage for empty reports, long interview answers, and non-letter language detection',
+        () async {
       final repGen = ReportGenerator();
 
       // Empty questions in report
@@ -693,11 +759,13 @@ void main() {
         title: 'No Questions Dialogue',
         startedAt: '2026-09-17T00:00:00Z',
       );
-      final qReport = repGen.generateReport(conversation: convEmptyQ, type: ReportType.questionsReport);
+      final qReport = repGen.generateReport(
+          conversation: convEmptyQ, type: ReportType.questionsReport);
       expect(qReport.content, contains('No explicit inquiries detected'));
 
       // Empty action items in report
-      final aReport = repGen.generateReport(conversation: convEmptyQ, type: ReportType.actionItems);
+      final aReport = repGen.generateReport(
+          conversation: convEmptyQ, type: ReportType.actionItems);
       expect(aReport.content, contains('No outstanding action items recorded'));
 
       // Meeting minutes with host participant having role
@@ -705,9 +773,13 @@ void main() {
         id: 'c_meet',
         title: 'Executive Session',
         startedAt: '2026-09-17T00:00:00Z',
-        participants: [Participant(id: 'p1', name: 'Alice', isHost: true, role: 'VP Architecture')],
+        participants: [
+          Participant(
+              id: 'p1', name: 'Alice', isHost: true, role: 'VP Architecture')
+        ],
       );
-      final mReport = repGen.generateReport(conversation: convMeeting, type: ReportType.meetingMinutes);
+      final mReport = repGen.generateReport(
+          conversation: convMeeting, type: ReportType.meetingMinutes);
       expect(mReport.content, contains('(Host)'));
       expect(mReport.content, contains('VP Architecture'));
 
@@ -720,8 +792,10 @@ void main() {
       // Conversation extractor: unresolved questions
       final extractor = ConversationExtractor();
       final questions = [
-        ExtractedQuestion(id: 'q1', questionText: 'Is this done?', isAnswered: true),
-        ExtractedQuestion(id: 'q2', questionText: 'What is next?', isAnswered: false),
+        ExtractedQuestion(
+            id: 'q1', questionText: 'Is this done?', isAnswered: true),
+        ExtractedQuestion(
+            id: 'q2', questionText: 'What is next?', isAnswered: false),
       ];
       final unresolved = extractor.extractUnresolvedQuestions(questions);
       expect(unresolved.length, equals(1));
@@ -729,18 +803,31 @@ void main() {
 
       // Interview evaluator: very short answer
       final evaluator = InterviewEvaluator();
-      final shortAssessment = await evaluator.evaluateAnswer(question: 'Explain sharding', candidateAnswer: 'no');
-      expect(shortAssessment.rubrics.firstWhere((r) => r.criterion == 'clarity').score, equals(4));
-      expect(shortAssessment.areasForImprovement, contains('Expand upon real-world examples and measurable outcomes.'));
+      final shortAssessment = await evaluator.evaluateAnswer(
+          question: 'Explain sharding', candidateAnswer: 'no');
+      expect(
+          shortAssessment.rubrics
+              .firstWhere((r) => r.criterion == 'clarity')
+              .score,
+          equals(4));
+      expect(shortAssessment.areasForImprovement,
+          contains('Expand upon real-world examples and measurable outcomes.'));
 
       // Interview evaluator: rambly answer (>400 words)
       final ramblyAnswer = List.generate(420, (i) => 'word$i').join(' ');
-      final ramblyAssessment = await evaluator.evaluateAnswer(question: 'Explain system architecture', candidateAnswer: ramblyAnswer);
-      expect(ramblyAssessment.rubrics.firstWhere((r) => r.criterion == 'clarity').score, equals(6));
+      final ramblyAssessment = await evaluator.evaluateAnswer(
+          question: 'Explain system architecture',
+          candidateAnswer: ramblyAnswer);
+      expect(
+          ramblyAssessment.rubrics
+              .firstWhere((r) => r.criterion == 'clarity')
+              .score,
+          equals(6));
 
       // LocalModelManager: unload non-existent model
       final manager = LocalModelManager();
-      expect(() async => await manager.unloadModel('non-existent'), throwsA(isA<NotFoundException>()));
+      expect(() async => await manager.unloadModel('non-existent'),
+          throwsA(isA<NotFoundException>()));
     });
   });
 }

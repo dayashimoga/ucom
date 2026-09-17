@@ -53,7 +53,8 @@ class NetworkGate {
 
   /// Evaluates whether an outbound connection to [destination] is permitted.
   /// Throws [NetworkBlockedException] or [OfflineViolationException] if blocked.
-  void checkOutboundAccess(String destination, {String method = 'GET', int payloadBytes = 0}) {
+  void checkOutboundAccess(String destination,
+      {String method = 'GET', int payloadBytes = 0}) {
     if (_isOfflineEnforced) {
       final record = NetworkRequestRecord(
         destination: destination,
@@ -122,7 +123,9 @@ class _GatedHttpClient implements HttpClient {
   dynamic noSuchMethod(Invocation invocation) {
     try {
       // Forward members dynamically to inner client
-      return (invocation.isMethod || invocation.isGetter || invocation.isSetter);
+      return (invocation.isMethod ||
+          invocation.isGetter ||
+          invocation.isSetter);
     } catch (_) {
       return null;
     }
@@ -132,7 +135,8 @@ class _GatedHttpClient implements HttpClient {
   void close({bool force = false}) => _inner.close(force: force);
 
   @override
-  Future<HttpClientRequest> open(String method, String host, int port, String path) {
+  Future<HttpClientRequest> open(
+      String method, String host, int port, String path) {
     _gate.checkOutboundAccess('$host:$port$path', method: method);
     return _inner.open(method, host, port, path);
   }
@@ -144,37 +148,43 @@ class _GatedHttpClient implements HttpClient {
   }
 
   @override
-  Future<HttpClientRequest> get(String host, int port, String path) => open('GET', host, port, path);
+  Future<HttpClientRequest> get(String host, int port, String path) =>
+      open('GET', host, port, path);
 
   @override
   Future<HttpClientRequest> getUrl(Uri url) => openUrl('GET', url);
 
   @override
-  Future<HttpClientRequest> post(String host, int port, String path) => open('POST', host, port, path);
+  Future<HttpClientRequest> post(String host, int port, String path) =>
+      open('POST', host, port, path);
 
   @override
   Future<HttpClientRequest> postUrl(Uri url) => openUrl('POST', url);
 
   @override
-  Future<HttpClientRequest> put(String host, int port, String path) => open('PUT', host, port, path);
+  Future<HttpClientRequest> put(String host, int port, String path) =>
+      open('PUT', host, port, path);
 
   @override
   Future<HttpClientRequest> putUrl(Uri url) => openUrl('PUT', url);
 
   @override
-  Future<HttpClientRequest> delete(String host, int port, String path) => open('DELETE', host, port, path);
+  Future<HttpClientRequest> delete(String host, int port, String path) =>
+      open('DELETE', host, port, path);
 
   @override
   Future<HttpClientRequest> deleteUrl(Uri url) => openUrl('DELETE', url);
 
   @override
-  Future<HttpClientRequest> patch(String host, int port, String path) => open('PATCH', host, port, path);
+  Future<HttpClientRequest> patch(String host, int port, String path) =>
+      open('PATCH', host, port, path);
 
   @override
   Future<HttpClientRequest> patchUrl(Uri url) => openUrl('PATCH', url);
 
   @override
-  Future<HttpClientRequest> head(String host, int port, String path) => open('HEAD', host, port, path);
+  Future<HttpClientRequest> head(String host, int port, String path) =>
+      open('HEAD', host, port, path);
 
   @override
   Future<HttpClientRequest> headUrl(Uri url) => openUrl('HEAD', url);
