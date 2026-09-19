@@ -56,6 +56,7 @@ class PrivacyLogger {
       'message': message,
       if (meta != null) 'metadata': _sanitize(meta),
     };
+    // ignore: avoid_print
     print(jsonEncode(logPayload));
   }
 
