@@ -22,6 +22,10 @@ jobs:
           path: ./
           extra_args: --only-verified
 
+      - name: Pre-populate Pub Cache and Dependencies
+        run: |
+          docker run --rm -v "${PWD}:/app" -e PUB_CACHE=/app/.pub-cache -w /app/tests ghcr.io/cirruslabs/flutter:stable dart pub get
+
       - name: Offline Privacy Invariant Verification
         run: |
           docker run --rm --network none -v "${PWD}:/app" -e PUB_CACHE=/app/.pub-cache -w /app/tests ghcr.io/cirruslabs/flutter:stable dart test offline
