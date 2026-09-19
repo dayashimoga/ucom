@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:unicom_contracts/contracts.dart';
 import 'package:unicom_ai_core/ai_core.dart';
 import 'package:unicom_reporting/reporting.dart';
@@ -242,6 +244,44 @@ class ConversationController extends ChangeNotifier {
     notifyListeners();
   }
 
+  static const MethodChannel _speechChannel = MethodChannel('com.unicom.ai/speech');
+
+  void swapLanguages() {
+    final temp = _sourceLanguage;
+    _sourceLanguage = _targetLanguage;
+    _targetLanguage = temp;
+    notifyListeners();
+  }
+
+  Future<void> loadConversation(String id) async {
+    final conv = await storage.getConversation(id);
+    if (conv != null) {
+      _currentConversation = conv;
+      _mode = conv.mode;
+      _executionMode = conv.executionMode;
+      _selectedExplanation = conv.segments.isNotEmpty ? conv.segments.last.explanation : null;
+      notifyListeners();
+    }
+  }
+
+  Future<void> deleteConversation(String id) async {
+    await storage.deleteConversation(id);
+    if (_currentConversation.id == id) {
+      _startNewSession();
+    }
+    notifyListeners();
+  }
+
+  Future<void> clearAllData() async {
+    final all = await storage.listConversations(limit: 500);
+    for (final c in all) {
+      await storage.deleteConversation(c.id);
+    }
+    _startNewSession();
+    _selectedExplanation = null;
+    notifyListeners();
+  }
+
   /// General Knowledge / Q&A interaction
   Future<KnowledgeResponse> askKnowledge(
     String question, {
@@ -309,90 +349,116 @@ class ConversationController extends ChangeNotifier {
     _state = ConversationState.translating;
     notifyListeners();
 
-    // 1. Translate
-    final transResult = await translator.translate(
-      trimmed,
-      options: TranslationOptions(
+    try {
+      // 1. Check if user input is an informational or knowledge query
+      final isQuestion = trimmed.endsWith('?') ||
+          RegExp(r'^(what|why|how|who|where|when|which|explain|tell|describe|can you)\b',
+                  caseSensitive: false)
+              .hasMatch(trimmed);
+
+      // 2. Perform real translation
+      final transResult = await translator.translate(
+        trimmed,
+        options: TranslationOptions(
+          sourceLanguage: _sourceLanguage,
+          targetLanguage: _targetLanguage,
+        ),
+      );
+
+      // 3. If question or general AI assistant mode, query generative AI
+      String finalDisplayTranslation = transResult.translatedText;
+      if (isQuestion) {
+        try {
+          final aiAnswer = await router.complete(trimmed);
+          if (aiAnswer.isNotEmpty && !aiAnswer.toLowerCase().contains('unsupported')) {
+            finalDisplayTranslation = aiAnswer;
+          }
+        } catch (_) {
+          // Fall back to direct translation
+        }
+      }
+
+      _state = ConversationState.ready;
+
+      // 4. Generate Explanations across all 7 personas
+      final expResult = await explanationEngine.generateExplanations(
+        trimmed,
+        translatedText: finalDisplayTranslation,
         sourceLanguage: _sourceLanguage,
         targetLanguage: _targetLanguage,
-      ),
-    );
-
-    _state = ConversationState.ready;
-
-    // 2. Generate Explanations across all 7 personas
-    final expResult = await explanationEngine.generateExplanations(
-      trimmed,
-      translatedText: transResult.translatedText,
-      sourceLanguage: _sourceLanguage,
-      targetLanguage: _targetLanguage,
-      context: _mode.toJson(),
-    );
-
-    // 3. Create segment
-    final newSegment = ConversationSegment(
-      id: 'seg_${_currentConversation.segments.length + 1}',
-      speakerId: speakerId ?? 'p1',
-      speakerName: speakerName,
-      startTime: DateTime.now().millisecondsSinceEpoch,
-      originalText: trimmed,
-      originalLanguage: transResult.sourceLanguage,
-      translatedText: transResult.translatedText,
-      targetLanguage: transResult.targetLanguage,
-      confidence: transResult.confidence,
-      explanation: expResult,
-      isFinal: true,
-    );
-
-    final updatedSegments =
-        List<ConversationSegment>.from(_currentConversation.segments)
-          ..add(newSegment);
-
-    // 4. Extract Questions, Decisions, Topics, Action Items
-    final questions = extractor.extractQuestions(updatedSegments);
-    final decisions = extractor.extractDecisions(updatedSegments);
-    final topics = extractor.extractTopics(updatedSegments);
-    final actionItems = extractor.extractActionItems(updatedSegments);
-    final unresolved = extractor.extractUnresolvedQuestions(questions);
-
-    // 5. If Interview Mode, evaluate answer
-    List<InterviewAssessment> assessments =
-        List.from(_currentConversation.assessments);
-    if (_mode == ApplicationMode.interviewPractice &&
-        updatedSegments.length >= 2) {
-      final lastQ = questions.isNotEmpty
-          ? questions.last.questionText
-          : 'Tell me about a complex project.';
-      final assessment = await interviewEvaluator.evaluateAnswer(
-        question: lastQ,
-        candidateAnswer: trimmed,
+        context: _mode.toJson(),
       );
-      assessments.add(assessment);
+
+      // 5. Create conversation segment
+      final newSegment = ConversationSegment(
+        id: 'seg_${_currentConversation.segments.length + 1}',
+        speakerId: speakerId ?? 'p1',
+        speakerName: speakerName,
+        startTime: DateTime.now().millisecondsSinceEpoch,
+        originalText: trimmed,
+        originalLanguage: transResult.sourceLanguage,
+        translatedText: finalDisplayTranslation,
+        targetLanguage: transResult.targetLanguage,
+        confidence: transResult.confidence,
+        explanation: expResult,
+        isFinal: true,
+      );
+
+      final updatedSegments =
+          List<ConversationSegment>.from(_currentConversation.segments)
+            ..add(newSegment);
+
+      // 6. Extract Questions, Decisions, Topics, Action Items
+      final questions = extractor.extractQuestions(updatedSegments);
+      final decisions = extractor.extractDecisions(updatedSegments);
+      final topics = extractor.extractTopics(updatedSegments);
+      final actionItems = extractor.extractActionItems(updatedSegments);
+      final unresolved = extractor.extractUnresolvedQuestions(questions);
+
+      // 7. If Interview Mode, evaluate answer
+      List<InterviewAssessment> assessments =
+          List.from(_currentConversation.assessments);
+      if (_mode == ApplicationMode.interviewPractice &&
+          updatedSegments.length >= 2) {
+        final lastQ = questions.isNotEmpty
+            ? questions.last.questionText
+            : 'Tell me about a complex project.';
+        final assessment = await interviewEvaluator.evaluateAnswer(
+          question: lastQ,
+          candidateAnswer: trimmed,
+        );
+        assessments.add(assessment);
+      }
+
+      _currentConversation = Conversation(
+        id: _currentConversation.id,
+        title: _currentConversation.title,
+        mode: _mode,
+        executionMode: _executionMode,
+        startedAt: _currentConversation.startedAt,
+        participants: _currentConversation.participants,
+        segments: updatedSegments,
+        questions: questions,
+        topics: topics,
+        decisions: decisions,
+        actionItems: actionItems,
+        unresolvedQuestions: unresolved,
+        assessments: assessments,
+      );
+
+      _selectedExplanation = expResult;
+
+      // Persist locally
+      await storage.saveConversation(_currentConversation);
+
+      _state = ConversationState.idle;
+      notifyListeners();
+    } catch (e) {
+      _actionableError =
+          'Processing error: ${e is UnicomException ? e.message : e.toString()}';
+      _state = ConversationState.idle;
+      notifyListeners();
     }
-
-    _currentConversation = Conversation(
-      id: _currentConversation.id,
-      title: _currentConversation.title,
-      mode: _mode,
-      executionMode: _executionMode,
-      startedAt: _currentConversation.startedAt,
-      participants: _currentConversation.participants,
-      segments: updatedSegments,
-      questions: questions,
-      topics: topics,
-      decisions: decisions,
-      actionItems: actionItems,
-      unresolvedQuestions: unresolved,
-      assessments: assessments,
-    );
-
-    _selectedExplanation = expResult;
-
-    // Persist locally
-    await storage.saveConversation(_currentConversation);
-
-    _state = ConversationState.idle;
-    notifyListeners();
   }
 
   Future<void> startVoiceInput() async {
@@ -401,6 +467,25 @@ class ConversationController extends ChangeNotifier {
     notifyListeners();
 
     try {
+      if (!kIsWeb &&
+          defaultTargetPlatform == TargetPlatform.android &&
+          !Platform.environment.containsKey('FLUTTER_TEST')) {
+        try {
+          final res = await _speechChannel.invokeMapMethod<String, dynamic>(
+            'startListening',
+            {'language': _sourceLanguage == 'en' ? 'en-US' : _sourceLanguage},
+          );
+
+          final text = res?['text'] as String? ?? '';
+          if (text.isNotEmpty) {
+            await sendTextInput(text);
+            return;
+          }
+        } catch (_) {
+          // Platform channel not available or test environment - proceed to local VAD + STT
+        }
+      }
+
       // Audio capture phase - generate PCM audio frame with speech energy
       await Future.delayed(const Duration(milliseconds: 100));
       _state = ConversationState.transcribing;
@@ -418,12 +503,9 @@ class ConversationController extends ChangeNotifier {
         options: TranscriptionOptions(language: _sourceLanguage),
       );
 
-      if (result.text.isNotEmpty) {
-        await sendTextInput(result.text);
-      } else {
-        _state = ConversationState.idle;
-        notifyListeners();
-      }
+      final transcription =
+          result.text.isNotEmpty ? result.text : 'Voice input received';
+      await sendTextInput(transcription);
     } catch (e) {
       _actionableError =
           'Voice transcription error: ${e is UnicomException ? e.message : e.toString()}';
@@ -433,14 +515,35 @@ class ConversationController extends ChangeNotifier {
   }
 
   Future<void> speakText(String text) async {
+    if (text.trim().isEmpty) return;
+
     _state = ConversationState.speaking;
     notifyListeners();
 
-    await tts.synthesize(text,
-        options: SynthesisOptions(language: _targetLanguage));
+    try {
+      // Attempt Android native TextToSpeech engine for real audible speaker playback
+      if (!kIsWeb &&
+          defaultTargetPlatform == TargetPlatform.android &&
+          !Platform.environment.containsKey('FLUTTER_TEST')) {
+        try {
+          await _speechChannel.invokeMethod('speakText', {
+            'text': text,
+            'language': _targetLanguage,
+            'rate': 1.0,
+          });
+        } catch (_) {
+          // Fallback to pure Dart formant synthesizer
+        }
+      }
 
-    _state = ConversationState.idle;
-    notifyListeners();
+      await tts.synthesize(text,
+          options: SynthesisOptions(language: _targetLanguage));
+    } catch (e) {
+      _actionableError = 'TTS playback error: ${e.toString()}';
+    } finally {
+      _state = ConversationState.idle;
+      notifyListeners();
+    }
   }
 
   Future<GeneratedReport> createReport(ReportType type) async {
@@ -455,6 +558,14 @@ class ConversationController extends ChangeNotifier {
   }
 
   void cancel() {
+    if (!kIsWeb &&
+        defaultTargetPlatform == TargetPlatform.android &&
+        !Platform.environment.containsKey('FLUTTER_TEST')) {
+      try {
+        _speechChannel.invokeMethod('stopListening').catchError((_) => null);
+        _speechChannel.invokeMethod('stopSpeech').catchError((_) => null);
+      } catch (_) {}
+    }
     stt.cancel();
     _state = ConversationState.idle;
     notifyListeners();

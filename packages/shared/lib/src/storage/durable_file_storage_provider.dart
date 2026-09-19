@@ -135,10 +135,10 @@ class DurableFileStorageProvider implements StorageProvider {
     int limit = 50,
     int offset = 0,
   }) async {
-    if (!await _conversationsDir.exists()) return [];
+    if (!_conversationsDir.existsSync()) return [];
 
-    final files = await _conversationsDir
-        .list()
+    final files = _conversationsDir
+        .listSync()
         .where((e) => e is File && e.path.endsWith('.json'))
         .cast<File>()
         .toList();
@@ -183,21 +183,21 @@ class DurableFileStorageProvider implements StorageProvider {
   Future<bool> deleteConversation(String id) async {
     final convFile = File('${_conversationsDir.path}/$id.json');
     var existed = false;
-    if (await convFile.exists()) {
-      await convFile.delete();
+    if (convFile.existsSync()) {
+      convFile.deleteSync();
       existed = true;
     }
 
     // Delete associated reports
-    if (await _reportsDir.exists()) {
-      final reportFiles = await _reportsDir
-          .list()
+    if (_reportsDir.existsSync()) {
+      final reportFiles = _reportsDir
+          .listSync()
           .where(
               (e) => e is File && e.uri.pathSegments.last.startsWith('${id}_'))
           .cast<File>()
           .toList();
       for (final rf in reportFiles) {
-        await rf.delete();
+        rf.deleteSync();
       }
     }
 
@@ -222,19 +222,19 @@ class DurableFileStorageProvider implements StorageProvider {
         File('${_reportsDir.path}/${report.conversationId}_${report.id}.tmp');
 
     await tempFile.writeAsBytes(bytes, flush: true);
-    if (await targetFile.exists()) {
-      await targetFile.delete();
+    if (targetFile.existsSync()) {
+      targetFile.deleteSync();
     }
-    await tempFile.rename(targetFile.path);
+    tempFile.renameSync(targetFile.path);
   }
 
   @override
   Future<List<GeneratedReport>> getReportsByConversationId(
       String conversationId) async {
-    if (!await _reportsDir.exists()) return [];
+    if (!_reportsDir.existsSync()) return [];
 
-    final files = await _reportsDir
-        .list()
+    final files = _reportsDir
+        .listSync()
         .where((e) =>
             e is File &&
             e.uri.pathSegments.last.startsWith('${conversationId}_') &&
@@ -300,11 +300,11 @@ class DurableFileStorageProvider implements StorageProvider {
   Future<int> getTotalStorageBytes() async {
     var total = 0;
     for (final dir in [_conversationsDir, _reportsDir, _quarantineDir]) {
-      if (await dir.exists()) {
-        await for (final entity
-            in dir.list(recursive: true, followLinks: false)) {
+      if (dir.existsSync()) {
+        for (final entity
+            in dir.listSync(recursive: true, followLinks: false)) {
           if (entity is File) {
-            total += await entity.length();
+            total += entity.lengthSync();
           }
         }
       }
@@ -314,9 +314,9 @@ class DurableFileStorageProvider implements StorageProvider {
 
   /// Retrieves list of quarantined corrupt files.
   Future<List<String>> getQuarantinedFiles() async {
-    if (!await _quarantineDir.exists()) return [];
+    if (!_quarantineDir.existsSync()) return [];
     return _quarantineDir
-        .list()
+        .listSync()
         .where((e) => e is File)
         .map((e) => e.path)
         .toList();

@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:unicom_model_runtime/model_runtime.dart';
 import '../features/conversation/conversation_state_notifier.dart';
 import '../features/conversation/conversation_screen.dart';
-import '../features/interview/interview_practice_screen.dart';
-import '../features/meeting/meeting_screen.dart';
-import '../features/reports/report_screen.dart';
-import '../features/models/model_manager_screen.dart';
+import '../features/history/history_screen.dart';
+import '../features/tools/learn_tools_screen.dart';
 import '../features/settings/settings_screen.dart';
 import '../ui/adaptive/responsive_breakpoints.dart';
 import 'theme.dart';
@@ -47,10 +45,11 @@ class _UnicomAppState extends State<UnicomApp> {
 
         final screens = [
           ConversationScreen(controller: widget.controller),
-          InterviewPracticeScreen(controller: widget.controller),
-          MeetingScreen(controller: widget.controller),
-          ReportScreen(controller: widget.controller),
-          ModelManagerScreen(modelManager: widget.modelManager),
+          HistoryScreen(
+            controller: widget.controller,
+            onOpenLive: () => setState(() => _currentIndex = 0),
+          ),
+          LearnToolsScreen(controller: widget.controller),
           SettingsScreen(controller: widget.controller),
         ];
 
@@ -85,29 +84,25 @@ class _UnicomAppState extends State<UnicomApp> {
                             ),
                             destinations: const [
                               NavigationRailDestination(
-                                  icon: Icon(Icons.chat_bubble_outline),
-                                  selectedIcon: Icon(Icons.chat_bubble),
-                                  label: Text('Live')),
+                                icon: Icon(Icons.chat_bubble_outline),
+                                selectedIcon: Icon(Icons.chat_bubble),
+                                label: Text('Live'),
+                              ),
                               NavigationRailDestination(
-                                  icon: Icon(Icons.school_outlined),
-                                  selectedIcon: Icon(Icons.school),
-                                  label: Text('Interview')),
+                                icon: Icon(Icons.history_outlined),
+                                selectedIcon: Icon(Icons.history),
+                                label: Text('History'),
+                              ),
                               NavigationRailDestination(
-                                  icon: Icon(Icons.groups_outlined),
-                                  selectedIcon: Icon(Icons.groups),
-                                  label: Text('Meeting')),
+                                icon: Icon(Icons.auto_stories_outlined),
+                                selectedIcon: Icon(Icons.auto_stories),
+                                label: Text('Learn & Tools'),
+                              ),
                               NavigationRailDestination(
-                                  icon: Icon(Icons.description_outlined),
-                                  selectedIcon: Icon(Icons.description),
-                                  label: Text('Reports')),
-                              NavigationRailDestination(
-                                  icon: Icon(Icons.memory_outlined),
-                                  selectedIcon: Icon(Icons.memory),
-                                  label: Text('Models')),
-                              NavigationRailDestination(
-                                  icon: Icon(Icons.settings_outlined),
-                                  selectedIcon: Icon(Icons.settings),
-                                  label: Text('Settings')),
+                                icon: Icon(Icons.settings_outlined),
+                                selectedIcon: Icon(Icons.settings),
+                                label: Text('Settings'),
+                              ),
                             ],
                           ),
                         ),
@@ -128,32 +123,28 @@ class _UnicomAppState extends State<UnicomApp> {
           bottomNavigationBar: NavigationBar(
             selectedIndex: _currentIndex,
             onDestinationSelected: (idx) => setState(() => _currentIndex = idx),
-            labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
+            labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
             destinations: const [
               NavigationDestination(
-                  icon: Icon(Icons.chat_bubble_outline),
-                  selectedIcon: Icon(Icons.chat_bubble),
-                  label: 'Live'),
+                icon: Icon(Icons.chat_bubble_outline),
+                selectedIcon: Icon(Icons.chat_bubble),
+                label: 'Live',
+              ),
               NavigationDestination(
-                  icon: Icon(Icons.school_outlined),
-                  selectedIcon: Icon(Icons.school),
-                  label: 'Interview'),
+                icon: Icon(Icons.history_outlined),
+                selectedIcon: Icon(Icons.history),
+                label: 'History',
+              ),
               NavigationDestination(
-                  icon: Icon(Icons.groups_outlined),
-                  selectedIcon: Icon(Icons.groups),
-                  label: 'Meeting'),
+                icon: Icon(Icons.auto_stories_outlined),
+                selectedIcon: Icon(Icons.auto_stories),
+                label: 'Learn & Tools',
+              ),
               NavigationDestination(
-                  icon: Icon(Icons.description_outlined),
-                  selectedIcon: Icon(Icons.description),
-                  label: 'Reports'),
-              NavigationDestination(
-                  icon: Icon(Icons.memory_outlined),
-                  selectedIcon: Icon(Icons.memory),
-                  label: 'Models'),
-              NavigationDestination(
-                  icon: Icon(Icons.settings_outlined),
-                  selectedIcon: Icon(Icons.settings),
-                  label: 'Settings'),
+                icon: Icon(Icons.settings_outlined),
+                selectedIcon: Icon(Icons.settings),
+                label: 'Settings',
+              ),
             ],
           ),
         );

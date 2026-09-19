@@ -3,13 +3,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:unicom_app/app/theme.dart';
 import 'package:unicom_app/features/conversation/conversation_screen.dart';
 import 'package:unicom_app/features/conversation/conversation_state_notifier.dart';
+import 'package:unicom_app/providers/in_memory_storage_provider.dart';
 
 void main() {
   group('ConversationScreen Widget Tests', () {
     late ConversationController controller;
 
     setUp(() {
-      controller = ConversationController();
+      controller = ConversationController(
+        storageProvider: LocalStorageProvider.inMemory(),
+      );
     });
 
     Widget createTestApp({Size size = const Size(390, 844)}) {

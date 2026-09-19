@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:unicom_contracts/contracts.dart';
 import '../../app/theme.dart';
 import '../../ui/adaptive/responsive_breakpoints.dart';
@@ -22,17 +23,36 @@ class _ConversationScreenState extends State<ConversationScreen> {
 
   static const List<Map<String, String>> _availableLangs = [
     {'code': 'en', 'name': 'English'},
-    {'code': 'es', 'name': 'Español'},
-    {'code': 'fr', 'name': 'Français'},
-    {'code': 'de', 'name': 'Deutsch'},
-    {'code': 'zh', 'name': '中文'},
-    {'code': 'ja', 'name': '日本語'},
-    {'code': 'ar', 'name': 'العربية'},
-    {'code': 'hi', 'name': 'हिन्दी'},
-    {'code': 'ta', 'name': 'தமிழ்'},
-    {'code': 'pt', 'name': 'Português'},
-    {'code': 'ru', 'name': 'Русский'},
+    {'code': 'ta', 'name': 'Tamil'},
+    {'code': 'es', 'name': 'Spanish'},
+    {'code': 'hi', 'name': 'Hindi'},
+    {'code': 'fr', 'name': 'French'},
+    {'code': 'de', 'name': 'German'},
+    {'code': 'ja', 'name': 'Japanese'},
+    {'code': 'zh', 'name': 'Chinese'},
+    {'code': 'pt', 'name': 'Portuguese'},
+    {'code': 'ru', 'name': 'Russian'},
+    {'code': 'ar', 'name': 'Arabic'},
   ];
+
+  @override
+  void dispose() {
+    _textController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,15 +66,15 @@ class _ConversationScreenState extends State<ConversationScreen> {
           body: Column(
             children: [
               _buildErrorBanner(context),
-              _buildTopStatusBanner(context),
+              _buildOfflineModelBanner(context),
               Expanded(
                 child: isSplit
                     ? _buildSplitLayout(context)
                     : _buildPhoneLayout(context),
               ),
+              _buildPermanentComposer(context),
             ],
           ),
-          bottomNavigationBar: _buildBottomActionBar(context),
         );
       },
     );
@@ -62,9 +82,23 @@ class _ConversationScreenState extends State<ConversationScreen> {
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
     return AppBar(
-      title: Text(
-        widget.controller.currentConversation.title,
-        overflow: TextOverflow.ellipsis,
+      title: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.centerLeft,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'UNICOM',
+              style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: 0.5),
+            ),
+            const SizedBox(width: 8),
+            StatusBadge(
+              executionMode: widget.controller.executionMode,
+              state: widget.controller.state,
+            ),
+          ],
+        ),
       ),
       actions: [
         _buildLanguageSelector(context),
@@ -89,9 +123,10 @@ class _ConversationScreenState extends State<ConversationScreen> {
             child: Text(
               error,
               style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600),
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
           IconButton(
@@ -106,85 +141,111 @@ class _ConversationScreenState extends State<ConversationScreen> {
     );
   }
 
-  Widget _buildTopStatusBanner(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      color: Theme.of(context).cardTheme.color?.withOpacity(0.3),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          StatusBadge(
-            executionMode: widget.controller.executionMode,
-            state: widget.controller.state,
-          ),
-          if (widget.controller.state != ConversationState.idle)
-            Text(
-              '${widget.controller.sourceLanguage.toUpperCase()} → ${widget.controller.targetLanguage.toUpperCase()}',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.color
-                    ?.withOpacity(0.7),
+  Widget _buildOfflineModelBanner(BuildContext context) {
+    if (widget.controller.executionMode == ExecutionMode.privateOffline &&
+        !widget.controller.localLLM.isModelLoaded) {
+      return Container(
+        width: double.infinity,
+        color: UnicomTheme.warningAmber.withOpacity(0.15),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Row(
+          children: [
+            const Icon(Icons.cloud_download_outlined,
+                color: UnicomTheme.warningAmber, size: 20),
+            const SizedBox(width: 8),
+            const Expanded(
+              child: Text(
+                'Offline model required for private inference.',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
               ),
             ),
-        ],
-      ),
-    );
+            FilledButton.tonal(
+              style: FilledButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                visualDensity: VisualDensity.compact,
+              ),
+              onPressed: () async {
+                await widget.controller.modelManager
+                    .downloadModel('unicom-knowledge-llm-q4');
+                await widget.controller.modelManager
+                    .activateModel('unicom-knowledge-llm-q4');
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Offline model downloaded & activated.')),
+                  );
+                }
+              },
+              child: const Text('Download 50 MB', style: TextStyle(fontSize: 11)),
+            ),
+          ],
+        ),
+      );
+    }
+    return const SizedBox.shrink();
   }
 
   Widget _buildLanguageSelector(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardTheme.color,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: UnicomTheme.darkSurfaceVariant),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          DropdownButton<String>(
-            value: widget.controller.sourceLanguage,
-            underline: const SizedBox(),
-            isDense: true,
-            items: _availableLangs.map((lang) {
-              return DropdownMenuItem(
-                value: lang['code'],
-                child: Text(lang['code']!.toUpperCase(),
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
-              );
-            }).toList(),
-            onChanged: (val) {
-              if (val != null) {
-                widget.controller
-                    .setLanguages(val, widget.controller.targetLanguage);
-              }
-            },
-          ),
-          const Icon(Icons.arrow_forward, size: 14, color: Colors.grey),
-          DropdownButton<String>(
-            value: widget.controller.targetLanguage,
-            underline: const SizedBox(),
-            isDense: true,
-            items: _availableLangs.map((lang) {
-              return DropdownMenuItem(
-                value: lang['code'],
-                child: Text(lang['code']!.toUpperCase(),
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
-              );
-            }).toList(),
-            onChanged: (val) {
-              if (val != null) {
-                widget.controller
-                    .setLanguages(widget.controller.sourceLanguage, val);
-              }
-            },
-          ),
-        ],
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardTheme.color,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: UnicomTheme.darkSurfaceVariant),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            DropdownButton<String>(
+              value: widget.controller.sourceLanguage,
+              underline: const SizedBox(),
+              isDense: true,
+              items: _availableLangs.map((lang) {
+                return DropdownMenuItem(
+                  value: lang['code'],
+                  child: Text(lang['code']!.toUpperCase(),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 13)),
+                );
+              }).toList(),
+              onChanged: (val) {
+                if (val != null) {
+                  widget.controller
+                      .setLanguages(val, widget.controller.targetLanguage);
+                }
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.swap_horiz,
+                  size: 20, color: UnicomTheme.accentCyan),
+              tooltip: 'Swap languages',
+              visualDensity: VisualDensity.compact,
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              constraints: const BoxConstraints(),
+              onPressed: () => widget.controller.swapLanguages(),
+            ),
+            DropdownButton<String>(
+              value: widget.controller.targetLanguage,
+              underline: const SizedBox(),
+              isDense: true,
+              items: _availableLangs.map((lang) {
+                return DropdownMenuItem(
+                  value: lang['code'],
+                  child: Text(lang['code']!.toUpperCase(),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 13)),
+                );
+              }).toList(),
+              onChanged: (val) {
+                if (val != null) {
+                  widget.controller
+                      .setLanguages(widget.controller.sourceLanguage, val);
+                }
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -192,13 +253,13 @@ class _ConversationScreenState extends State<ConversationScreen> {
   Widget _buildSplitLayout(BuildContext context) {
     return Row(
       children: [
-        // Left pane: Conversation Dialogue (60% space)
+        // Left pane: Conversation Dialogue
         Expanded(
           flex: 6,
           child: _buildConversationList(context),
         ),
         const VerticalDivider(width: 1, color: UnicomTheme.darkSurfaceVariant),
-        // Right pane: Real-time Explanations & Insights (40% space)
+        // Right pane: Real-time Explanations & Insights
         Expanded(
           flex: 4,
           child: _buildInsightsPanel(context),
@@ -213,11 +274,12 @@ class _ConversationScreenState extends State<ConversationScreen> {
         Expanded(child: _buildConversationList(context)),
         if (widget.controller.selectedExplanation != null)
           Container(
-            constraints: const BoxConstraints(maxHeight: 280),
+            constraints: const BoxConstraints(maxHeight: 260),
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: SingleChildScrollView(
               child: ExplanationCard(
-                  explanation: widget.controller.selectedExplanation!),
+                explanation: widget.controller.selectedExplanation!,
+              ),
             ),
           ),
       ],
@@ -234,19 +296,53 @@ class _ConversationScreenState extends State<ConversationScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.record_voice_over,
-                  size: 56, color: UnicomTheme.accentCyan.withOpacity(0.5)),
-              const SizedBox(height: 16),
+              GestureDetector(
+                onTap: () => widget.controller.startVoiceInput(),
+                child: Container(
+                  width: 84,
+                  height: 84,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: const LinearGradient(
+                      colors: [UnicomTheme.primaryBlue, UnicomTheme.accentCyan],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: UnicomTheme.primaryBlue.withOpacity(0.3),
+                        blurRadius: 16,
+                        spreadRadius: 4,
+                      ),
+                    ],
+                  ),
+                  child: const Icon(Icons.record_voice_over,
+                      size: 40, color: Colors.white),
+                ),
+              ),
+              const SizedBox(height: 20),
               const Text(
-                'Universal Communication Intelligence',
+                'Talk, type, translate, or ask anything',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18),
               ),
               const SizedBox(height: 8),
-              Text(
-                'Type or tap the microphone to begin translating in real-time.',
+              const Text(
+                'Tap the microphone to speak, or type any question or message below.',
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium,
+                style: TextStyle(color: Colors.grey, fontSize: 13),
+              ),
+              const SizedBox(height: 24),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                alignment: WrapAlignment.center,
+                children: [
+                  _buildPromptChip('Where is the hospital?'),
+                  _buildPromptChip('What is Kubernetes?'),
+                  _buildPromptChip('Explain quantum entanglement'),
+                  _buildPromptChip('How are you today?'),
+                ],
               ),
             ],
           ),
@@ -263,23 +359,147 @@ class _ConversationScreenState extends State<ConversationScreen> {
         final isSelected =
             widget.controller.selectedExplanation?.segmentId == seg.id;
 
-        return ConversationBubble(
-          segment: seg,
-          isExplanationActive: isSelected,
-          onSpeak: () => widget.controller.speakText(seg.translatedText),
-          onExplain: () {
-            if (seg.explanation != null) {
-              widget.controller.selectExplanation(seg.explanation);
-            }
-          },
+        return Column(
+          children: [
+            ConversationBubble(
+              segment: seg,
+              isExplanationActive: isSelected,
+              onSpeak: () => widget.controller.speakText(
+                  seg.translatedText.isNotEmpty ? seg.translatedText : seg.originalText),
+              onExplain: () {
+                if (seg.explanation != null) {
+                  widget.controller.selectExplanation(seg.explanation);
+                }
+              },
+            ),
+            // Context Action Row directly below latest item
+            if (index == segments.length - 1)
+              _buildContextActions(context, seg),
+          ],
         );
       },
     );
   }
 
+  Widget _buildPromptChip(String text) {
+    return ActionChip(
+      label: Text(text, style: const TextStyle(fontSize: 12)),
+      onPressed: () {
+        widget.controller.sendTextInput(text);
+        _scrollToBottom();
+      },
+    );
+  }
+
+  Widget _buildContextActions(BuildContext context, ConversationSegment seg) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            _buildSmallActionChip(
+              icon: Icons.translate,
+              label: 'Translate',
+              onTap: () {
+                _textController.text = seg.originalText;
+              },
+            ),
+            const SizedBox(width: 6),
+            if (seg.explanation != null)
+              _buildSmallActionChip(
+                icon: Icons.lightbulb_outline,
+                label: 'Explain',
+                onTap: () => widget.controller.selectExplanation(seg.explanation),
+              ),
+            const SizedBox(width: 6),
+            _buildSmallActionChip(
+              icon: Icons.volume_up_outlined,
+              label: 'Listen',
+              onTap: () => widget.controller.speakText(
+                  seg.translatedText.isNotEmpty ? seg.translatedText : seg.originalText),
+            ),
+            const SizedBox(width: 6),
+            _buildSmallActionChip(
+              icon: Icons.copy,
+              label: 'Copy',
+              onTap: () {
+                Clipboard.setData(ClipboardData(
+                  text: '${seg.originalText}\n${seg.translatedText}',
+                ));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Copied to clipboard')),
+                );
+              },
+            ),
+            const SizedBox(width: 6),
+            PopupMenuButton<String>(
+              tooltip: 'More actions',
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: UnicomTheme.darkSurfaceVariant),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.more_horiz, size: 14, color: Colors.grey),
+                    SizedBox(width: 4),
+                    Text('More', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                  ],
+                ),
+              ),
+              onSelected: (val) {
+                if (val == 'clear') widget.controller.clearSession();
+              },
+              itemBuilder: (context) => const [
+                PopupMenuItem(
+                  value: 'clear',
+                  child: Row(
+                    children: [
+                      Icon(Icons.delete_outline, size: 16),
+                      SizedBox(width: 8),
+                      Text('Clear Session'),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSmallActionChip({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: UnicomTheme.darkSurfaceVariant),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 13, color: UnicomTheme.accentCyan),
+            const SizedBox(width: 4),
+            Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildInsightsPanel(BuildContext context) {
     final exp = widget.controller.selectedExplanation;
-    final conv = widget.controller.currentConversation;
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -300,267 +520,85 @@ class _ConversationScreenState extends State<ConversationScreen> {
             ),
             child: const Center(
               child: Text(
-                'Select any speech bubble to inspect simple, deep, terminology, grammar, cultural, and child-friendly explanations.',
+                'Select any conversation bubble to inspect simple, deep, terminology, grammar, cultural, and child-friendly explanations.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey),
+                style: TextStyle(color: Colors.grey, fontSize: 13),
               ),
             ),
           ),
-        const SizedBox(height: 16),
-        if (conv.questions.isNotEmpty) ...[
-          const Text('Extracted Questions',
-              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
-          const SizedBox(height: 8),
-          ...conv.questions.map((q) => Card(
-                margin: const EdgeInsets.only(bottom: 6),
-                child: Padding(
-                  padding: const EdgeInsets.all(10),
-                  child: Row(
-                    children: [
-                      Icon(
-                        q.isAnswered ? Icons.check_circle : Icons.help_outline,
-                        size: 16,
-                        color: q.isAnswered
-                            ? UnicomTheme.successGreen
-                            : UnicomTheme.warningAmber,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(q.questionText,
-                            style: const TextStyle(fontSize: 13)),
-                      ),
-                    ],
-                  ),
-                ),
-              )),
-        ],
-        if (conv.actionItems.isNotEmpty) ...[
-          const SizedBox(height: 12),
-          const Text('Action Items',
-              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
-          const SizedBox(height: 8),
-          ...conv.actionItems.map((a) => Card(
-                margin: const EdgeInsets.only(bottom: 6),
-                child: Padding(
-                  padding: const EdgeInsets.all(10),
-                  child: Text('• [${a.assignee}] ${a.title}',
-                      style: const TextStyle(fontSize: 13)),
-                ),
-              )),
-        ],
       ],
     );
   }
 
-  Widget _buildBottomActionBar(BuildContext context) {
-    final segments = widget.controller.currentConversation.segments;
-    final hasSegments = segments.isNotEmpty;
+  Widget _buildPermanentComposer(BuildContext context) {
+    final isListening = widget.controller.state == ConversationState.listening;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
       decoration: BoxDecoration(
         color: Theme.of(context).cardTheme.color,
         border: const Border(
-            top: BorderSide(color: UnicomTheme.darkSurfaceVariant)),
+          top: BorderSide(color: UnicomTheme.darkSurfaceVariant),
+        ),
       ),
       child: SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+        child: Row(
           children: [
-            // Contextual Action Row: Speak | Listen | Explain | Translate | Report | More
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  _buildActionChip(
-                    context,
-                    label:
-                        widget.controller.state == ConversationState.listening
-                            ? 'Stop'
-                            : 'Speak',
-                    icon: widget.controller.state == ConversationState.listening
-                        ? Icons.stop
-                        : Icons.mic,
-                    color:
-                        widget.controller.state == ConversationState.listening
-                            ? UnicomTheme.dangerRed
-                            : UnicomTheme.primaryBlue,
-                    onTap: () {
-                      if (widget.controller.state ==
-                          ConversationState.listening) {
-                        widget.controller.cancel();
-                      } else {
-                        widget.controller.startVoiceInput();
-                      }
-                    },
+            // Message input field
+            Expanded(
+              child: TextField(
+                controller: _textController,
+                decoration: InputDecoration(
+                  hintText: 'Talk, type, translate, or ask anything...',
+                  hintStyle: const TextStyle(fontSize: 13),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(24),
+                    borderSide:
+                        const BorderSide(color: UnicomTheme.darkSurfaceVariant),
                   ),
-                  const SizedBox(width: 8),
-                  _buildActionChip(
-                    context,
-                    label: 'Listen',
-                    icon: Icons.volume_up_outlined,
-                    onTap: hasSegments
-                        ? () => widget.controller
-                            .speakText(segments.last.translatedText)
-                        : null,
-                  ),
-                  const SizedBox(width: 8),
-                  _buildActionChip(
-                    context,
-                    label: 'Explain',
-                    icon: Icons.lightbulb_outline,
-                    onTap: hasSegments && segments.last.explanation != null
-                        ? () => widget.controller
-                            .selectExplanation(segments.last.explanation)
-                        : null,
-                  ),
-                  const SizedBox(width: 8),
-                  _buildActionChip(
-                    context,
-                    label: 'Translate',
-                    icon: Icons.translate,
-                    onTap: () {
-                      final text = _textController.text.trim();
-                      if (text.isNotEmpty) {
-                        widget.controller.sendTextInput(text);
-                        _textController.clear();
-                      }
-                    },
-                  ),
-                  const SizedBox(width: 8),
-                  _buildActionChip(
-                    context,
-                    label: 'Report',
-                    icon: Icons.summarize_outlined,
-                    onTap: () async {
-                      await widget.controller
-                          .createReport(ReportType.quickSummary);
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content:
-                                  Text('Summary report generated and saved.')),
-                        );
-                      }
-                    },
-                  ),
-                  const SizedBox(width: 8),
-                  PopupMenuButton<String>(
-                    tooltip: 'More options',
-                    child: _buildActionChip(
-                      context,
-                      label: 'More',
-                      icon: Icons.more_horiz,
-                      onTap: null, // Tap handled by PopupMenuButton
-                    ),
-                    onSelected: (val) {
-                      if (val == 'clear') {
-                        widget.controller.clearSession();
-                      }
-                    },
-                    itemBuilder: (context) => const [
-                      PopupMenuItem(
-                        value: 'clear',
-                        child: Row(
-                          children: [
-                            Icon(Icons.delete_outline, size: 16),
-                            SizedBox(width: 8),
-                            Text('Clear Session'),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  isDense: true,
+                ),
+                onSubmitted: (val) {
+                  if (val.trim().isNotEmpty) {
+                    widget.controller.sendTextInput(val);
+                    _textController.clear();
+                    _scrollToBottom();
+                  }
+                },
               ),
             ),
-            const SizedBox(height: 8),
-            // Input Row
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _textController,
-                    decoration: InputDecoration(
-                      hintText: 'Type question or message...',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(24),
-                        borderSide: const BorderSide(
-                            color: UnicomTheme.darkSurfaceVariant),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 8),
-                      isDense: true,
-                    ),
-                    onSubmitted: (val) {
-                      if (val.trim().isNotEmpty) {
-                        widget.controller.sendTextInput(val);
-                        _textController.clear();
-                      }
-                    },
-                  ),
-                ),
-                const SizedBox(width: 8),
-                IconButton.filled(
-                  icon: const Icon(Icons.send, size: 24),
-                  tooltip: 'Send',
-                  onPressed: () {
-                    final text = _textController.text.trim();
-                    if (text.isNotEmpty) {
-                      widget.controller.sendTextInput(text);
-                      _textController.clear();
-                    }
-                  },
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActionChip(
-    BuildContext context, {
-    required String label,
-    required IconData icon,
-    Color? color,
-    VoidCallback? onTap,
-  }) {
-    final chipColor = color ??
-        Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.8) ??
-        Colors.white;
-    final isEnabled = onTap != null || label == 'More';
-
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color:
-              (color ?? Theme.of(context).cardTheme.color)?.withOpacity(0.15),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: (color ?? UnicomTheme.darkSurfaceVariant).withOpacity(0.4),
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: (icon == Icons.mic || icon == Icons.stop) ? 24 : 18,
-              color: isEnabled ? chipColor : Colors.grey,
+            const SizedBox(width: 8),
+            // Microphone action button
+            IconButton.filledTonal(
+              icon: Icon(
+                isListening ? Icons.stop : Icons.mic,
+                size: 24,
+                color: isListening ? UnicomTheme.dangerRed : null,
+              ),
+              tooltip: isListening ? 'Stop Listening' : 'Voice Input',
+              onPressed: () {
+                if (isListening) {
+                  widget.controller.cancel();
+                } else {
+                  widget.controller.startVoiceInput();
+                }
+              },
             ),
             const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: isEnabled ? chipColor : Colors.grey,
-              ),
+            // Send action button
+            IconButton.filled(
+              icon: const Icon(Icons.send, size: 24),
+              tooltip: 'Send',
+              onPressed: () {
+                final text = _textController.text.trim();
+                if (text.isNotEmpty) {
+                  widget.controller.sendTextInput(text);
+                  _textController.clear();
+                  _scrollToBottom();
+                }
+              },
             ),
           ],
         ),

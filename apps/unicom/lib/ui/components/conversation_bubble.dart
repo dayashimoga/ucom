@@ -88,9 +88,21 @@ class ConversationBubble extends StatelessWidget {
                           style: TextStyle(fontSize: 10, letterSpacing: 0.2),
                         ),
                       ),
-                      Text(
-                        '${segment.originalLanguage.toUpperCase()} → ${segment.targetLanguage.toUpperCase()}',
-                        style: Theme.of(context).textTheme.bodySmall,
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            segment.originalLanguage.toUpperCase(),
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                          const SizedBox(width: 3),
+                          const Icon(Icons.arrow_forward, size: 11, color: Colors.grey),
+                          const SizedBox(width: 3),
+                          Text(
+                            segment.targetLanguage.toUpperCase(),
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        ],
                       ),
                     ],
                   ),

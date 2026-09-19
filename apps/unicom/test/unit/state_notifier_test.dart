@@ -4,6 +4,7 @@ import 'package:unicom_ai_core/ai_core.dart';
 import 'package:unicom_app/features/conversation/conversation_state_notifier.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   group('ConversationController Unit Tests', () {
     late ConversationController controller;
 
