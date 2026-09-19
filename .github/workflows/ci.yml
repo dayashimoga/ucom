@@ -58,7 +58,7 @@ jobs:
         run: |
           cd tests
           dart test --coverage=coverage --branch-coverage unit contract integration offline security performance e2e
-          dart run coverage:format_coverage --lcov --in=coverage --out=coverage/lcov.info --packages=.dart_tool/package_config.json --report-on=/app/packages,/app/services
+          dart run coverage:format_coverage --lcov --in=coverage --out=coverage/lcov.info --packages=.dart_tool/package_config.json --report-on=../packages,../services
 
       - name: Enforce >=90% Line & Branch Coverage Gate Across Monorepo
         run: |
