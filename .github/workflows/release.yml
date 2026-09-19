@@ -26,7 +26,7 @@ jobs:
           cd ../reporting && dart pub get
           cd ../model_runtime && dart pub get
           cd ../../tests && dart pub get
-          dart test --coverage=coverage --branch-coverage unit contract integration offline security performance e2e
+          dart test --coverage=coverage --branch-coverage unit contract integration offline security performance e2e benchmarks
 
       - name: Package Release Assets
         run: |
