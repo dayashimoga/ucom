@@ -29,12 +29,42 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('AI & System Settings'), findsOneWidget);
+      expect(find.text('Language & Speech'), findsOneWidget);
       expect(find.text('AI Execution Tier & Privacy'), findsOneWidget);
       expect(find.text('Android Built-in AI (AICore)'), findsOneWidget);
       expect(find.text('Downloaded Local Models'), findsOneWidget);
       expect(find.text('Cloud AI & Model Configuration'), findsOneWidget);
       expect(find.text('Active Intelligence Mode'), findsOneWidget);
       expect(find.text('Data Hygiene & Retention'), findsOneWidget);
+      expect(find.text('About UNICOM AI'), findsOneWidget);
+      expect(find.text('Advanced: AI & Models'), findsOneWidget);
+    });
+
+    testWidgets('selects languages via modal bottom sheet', (tester) async {
+      tester.view.physicalSize = const Size(1280, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+
+      await tester.pumpWidget(createTestApp());
+      await tester.pumpAndSettle();
+
+      // Open Primary Language picker
+      await tester.tap(find.text('Primary Language'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Select Source Language'), findsOneWidget);
+      await tester.tap(find.text('Tamil'));
+      await tester.pumpAndSettle();
+      expect(controller.sourceLanguage, equals('ta'));
+
+      // Open Translation Target picker
+      await tester.tap(find.text('Translation Target'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Select Target Language'), findsOneWidget);
+      await tester.tap(find.text('Spanish'));
+      await tester.pumpAndSettle();
+      expect(controller.targetLanguage, equals('es'));
     });
 
     testWidgets('switches AI execution modes via radio buttons',
@@ -123,6 +153,29 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(SnackBar), findsOneWidget);
+    });
+
+    testWidgets('expands advanced section and toggles appearance',
+        (tester) async {
+      tester.view.physicalSize = const Size(1280, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+
+      await tester.pumpWidget(createTestApp());
+      await tester.pumpAndSettle();
+
+      // Expand Advanced: AI & Models
+      final advancedTile = find.text('Advanced: AI & Models');
+      await tester.tap(advancedTile);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Architecture & Quantization'), findsOneWidget);
+      expect(find.text('Network Gate Status'), findsOneWidget);
+
+      // Toggle Theme
+      final lightBtn = find.text('Light');
+      await tester.tap(lightBtn);
+      await tester.pumpAndSettle();
     });
   });
 }

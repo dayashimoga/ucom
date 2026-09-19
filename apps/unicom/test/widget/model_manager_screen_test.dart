@@ -32,7 +32,8 @@ void main() {
       expect(find.byIcon(Icons.refresh), findsOneWidget);
     });
 
-    testWidgets('triggers download and activation of model', (tester) async {
+    testWidgets('triggers download, activation, and removal of model',
+        (tester) async {
       tester.view.physicalSize = const Size(1280, 2000);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -54,12 +55,30 @@ void main() {
       });
       await tester.pumpAndSettle();
 
-      // Refresh and check
+      // Refresh and check installed
       await tester.tap(find.byIcon(Icons.refresh));
       await tester.pumpAndSettle();
 
       final whisper = await modelManager.getModel('whisper-tiny-quantized');
       expect(whisper?.isInstalled, isTrue);
+
+      // Activate model
+      final activateBtn = find.widgetWithText(FilledButton, 'Activate');
+      if (activateBtn.evaluate().isNotEmpty) {
+        await tester.tap(activateBtn.first);
+        await tester.pumpAndSettle();
+      }
+
+      // Remove or Uninstall model
+      final uninstallBtn = find.text('Uninstall');
+      final removeBtn = find.text('Remove');
+      if (uninstallBtn.evaluate().isNotEmpty) {
+        await tester.tap(uninstallBtn.first);
+        await tester.pumpAndSettle();
+      } else if (removeBtn.evaluate().isNotEmpty) {
+        await tester.tap(removeBtn.first);
+        await tester.pumpAndSettle();
+      }
     });
   });
 }

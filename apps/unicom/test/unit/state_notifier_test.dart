@@ -135,5 +135,39 @@ void main() {
       controller.cancel();
       expect(controller.state, equals(ConversationState.idle));
     });
+
+    test('swaps source and target languages', () {
+      controller.setLanguages('en', 'es');
+      controller.swapLanguages();
+      expect(controller.sourceLanguage, equals('es'));
+      expect(controller.targetLanguage, equals('en'));
+    });
+
+    test('loads, deletes, and clears conversation sessions', () async {
+      await controller.sendTextInput('Session message');
+      final id = controller.currentConversation.id;
+
+      await controller.loadConversation(id);
+      expect(controller.currentConversation.id, equals(id));
+
+      await controller.deleteConversation(id);
+      expect(controller.currentConversation.id, isNot(equals(id)));
+
+      await controller.sendTextInput('Another session');
+      await controller.clearAllData();
+      expect(controller.currentConversation.segments, isEmpty);
+    });
+
+    test('selects explanation cleanly', () async {
+      await controller.sendTextInput('Explain quantum computing');
+      expect(controller.selectedExplanation, isNotNull);
+
+      final exp = controller.selectedExplanation!;
+      controller.selectExplanation(null);
+      expect(controller.selectedExplanation, isNull);
+
+      controller.selectExplanation(exp);
+      expect(controller.selectedExplanation, equals(exp));
+    });
   });
 }

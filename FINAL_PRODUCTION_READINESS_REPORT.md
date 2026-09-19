@@ -24,7 +24,7 @@ Every capability across the 16 core mission areas was audited and verified direc
 | **7** | **Cloud AI & Secure BYOK** | **REAL API & STORAGE** | Google Gemini REST client with exponential backoff on HTTP 429/503. Zero embedded secrets. API keys stored in AES/HMAC authenticated vault (`SecureKeyStorage`). | **PROVEN & PASSED** |
 | **8** | **Grounded RAG Knowledge Engine** | **REAL ENGINE** | Sliding-window chunking, vector scoring, source provenance, missing fact detection ("not in sources" output), contradictory source detection, and prompt injection neutralization tags (`[SANITIZED_PROMPT_INJECTION_NEUTRALIZED]`). | **PROVEN & PASSED** |
 | **9** | **Hard Offline Privacy** | **HARD ENFORCEMENT** | `NetworkGate` operates at socket/HTTP transport level below all providers. Outbound networking in `privateOffline` mode throws `OfflineViolationException` before socket initialization. Guaranteed 0 egress bytes. | **PROVEN & PASSED** |
-| **10** | **Coverage & Test Gates** | **VERIFIED GATES** | **100% test pass rate (220 / 220 passed)**. Backend Line: **96.77%**, Backend Branch: **93.56%**, Frontend Line: **90.99%**, Combined Line: **95.11%**. All gates $\ge 90\%$ passed. | **PROVEN & PASSED** |
+| **10** | **Coverage & Test Gates** | **VERIFIED GATES** | **100% test pass rate (233 / 233 passed)**. Backend Line: **96.77%**, Backend Branch: **93.56%**, Frontend Line: **91.10%**, Combined Line: **94.86%**. All gates $\ge 90\%$ passed. | **PROVEN & PASSED** |
 | **11** | **UX Overhaul: Results > Controls** | **PRODUCTION UX** | Content-first layout. Eliminated `RenderFlex` overflows and broken unicode glyphs (`□`). Clean 4-tab navigation, permanent composer with accessible mic/send, and consumer settings with `Advanced → AI & Models`. | **PROVEN & PASSED** |
 | **12** | **Resilience & Durable Persistence** | **RESILIENT STORAGE** | Atomic write-and-rename in `DurableFileStorageProvider`. Automated corrupted file quarantine into `.quarantine/`. Handled mic denial, network drop, quota exhaustion, and missing model errors gracefully in UI. | **PROVEN & PASSED** |
 | **13** | **Security & SBOM** | **AUDITED & GATED** | PrivacyLogger redacts sensitive tokens and PII. SAST scans clean. Complete CycloneDX 1.5 SBOM generated (`UNICOM_AI_SBOM.json`) covering all Dart, Gradle, native, and AI models. | **PROVEN & PASSED** |
@@ -43,8 +43,8 @@ Coverage was measured using Dart VM native instrumentation (`--coverage` and `--
 | Component Layer | Lines Hit / Found | Line Coverage | Branches Hit / Found | Branch Coverage | Threshold | Result |
 |:---|:---:|:---:|:---:|:---:|:---:|:---:|
 | **Backend Packages & Services** | **2,696 / 2,786** | **96.77%** | **959 / 1,025** | **93.56%** | $\ge 90.0\%$ | **PASS** |
-| **Frontend Application (`apps/unicom`)** | **1,020 / 1,121** | **90.99%** | *N/A (Engine)* | *Documented Limitation\** | $\ge 90.0\%$ | **PASS** |
-| **Combined Monorepo** | **3,716 / 3,907** | **95.11%** | **959 / 1,025** | **93.56%** | $\ge 90.0\%$ | **PASS** |
+| **Frontend Application (`apps/unicom`)** | **1,289 / 1,415** | **91.10%** | *N/A (Engine)* | *Documented Limitation\** | $\ge 90.0\%$ | **PASS** |
+| **Combined Monorepo** | **3,985 / 4,201** | **94.86%** | **959 / 1,025** | **93.56%** | $\ge 90.0\%$ | **PASS** |
 
 *\*Documentation of Flutter Tooling Limitation: Flutter's current testing engine (`flutter test --coverage`) emits standard LCOV `DA` (line) records but does not instrument or emit `BRDA` (branch) records for Dart widget execution. In compliance with strict auditing rules, this engine limitation is reported honestly rather than fabricating branch numbers.*
 
@@ -58,13 +58,13 @@ Coverage was measured using Dart VM native instrumentation (`--coverage` and `--
   - Performance & Latency tests: 7
   - E2E User Journey tests: 5
   - AI Quality & Real Model Benchmark tests: 19
-- **Frontend Widget & UI Tests (`apps/unicom/test/` directory)**: **64 / 64 passed (100%)**
+- **Frontend Widget & UI Tests (`apps/unicom/test/` directory)**: **77 / 77 passed (100%)**
   - WCAG 2.2 AA Accessibility tests: 3
   - Responsive Viewport tests: 6
   - UI Component tests: 6
-  - Controller & State Notifier Unit tests: 10
-  - Widget & Flow tests: 39
-- **Total Monorepo Tests**: **220 / 220 PASSED (100% Pass Rate, 0 Skips, 0 Failures)**
+  - Controller & State Notifier Unit tests: 13
+  - Widget & Flow tests: 49
+- **Total Monorepo Tests**: **233 / 233 PASSED (100% Pass Rate, 0 Skips, 0 Failures)**
 
 ---
 

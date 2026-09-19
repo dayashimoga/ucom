@@ -41,7 +41,8 @@ void main() {
           find.textContaining('PROVENANCE & EXECUTION AUDIT'), findsOneWidget);
     });
 
-    testWidgets('switches report types via choice chips', (tester) async {
+    testWidgets('switches report types via choice chips and refreshes',
+        (tester) async {
       tester.view.physicalSize = const Size(1280, 800);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -57,9 +58,15 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.textContaining('VERBATIM TRANSCRIPT'), findsWidgets);
+
+      // Tap refresh
+      await tester.tap(find.byIcon(Icons.refresh));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('VERBATIM TRANSCRIPT'), findsWidgets);
     });
 
-    testWidgets('exports report via popup menu', (tester) async {
+    testWidgets('exports report via popup menu in multiple formats',
+        (tester) async {
       tester.view.physicalSize = const Size(1280, 800);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -67,16 +74,33 @@ void main() {
       await tester.pumpWidget(createTestApp());
       await tester.pumpAndSettle();
 
-      // Open export menu
+      // Export Markdown
       await tester.tap(find.byIcon(Icons.download));
       await tester.pumpAndSettle();
-
-      final mdItem = find.text('Export Markdown (.md)');
-      expect(mdItem, findsOneWidget);
-      await tester.tap(mdItem);
+      await tester.tap(find.text('Export Markdown (.md)'));
       await tester.pumpAndSettle();
-
       expect(find.byType(SnackBar), findsOneWidget);
+
+      // Export PDF
+      await tester.tap(find.byIcon(Icons.download));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Export PDF Document (.pdf)'));
+      await tester.pumpAndSettle();
+      expect(find.byType(SnackBar), findsWidgets);
+
+      // Export JSON
+      await tester.tap(find.byIcon(Icons.download));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Export Structured Data (.json)'));
+      await tester.pumpAndSettle();
+      expect(find.byType(SnackBar), findsWidgets);
+
+      // Export Plain Text
+      await tester.tap(find.byIcon(Icons.download));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Export Plain Text (.txt)'));
+      await tester.pumpAndSettle();
+      expect(find.byType(SnackBar), findsWidgets);
     });
   });
 }
