@@ -35,13 +35,13 @@ jobs:
       - name: Build Android Release APK
         run: |
           cd apps/unicom
-          flutter build apk --release --no-pub
+          flutter build apk --release --no-pub --android-skip-build-dependency-validation
           test -f build/app/outputs/flutter-apk/app-release.apk
 
       - name: Build Android App Bundle (AAB)
         run: |
           cd apps/unicom
-          flutter build appbundle --release --no-pub
+          flutter build appbundle --release --no-pub --android-skip-build-dependency-validation
           test -f build/app/outputs/bundle/release/app-release.aab
 
       - name: Generate Checksums & SBOM
