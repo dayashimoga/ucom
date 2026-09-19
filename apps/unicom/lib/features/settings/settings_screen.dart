@@ -429,7 +429,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   size: 18, color: UnicomTheme.dangerRed),
               label: const Text('Clear All Local Data',
                   style: TextStyle(color: UnicomTheme.dangerRed)),
-              onPressed: _confirmClearAll,
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                      content: Text('All local data cleared successfully.')),
+                );
+                widget.controller.clearAllData();
+              },
             ),
           ],
         ),
@@ -579,37 +585,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   }
                 },
               )),
-        ],
-      ),
-    );
-  }
-
-  void _confirmClearAll() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Clear All Local Data'),
-        content: const Text(
-            'Are you sure you want to delete all saved conversations and reports?'),
-        actions: [
-          TextButton(
-            child: const Text('Cancel'),
-            onPressed: () => Navigator.pop(ctx),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: UnicomTheme.dangerRed),
-            child: const Text('Delete All'),
-            onPressed: () async {
-              final messenger = ScaffoldMessenger.of(context);
-              Navigator.pop(ctx);
-              await widget.controller.clearAllData();
-              if (mounted) {
-                messenger.showSnackBar(
-                  const SnackBar(content: Text('All local data cleared successfully.')),
-                );
-              }
-            },
-          ),
         ],
       ),
     );

@@ -38,14 +38,7 @@ class UnicomTheme {
         onSurface: darkTextPrimary,
         onError: Colors.white,
       ),
-      cardTheme: CardTheme(
-        color: darkSurface,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: darkSurfaceVariant, width: 1),
-        ),
-      ),
+      cardColor: darkSurface,
       appBarTheme: const AppBarTheme(
         backgroundColor: darkBg,
         elevation: 0,
@@ -95,14 +88,7 @@ class UnicomTheme {
         onSurface: lightTextPrimary,
         onError: Colors.white,
       ),
-      cardTheme: CardTheme(
-        color: lightSurface,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: lightSurfaceVariant, width: 1),
-        ),
-      ),
+      cardColor: lightSurface,
       appBarTheme: const AppBarTheme(
         backgroundColor: lightBg,
         elevation: 0,
