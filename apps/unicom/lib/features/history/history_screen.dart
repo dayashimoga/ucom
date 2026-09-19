@@ -164,10 +164,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
           child: InkWell(
             borderRadius: BorderRadius.circular(12),
             onTap: () async {
+              final messenger = ScaffoldMessenger.of(context);
               await widget.controller.loadConversation(conv.id);
               widget.onOpenLive?.call();
               if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
+                messenger.showSnackBar(
                   SnackBar(content: Text('Loaded session: ${conv.title}')),
                 );
               }

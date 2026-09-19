@@ -429,13 +429,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   size: 18, color: UnicomTheme.dangerRed),
               label: const Text('Clear All Local Data',
                   style: TextStyle(color: UnicomTheme.dangerRed)),
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                      content: Text('All local data cleared successfully.')),
-                );
-                widget.controller.clearAllData();
-              },
+              onPressed: _confirmClearAll,
             ),
           ],
         ),
@@ -482,13 +476,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildAboutSection(BuildContext context) {
-    return Card(
+    return const Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Row(
+            Row(
               children: [
                 Icon(Icons.info_outline, color: Colors.grey, size: 20),
                 SizedBox(width: 8),
@@ -496,8 +490,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               ],
             ),
-            const SizedBox(height: 8),
-            const Text(
+            SizedBox(height: 8),
+            Text(
               'Version 1.0.0-production\nUniversal Communication & Intelligence Platform\nDesigned for privacy-first, on-device translation and multi-persona explanations.',
               style: TextStyle(fontSize: 12, height: 1.5, color: Colors.grey),
             ),
@@ -508,29 +502,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildAdvancedSection(BuildContext context) {
-    return ExpansionTile(
-      leading: const Icon(Icons.tune, color: UnicomTheme.accentCyan),
-      title: const Text('Advanced: AI & Models',
+    return const ExpansionTile(
+      leading: Icon(Icons.tune, color: UnicomTheme.accentCyan),
+      title: Text('Advanced: AI & Models',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-      subtitle: const Text('AICore, BYOK cloud API keys, and model parameters'),
+      subtitle: Text('AICore, BYOK cloud API keys, and model parameters'),
       children: [
         Padding(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Architecture & Quantization',
+              Text('Architecture & Quantization',
                   style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
-              const SizedBox(height: 6),
-              const Text(
+              SizedBox(height: 6),
+              Text(
                 'LLM: Quantized Transformer Q4_0 / INT4 (50 MB)\nSTT: Mel-Spectral VAD + Acoustic INT8 (39 MB)\nTTS: Klatt Formant Resonator Cascade + Android TTS\nTranslation: Neural Sequence Alignment + Offline Lexicon (45 MB)',
                 style: TextStyle(fontSize: 12, height: 1.5, fontFamily: 'monospace', color: Colors.grey),
               ),
-              const Divider(height: 24),
-              const Text('Network Gate Status',
+              Divider(height: 24),
+              Text('Network Gate Status',
                   style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
-              const SizedBox(height: 6),
-              const Text(
+              SizedBox(height: 6),
+              Text(
                 'Private Offline Mode enforces hard socket/HTTP transport layer block. Outbound network attempts throw OfflineViolationException with 0 egress bytes.',
                 style: TextStyle(fontSize: 12, color: Colors.grey),
               ),
@@ -606,10 +600,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
             style: FilledButton.styleFrom(backgroundColor: UnicomTheme.dangerRed),
             child: const Text('Delete All'),
             onPressed: () async {
+              final messenger = ScaffoldMessenger.of(context);
               Navigator.pop(ctx);
               await widget.controller.clearAllData();
               if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
+                messenger.showSnackBar(
                   const SnackBar(content: Text('All local data cleared successfully.')),
                 );
               }

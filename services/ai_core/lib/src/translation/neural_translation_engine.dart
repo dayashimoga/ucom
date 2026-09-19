@@ -425,7 +425,6 @@ class NeuralTranslationEngine implements TranslationProvider {
   }
 
   String _translateSentenceTokens(String text, Map<String, String> vocab) {
-    final words = text.split(RegExp(r'(\s+|[.,!?:;()"\-])'));
     final result = StringBuffer();
 
     for (int i = 0; i < text.length;) {

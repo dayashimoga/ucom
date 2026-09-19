@@ -396,7 +396,6 @@ class LocalLLMProvider implements LLMProvider {
 
     final isSimple = systemPrompt != null && systemPrompt.contains('simple');
     final isChildFriendly = systemPrompt != null && systemPrompt.contains('child');
-    final isTechnical = systemPrompt != null && (systemPrompt.contains('technical') || systemPrompt.contains('deep'));
 
     if (isSimple) {
       buffer.write('Simply put: ');
