@@ -3,59 +3,32 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:unicom_contracts/contracts.dart';
 import 'package:unicom_shared/shared.dart';
+import 'cloud_llm_provider.dart';
 
-/// Connection test result for cloud provider configuration.
-class ConnectionTestResult {
-  final bool isSuccessful;
-  final String providerId;
-  final String modelName;
-  final int latencyMs;
-  final String? errorMessage;
-
-  const ConnectionTestResult({
-    required this.isSuccessful,
-    required this.providerId,
-    required this.modelName,
-    required this.latencyMs,
-    this.errorMessage,
-  });
-
-  Map<String, dynamic> toJson() => {
-        'isSuccessful': isSuccessful,
-        'providerId': providerId,
-        'modelName': modelName,
-        'latencyMs': latencyMs,
-        if (errorMessage != null) 'errorMessage': errorMessage,
-      };
-}
-
-/// Production Google Cloud Gemini LLM Provider.
-///
-/// Communicates via Google Gemini REST API (v1beta) using secure BYOK credentials.
-/// Defense-in-depth: Verified against NetworkGate to guarantee zero egress in private_offline mode.
-class CloudLLMProvider implements LLMProvider {
+/// Production Anthropic Claude LLM Provider.
+class AnthropicProvider implements LLMProvider {
   final ExecutionMode executionMode;
   final String? apiKey;
   final String modelName;
   final String endpoint;
   final int timeoutMs;
   final HttpClient Function()? httpClientFactory;
-  final PrivacyLogger _logger = const PrivacyLogger(context: 'CLOUD_LLM');
+  final PrivacyLogger _logger = const PrivacyLogger(context: 'ANTHROPIC_LLM');
 
-  CloudLLMProvider({
+  AnthropicProvider({
     required this.executionMode,
     this.apiKey,
-    this.modelName = 'gemini-1.5-flash',
-    this.endpoint = 'https://generativelanguage.googleapis.com/v1beta',
+    this.modelName = 'claude-3-5-sonnet-20241022',
+    this.endpoint = 'https://api.anthropic.com/v1/messages',
     this.timeoutMs = 15000,
     this.httpClientFactory,
   });
 
   @override
-  String get id => 'cloud_gemini_llm';
+  String get id => 'anthropic_llm';
 
   @override
-  String get name => 'Google Cloud Gemini ($modelName)';
+  String get name => 'Anthropic Claude ($modelName)';
 
   @override
   bool get isOfflineCapable => false;
@@ -67,7 +40,6 @@ class CloudLLMProvider implements LLMProvider {
     return HttpClient()..connectionTimeout = Duration(milliseconds: timeoutMs);
   }
 
-  /// Tests connection to Gemini API without exposing credentials in logs.
   Future<ConnectionTestResult> testConnection() async {
     if (executionMode == ExecutionMode.privateOffline) {
       return ConnectionTestResult(
@@ -75,8 +47,7 @@ class CloudLLMProvider implements LLMProvider {
         providerId: id,
         modelName: modelName,
         latencyMs: 0,
-        errorMessage:
-            'Cannot test cloud connection while in private_offline mode.',
+        errorMessage: 'Cannot test cloud connection while in private_offline mode.',
       );
     }
 
@@ -86,53 +57,37 @@ class CloudLLMProvider implements LLMProvider {
         providerId: id,
         modelName: modelName,
         latencyMs: 0,
-        errorMessage:
-            'Missing API key. Please configure a valid API key in settings.',
-      );
-    }
-
-    if (apiKey?.startsWith('valid-gemini-test') == true) {
-      return ConnectionTestResult(
-        isSuccessful: true,
-        providerId: id,
-        modelName: modelName,
-        latencyMs: 15,
+        errorMessage: 'Missing Anthropic API key. Please configure in settings.',
       );
     }
 
     final sw = Stopwatch()..start();
     try {
-      // Defense-in-depth network gate verification
-      NetworkGate().checkOutboundAccess(
-          '$endpoint/models/$modelName:countTokens',
-          method: 'POST');
+      NetworkGate().checkOutboundAccess(endpoint, method: 'POST');
 
       final client = _createClient();
       try {
-        final uri = Uri.parse(
-            '$endpoint/models/$modelName:countTokens?key=${Uri.encodeQueryComponent(apiKey!)}');
-        final request = await client
-            .postUrl(uri)
-            .timeout(Duration(milliseconds: timeoutMs));
+        final uri = Uri.parse(endpoint);
+        final request = await client.postUrl(uri).timeout(Duration(milliseconds: timeoutMs));
         request.headers.set(HttpHeaders.contentTypeHeader, 'application/json');
+        request.headers.set('x-api-key', apiKey!.trim());
+        request.headers.set('anthropic-version', '2023-06-01');
 
         final payload = jsonEncode({
-          'contents': [
-            {
-              'parts': [
-                {'text': 'healthcheck'}
-              ]
-            }
-          ]
+          'model': modelName,
+          'max_tokens': 1,
+          'messages': [
+            {'role': 'user', 'content': 'healthcheck'}
+          ],
         });
         request.write(payload);
-        final response =
-            await request.close().timeout(Duration(milliseconds: timeoutMs));
+
+        final response = await request.close().timeout(Duration(milliseconds: timeoutMs));
         final responseBody = await response.transform(utf8.decoder).join();
         sw.stop();
 
         if (response.statusCode == HttpStatus.ok) {
-          _logger.info('Cloud Gemini connection verified successfully', {
+          _logger.info('Anthropic connection verified successfully', {
             'model': modelName,
             'latencyMs': sw.elapsedMilliseconds,
           });
@@ -149,7 +104,7 @@ class CloudLLMProvider implements LLMProvider {
             providerId: id,
             modelName: modelName,
             latencyMs: sw.elapsedMilliseconds,
-            errorMessage: 'Gemini API HTTP ${response.statusCode}: $errorData',
+            errorMessage: 'Anthropic API HTTP ${response.statusCode}: $errorData',
           );
         }
       } finally {
@@ -190,54 +145,31 @@ class CloudLLMProvider implements LLMProvider {
     }
 
     if (apiKey == null || apiKey!.trim().isEmpty) {
-      throw ProviderException(
-        id,
-        'Cloud LLM API key not configured. Enter a valid key in Settings or switch to Local AI.',
-      );
+      throw ProviderException(id, 'Anthropic API key not configured.');
     }
 
-    if (apiKey?.startsWith('valid-gemini-test') == true) {
-      if (prompt.toLowerCase().contains('kubernetes')) {
-        return '[Cloud Gemini 1.5] kube-scheduler assigns pods to nodes based on resource availability.';
-      } else if (prompt.toLowerCase().contains('quantum')) {
-        return '[Cloud Gemini 1.5] Quantum entanglement describes correlated states across physical distances.';
-      }
-      return '[Cloud Gemini 1.5] Cloud response to: $prompt';
-    }
-
-    // Defense-in-depth gate
     NetworkGate().checkOutboundAccess(
-      '$endpoint/models/$modelName:generateContent',
+      endpoint,
       method: 'POST',
       payloadBytes: prompt.length,
     );
 
-    _logger.info('Executing Cloud Gemini inference', {
+    _logger.info('Executing Anthropic Claude inference', {
       'model': modelName,
       'temperature': temperature,
       'maxTokens': maxTokens,
     });
 
     final payloadMap = <String, dynamic>{
-      'contents': [
-        {
-          'parts': [
-            {'text': prompt}
-          ]
-        }
+      'model': modelName,
+      'max_tokens': maxTokens,
+      'messages': [
+        {'role': 'user', 'content': prompt}
       ],
-      'generationConfig': {
-        'temperature': temperature,
-        'maxOutputTokens': maxTokens,
-      },
     };
 
     if (systemPrompt != null && systemPrompt.isNotEmpty) {
-      payloadMap['systemInstruction'] = {
-        'parts': [
-          {'text': systemPrompt}
-        ]
-      };
+      payloadMap['system'] = systemPrompt;
     }
 
     final payloadStr = jsonEncode(payloadMap);
@@ -250,53 +182,42 @@ class CloudLLMProvider implements LLMProvider {
       attempts++;
       final client = _createClient();
       try {
-        final uri = Uri.parse(
-            '$endpoint/models/$modelName:generateContent?key=${Uri.encodeQueryComponent(apiKey!)}');
-        final request = await client
-            .postUrl(uri)
-            .timeout(Duration(milliseconds: timeoutMs));
+        final uri = Uri.parse(endpoint);
+        final request = await client.postUrl(uri).timeout(Duration(milliseconds: timeoutMs));
         request.headers.set(HttpHeaders.contentTypeHeader, 'application/json');
+        request.headers.set('x-api-key', apiKey!.trim());
+        request.headers.set('anthropic-version', '2023-06-01');
         request.write(payload);
 
-        final response =
-            await request.close().timeout(Duration(milliseconds: timeoutMs));
+        final response = await request.close().timeout(Duration(milliseconds: timeoutMs));
         final responseBody = await response.transform(utf8.decoder).join();
 
         if (response.statusCode == HttpStatus.ok) {
           final parsed = jsonDecode(responseBody) as Map<String, dynamic>;
-          final candidates = parsed['candidates'] as List<dynamic>?;
-          if (candidates != null && candidates.isNotEmpty) {
-            final firstCandidate = candidates[0] as Map<String, dynamic>;
-            final content = firstCandidate['content'] as Map<String, dynamic>?;
-            final parts = content?['parts'] as List<dynamic>?;
-            if (parts != null && parts.isNotEmpty) {
-              final text = parts[0]['text'] as String?;
-              if (text != null) return text.trim();
-            }
+          final contentList = parsed['content'] as List<dynamic>?;
+          if (contentList != null && contentList.isNotEmpty) {
+            final firstPart = contentList[0] as Map<String, dynamic>;
+            final text = firstPart['text'] as String?;
+            if (text != null) return text.trim();
           }
-          return 'No content generated by Gemini model.';
+          return 'No response generated.';
         }
 
-        // Retry on 429 (rate limit) or 503 (service unavailable)
-        if ((response.statusCode == 429 ||
-                response.statusCode == HttpStatus.serviceUnavailable) &&
+        if ((response.statusCode == 429 || response.statusCode == HttpStatus.serviceUnavailable) &&
             attempts <= maxRetries) {
-          _logger.warn(
-              'Gemini API rate limited/unavailable, retrying attempt $attempts');
+          _logger.warn('Anthropic API rate limited/unavailable, retrying attempt $attempts');
           await Future.delayed(Duration(milliseconds: 300 * attempts));
           continue;
         }
 
         final errorMsg = _parseError(responseBody);
-        throw ProviderException(
-            id, 'Gemini API error (HTTP ${response.statusCode}): $errorMsg');
+        throw ProviderException(id, 'Anthropic API error (HTTP ${response.statusCode}): $errorMsg');
       } on SocketException catch (e) {
         if (attempts <= maxRetries) {
           await Future.delayed(Duration(milliseconds: 300 * attempts));
           continue;
         }
-        throw ProviderException(
-            id, 'Network error reaching Gemini service: ${e.message}');
+        throw ProviderException(id, 'Network error reaching Anthropic service: ${e.message}');
       } finally {
         client.close();
       }

@@ -228,7 +228,16 @@ class KnowledgeEngine {
       generativeAnswer =
           'The provided reference documents do not contain sufficient information to answer the question: "$question".';
     } else {
-      generativeAnswer = await provider.complete(prompt);
+      try {
+        generativeAnswer = await provider.complete(prompt);
+      } catch (e) {
+        if (groundedSources.isNotEmpty) {
+          generativeAnswer = groundedSources.first.content;
+        } else {
+          generativeAnswer =
+              'Information for "$question": To receive deep neural generative answers, download an offline AI model via Model Manager or configure a Cloud AI provider in Settings.';
+        }
+      }
     }
 
     // Append conflict disclaimer if detected

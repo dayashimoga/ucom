@@ -1,6 +1,11 @@
+import 'dart:convert';
 import 'package:unicom_contracts/contracts.dart';
 
 class ExplanationEngine {
+  final LLMProvider? provider;
+
+  ExplanationEngine([this.provider]);
+
   Future<ExplanationResult> generateExplanations(
     String text, {
     String? segmentId,
@@ -14,9 +19,49 @@ class ExplanationEngine {
     final requestedPersonas = personas ?? ExplanationPersona.values;
     final explanations = <ExplanationPersona, ExplanationEntry>{};
 
+    // Attempt real LLM generation if provider is available
+    if (provider != null) {
+      try {
+        final prompt = '''
+Analyze and explain the following message across linguistic and cultural dimensions.
+Message: "$trimmed"
+Context: "${context ?? 'General conversation'}"
+Target Language: "${targetLanguage ?? 'en'}"
+
+Return ONLY a valid JSON object where keys are the persona names ("simple", "detailed", "terminology", "grammar", "culturalContext", "examples", "childFriendly") and each value is an object with:
+- "content": string explanation
+- "keyPoints": list of strings (2-4 key takeaways)
+''';
+        final response = await provider!.complete(prompt, maxTokens: 800, temperature: 0.3);
+        final cleanJson = _extractJson(response);
+        if (cleanJson != null) {
+          final parsed = jsonDecode(cleanJson) as Map<String, dynamic>;
+          for (final persona in requestedPersonas) {
+            final entryMap = parsed[persona.name] as Map<String, dynamic>?;
+            if (entryMap != null && entryMap['content'] != null) {
+              final keyPoints = (entryMap['keyPoints'] as List<dynamic>?)
+                      ?.map((e) => e.toString())
+                      .toList() ??
+                  [];
+              explanations[persona] = ExplanationEntry(
+                persona: persona,
+                content: entryMap['content'].toString(),
+                keyPoints: keyPoints,
+              );
+            }
+          }
+        }
+      } catch (_) {
+        // Fall back to structured linguistic template
+      }
+    }
+
+    // Fill any missing personas with structured template fallback
     for (final persona in requestedPersonas) {
-      explanations[persona] =
-          _buildPersonaExplanation(persona, trimmed, context, targetLanguage);
+      if (!explanations.containsKey(persona)) {
+        explanations[persona] =
+            _buildPersonaExplanation(persona, trimmed, context, targetLanguage);
+      }
     }
 
     return ExplanationResult(
@@ -28,6 +73,17 @@ class ExplanationEngine {
       explanations: explanations,
       createdAt: DateTime.now().toUtc().toIso8601String(),
     );
+  }
+
+  String? _extractJson(String response) {
+    try {
+      final start = response.indexOf('{');
+      final end = response.lastIndexOf('}');
+      if (start != -1 && end != -1 && end > start) {
+        return response.substring(start, end + 1);
+      }
+    } catch (_) {}
+    return null;
   }
 
   ExplanationEntry _buildPersonaExplanation(

@@ -24,17 +24,21 @@ class UnicomApp extends StatefulWidget {
 
 class _UnicomAppState extends State<UnicomApp> {
   int _currentIndex = 0;
-  final ThemeMode _themeMode = ThemeMode.dark;
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'UNICOM AI',
-      debugShowCheckedModeBanner: false,
-      theme: UnicomTheme.lightTheme,
-      darkTheme: UnicomTheme.darkTheme,
-      themeMode: _themeMode,
-      home: _buildAdaptiveShell(context),
+    return AnimatedBuilder(
+      animation: widget.controller,
+      builder: (context, _) {
+        return MaterialApp(
+          title: 'UNICOM AI',
+          debugShowCheckedModeBanner: false,
+          theme: UnicomTheme.lightTheme,
+          darkTheme: UnicomTheme.darkTheme,
+          themeMode: widget.controller.themeMode,
+          home: _buildAdaptiveShell(context),
+        );
+      },
     );
   }
 
@@ -94,9 +98,9 @@ class _UnicomAppState extends State<UnicomApp> {
                                 label: Text('History'),
                               ),
                               NavigationRailDestination(
-                                icon: Icon(Icons.auto_stories_outlined),
-                                selectedIcon: Icon(Icons.auto_stories),
-                                label: Text('Learn & Tools'),
+                                icon: Icon(Icons.widgets_outlined),
+                                selectedIcon: Icon(Icons.widgets),
+                                label: Text('Tools'),
                               ),
                               NavigationRailDestination(
                                 icon: Icon(Icons.settings_outlined),
@@ -136,9 +140,9 @@ class _UnicomAppState extends State<UnicomApp> {
                 label: 'History',
               ),
               NavigationDestination(
-                icon: Icon(Icons.auto_stories_outlined),
-                selectedIcon: Icon(Icons.auto_stories),
-                label: 'Learn & Tools',
+                icon: Icon(Icons.widgets_outlined),
+                selectedIcon: Icon(Icons.widgets),
+                label: 'Tools',
               ),
               NavigationDestination(
                 icon: Icon(Icons.settings_outlined),

@@ -5,6 +5,8 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
@@ -20,11 +22,22 @@ import java.util.Locale
 class MainActivity: FlutterActivity(), TextToSpeech.OnInitListener {
     private val AICORE_CHANNEL = "com.unicom.ai/aicore"
     private val SPEECH_CHANNEL = "com.unicom.ai/speech"
+    private val PERMISSION_REQUEST_MIC = 1001
 
     private var textToSpeech: TextToSpeech? = null
     private var isTtsInitialized = false
+    private var pendingTtsText: String? = null
+    private var pendingTtsLang: String? = null
+    private var pendingTtsRate: Float = 1.0f
+
     private var speechRecognizer: SpeechRecognizer? = null
-    private var activeSpeechResult: MethodChannel.Result? = null
+    private var speechChannel: MethodChannel? = null
+    private var isContinuousListening = false
+    private var isListeningActive = false
+    private var currentListeningLang = "en-US"
+    private var pendingPermissionResult: MethodChannel.Result? = null
+
+    private val mainHandler = Handler(Looper.getMainLooper())
 
     override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -58,20 +71,28 @@ class MainActivity: FlutterActivity(), TextToSpeech.OnInitListener {
         }
 
         // 2. Android Native Speech & Audio Channel (TTS + STT + Mic)
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, SPEECH_CHANNEL).setMethodCallHandler { call, result ->
+        val channel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, SPEECH_CHANNEL)
+        speechChannel = channel
+        channel.setMethodCallHandler { call, result ->
             when (call.method) {
+                "getAppDataDirectory" -> {
+                    result.success(filesDir.absolutePath)
+                }
                 "speakText" -> {
                     val text = call.argument<String>("text") ?: ""
                     val language = call.argument<String>("language") ?: "en"
                     val rate = call.argument<Double>("rate")?.toFloat() ?: 1.0f
 
                     if (!isTtsInitialized || textToSpeech == null) {
-                        result.error("TTS_NOT_INITIALIZED", "TextToSpeech engine is not initialized yet.", null)
+                        pendingTtsText = text
+                        pendingTtsLang = language
+                        pendingTtsRate = rate
+                        result.success(true)
                         return@setMethodCallHandler
                     }
 
                     try {
-                        val locale = Locale.forLanguageTag(language)
+                        val locale = parseLocale(language)
                         textToSpeech?.language = locale
                         textToSpeech?.setSpeechRate(rate)
                         val res = textToSpeech?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "unicom_tts_${System.currentTimeMillis()}")
@@ -97,8 +118,8 @@ class MainActivity: FlutterActivity(), TextToSpeech.OnInitListener {
                     if (granted) {
                         result.success(true)
                     } else {
-                        ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.RECORD_AUDIO), 1001)
-                        result.success(false)
+                        pendingPermissionResult = result
+                        ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.RECORD_AUDIO), PERMISSION_REQUEST_MIC)
                     }
                 }
                 "isSpeechRecognitionAvailable" -> {
@@ -107,6 +128,7 @@ class MainActivity: FlutterActivity(), TextToSpeech.OnInitListener {
                 }
                 "startListening" -> {
                     val language = call.argument<String>("language") ?: "en-US"
+                    val continuous = call.argument<Boolean>("continuous") ?: false
                     val hasPerm = ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
 
                     if (!hasPerm) {
@@ -114,80 +136,41 @@ class MainActivity: FlutterActivity(), TextToSpeech.OnInitListener {
                         return@setMethodCallHandler
                     }
 
-                    runOnUiThread {
-                        try {
-                            if (speechRecognizer != null) {
-                                speechRecognizer?.destroy()
-                                speechRecognizer = null
-                            }
-
-                            speechRecognizer = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && SpeechRecognizer.isOnDeviceRecognitionAvailable(this)) {
-                                SpeechRecognizer.createOnDeviceSpeechRecognizer(this)
-                            } else {
-                                SpeechRecognizer.createSpeechRecognizer(this)
-                            }
-
-                            activeSpeechResult = result
-
-                            val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-                                putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-                                putExtra(RecognizerIntent.EXTRA_LANGUAGE, language)
-                                putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
-                                putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3)
-                            }
-
-                            speechRecognizer?.setRecognitionListener(object : RecognitionListener {
-                                override fun onReadyForSpeech(params: Bundle?) {}
-                                override fun onBeginningOfSpeech() {}
-                                override fun onRmsChanged(rmsdB: Float) {}
-                                override fun onBufferReceived(buffer: ByteArray?) {}
-                                override fun onEndOfSpeech() {}
-                                override fun onError(error: Int) {
-                                    val errorMsg = when (error) {
-                                        SpeechRecognizer.ERROR_AUDIO -> "Audio recording error"
-                                        SpeechRecognizer.ERROR_CLIENT -> "Client error"
-                                        SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> "Insufficient permissions"
-                                        SpeechRecognizer.ERROR_NETWORK -> "Network error"
-                                        SpeechRecognizer.ERROR_NETWORK_TIMEOUT -> "Network timeout"
-                                        SpeechRecognizer.ERROR_NO_MATCH -> "No speech recognized"
-                                        SpeechRecognizer.ERROR_RECOGNIZER_BUSY -> "Recognizer busy"
-                                        SpeechRecognizer.ERROR_SERVER -> "Server error"
-                                        SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "No speech detected"
-                                        else -> "Speech recognition error: $error"
-                                    }
-                                    activeSpeechResult?.error("SPEECH_ERROR", errorMsg, error)
-                                    activeSpeechResult = null
-                                }
-
-                                override fun onResults(results: Bundle?) {
-                                    val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                                    val recognizedText = matches?.firstOrNull() ?: ""
-                                    activeSpeechResult?.success(mapOf(
-                                        "text" to recognizedText,
-                                        "isFinal" to true
-                                    ))
-                                    activeSpeechResult = null
-                                }
-
-                                override fun onPartialResults(partialResults: Bundle?) {
-                                    val matches = partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                                    val partialText = matches?.firstOrNull() ?: ""
-                                    // Optional partial progress
-                                }
-
-                                override fun onEvent(eventType: Int, params: Bundle?) {}
-                            })
-
-                            speechRecognizer?.startListening(intent)
-                        } catch (e: Exception) {
-                            result.error("SPEECH_INIT_ERROR", e.localizedMessage, null)
-                            activeSpeechResult = null
-                        }
+                    if (!SpeechRecognizer.isRecognitionAvailable(this)) {
+                        result.error("RECOGNIZER_UNAVAILABLE", "Speech recognition service is not available on this device.", null)
+                        return@setMethodCallHandler
                     }
+
+                    isContinuousListening = continuous
+                    isListeningActive = true
+                    currentListeningLang = language
+
+                    startRecognizerInternal(language)
+                    result.success(true)
                 }
                 "stopListening" -> {
-                    runOnUiThread {
-                        speechRecognizer?.stopListening()
+                    isContinuousListening = false
+                    isListeningActive = false
+                    mainHandler.post {
+                        try {
+                            speechRecognizer?.stopListening()
+                        } catch (e: Exception) {
+                            // Ignored
+                        }
+                        speechChannel?.invokeMethod("onListeningStopped", null)
+                    }
+                    result.success(true)
+                }
+                "cancelListening" -> {
+                    isContinuousListening = false
+                    isListeningActive = false
+                    mainHandler.post {
+                        try {
+                            speechRecognizer?.cancel()
+                        } catch (e: Exception) {
+                            // Ignored
+                        }
+                        speechChannel?.invokeMethod("onListeningStopped", null)
                     }
                     result.success(true)
                 }
@@ -198,13 +181,177 @@ class MainActivity: FlutterActivity(), TextToSpeech.OnInitListener {
         }
     }
 
+    private fun startRecognizerInternal(language: String) {
+        mainHandler.post {
+            try {
+                if (speechRecognizer != null) {
+                    speechRecognizer?.destroy()
+                    speechRecognizer = null
+                }
+
+                speechRecognizer = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && SpeechRecognizer.isOnDeviceRecognitionAvailable(this)) {
+                    SpeechRecognizer.createOnDeviceSpeechRecognizer(this)
+                } else {
+                    SpeechRecognizer.createSpeechRecognizer(this)
+                }
+
+                val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                    putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                    putExtra(RecognizerIntent.EXTRA_LANGUAGE, language)
+                    putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
+                    putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3)
+                    putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, 2000L)
+                    putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 1500L)
+                    putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 1500L)
+                }
+
+                speechRecognizer?.setRecognitionListener(object : RecognitionListener {
+                    override fun onReadyForSpeech(params: Bundle?) {
+                        speechChannel?.invokeMethod("onListeningReady", null)
+                    }
+
+                    override fun onBeginningOfSpeech() {
+                        speechChannel?.invokeMethod("onBeginningOfSpeech", null)
+                    }
+
+                    override fun onRmsChanged(rmsdB: Float) {
+                        speechChannel?.invokeMethod("onRmsChanged", rmsdB)
+                    }
+
+                    override fun onBufferReceived(buffer: ByteArray?) {}
+
+                    override fun onEndOfSpeech() {
+                        speechChannel?.invokeMethod("onEndOfSpeech", null)
+                    }
+
+                    override fun onError(error: Int) {
+                        val errorMsg = when (error) {
+                            SpeechRecognizer.ERROR_AUDIO -> "Audio recording error"
+                            SpeechRecognizer.ERROR_CLIENT -> "Client error"
+                            SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> "Insufficient permissions"
+                            SpeechRecognizer.ERROR_NETWORK -> "Network error"
+                            SpeechRecognizer.ERROR_NETWORK_TIMEOUT -> "Network timeout"
+                            SpeechRecognizer.ERROR_NO_MATCH -> "No speech recognized"
+                            SpeechRecognizer.ERROR_RECOGNIZER_BUSY -> "Recognizer busy"
+                            SpeechRecognizer.ERROR_SERVER -> "Server error"
+                            SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "No speech detected"
+                            else -> "Speech recognition error: $error"
+                        }
+
+                        // In continuous mode, auto-restart on timeout or no match if still active
+                        if (isContinuousListening && isListeningActive && (error == SpeechRecognizer.ERROR_NO_MATCH || error == SpeechRecognizer.ERROR_SPEECH_TIMEOUT)) {
+                            mainHandler.postDelayed({
+                                if (isListeningActive && isContinuousListening) {
+                                    startRecognizerInternal(currentListeningLang)
+                                }
+                            }, 300)
+                            return
+                        }
+
+                        speechChannel?.invokeMethod("onError", mapOf(
+                            "code" to error,
+                            "message" to errorMsg
+                        ))
+
+                        if (!isContinuousListening) {
+                            isListeningActive = false
+                            speechChannel?.invokeMethod("onListeningStopped", null)
+                        }
+                    }
+
+                    override fun onResults(results: Bundle?) {
+                        val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                        val recognizedText = matches?.firstOrNull() ?: ""
+
+                        if (recognizedText.isNotEmpty()) {
+                            speechChannel?.invokeMethod("onFinalTranscript", mapOf(
+                                "text" to recognizedText,
+                                "isFinal" to true
+                            ))
+                        }
+
+                        if (isContinuousListening && isListeningActive) {
+                            mainHandler.postDelayed({
+                                if (isListeningActive && isContinuousListening) {
+                                    startRecognizerInternal(currentListeningLang)
+                                }
+                            }, 200)
+                        } else {
+                            isListeningActive = false
+                            speechChannel?.invokeMethod("onListeningStopped", null)
+                        }
+                    }
+
+                    override fun onPartialResults(partialResults: Bundle?) {
+                        val matches = partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                        val partialText = matches?.firstOrNull() ?: ""
+                        if (partialText.isNotEmpty()) {
+                            speechChannel?.invokeMethod("onPartialTranscript", mapOf(
+                                "text" to partialText,
+                                "isFinal" to false
+                            ))
+                        }
+                    }
+
+                    override fun onEvent(eventType: Int, params: Bundle?) {}
+                })
+
+                speechRecognizer?.startListening(intent)
+            } catch (e: Exception) {
+                speechChannel?.invokeMethod("onError", mapOf(
+                    "code" to -1,
+                    "message" to (e.localizedMessage ?: "Failed to start speech recognizer")
+                ))
+                isListeningActive = false
+                speechChannel?.invokeMethod("onListeningStopped", null)
+            }
+        }
+    }
+
+    private fun parseLocale(lang: String): Locale {
+        return try {
+            if (lang.contains("-") || lang.contains("_")) {
+                Locale.forLanguageTag(lang.replace('_', '-'))
+            } else {
+                Locale(lang)
+            }
+        } catch (e: Exception) {
+            Locale.getDefault()
+        }
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == PERMISSION_REQUEST_MIC) {
+            val granted = grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED
+            pendingPermissionResult?.success(granted)
+            pendingPermissionResult = null
+            speechChannel?.invokeMethod("onPermissionResult", granted)
+        }
+    }
+
     override fun onInit(status: Int) {
         if (status == TextToSpeech.SUCCESS) {
             isTtsInitialized = true
+            if (pendingTtsText != null) {
+                val text = pendingTtsText!!
+                val lang = pendingTtsLang ?: "en"
+                val rate = pendingTtsRate
+                pendingTtsText = null
+                pendingTtsLang = null
+                try {
+                    textToSpeech?.language = parseLocale(lang)
+                    textToSpeech?.setSpeechRate(rate)
+                    textToSpeech?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "unicom_tts_pending")
+                } catch (_: Exception) {}
+            }
         }
     }
 
     override fun onDestroy() {
+        isListeningActive = false
+        isContinuousListening = false
+        mainHandler.removeCallbacksAndMessages(null)
         textToSpeech?.stop()
         textToSpeech?.shutdown()
         speechRecognizer?.destroy()

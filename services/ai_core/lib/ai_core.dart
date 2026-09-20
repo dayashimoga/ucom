@@ -19,5 +19,7 @@ export 'src/providers/android_aicore_provider.dart';
 export 'src/providers/local_llm_provider.dart';
 export 'src/providers/cloud_llm_provider.dart';
 export 'src/providers/ai_provider_router.dart';
+export 'src/providers/openai_provider.dart';
+export 'src/providers/anthropic_provider.dart';
 export 'src/knowledge/rag_retrieval_provider.dart';
 export 'src/knowledge/knowledge_engine.dart';

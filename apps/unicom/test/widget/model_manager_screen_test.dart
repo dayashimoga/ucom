@@ -42,9 +42,15 @@ void main() {
       await tester.pumpAndSettle();
 
       // Find Download Pack button for Whisper
-      final downloadBtn =
-          find.widgetWithText(FilledButton, 'Download Pack').first;
-      await tester.tap(downloadBtn);
+      final whisperCard = find.ancestor(
+        of: find.textContaining('Whisper Tiny'),
+        matching: find.byType(Card),
+      );
+      final downloadBtn = find.descendant(
+        of: whisperCard,
+        matching: find.widgetWithText(FilledButton, 'Download Pack'),
+      );
+      await tester.tap(downloadBtn.first);
       await tester.pump();
       await tester.runAsync(() async {
         for (int i = 0; i < 20; i++) {

@@ -3,6 +3,7 @@ import 'package:unicom_contracts/contracts.dart';
 import '../../app/theme.dart';
 import '../conversation/conversation_state_notifier.dart';
 import '../models/model_manager_screen.dart';
+import 'ai_providers_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   final ConversationController controller;
@@ -44,39 +45,39 @@ class _SettingsScreenState extends State<SettingsScreen> {
             children: [
               // 1. Language & Speech
               _buildLanguageSpeechSection(context),
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
 
               // 2. AI Execution Tier & Privacy
               _buildAIModeCard(context),
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
 
               // 3. Android Built-in AI (AICore)
               _buildAndroidAICoreCard(context),
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
 
               // 4. Downloaded Local Models
-              _buildLocalModelsCard(context),
-              const SizedBox(height: 16),
+              _buildOfflineAIDownloadsSection(context),
+              const SizedBox(height: 14),
 
               // 5. Cloud AI & Model Configuration
               _buildCloudAICard(context),
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
 
               // 6. Active Intelligence Mode
               _buildApplicationModeCard(context),
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
 
               // 7. Data Hygiene & Retention
               _buildDataHygieneCard(context),
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
 
-              // 8. Appearance
+              // 8. Appearance (Theme: System / Dark / Light)
               _buildAppearanceSection(context),
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
 
-              // 9. About
+              // 9. About UNICOM AI
               _buildAboutSection(context),
-              const SizedBox(height: 20),
+              const SizedBox(height: 14),
 
               // 10. Advanced: AI & Models
               _buildAdvancedSection(context),
@@ -88,6 +89,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  // 1. Language & Speech
   Widget _buildLanguageSpeechSection(BuildContext context) {
     return Card(
       child: Padding(
@@ -103,17 +105,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             const Text(
               'Configure your primary communication languages and voice preferences.',
-              style: TextStyle(fontSize: 13, color: Colors.grey),
+              style: TextStyle(fontSize: 12, color: Colors.grey),
             ),
-            const Divider(height: 24),
+            const Divider(height: 20),
             ListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('Primary Language'),
               subtitle: Text(
-                  'Currently: ${widget.controller.sourceLanguage.toUpperCase()}'),
+                  'Currently: ${_getLanguageName(widget.controller.sourceLanguage)} (${widget.controller.sourceLanguage.toUpperCase()})'),
               trailing: const Icon(Icons.arrow_forward_ios, size: 14),
               onTap: () => _showLanguagePicker(true),
             ),
@@ -121,7 +123,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               contentPadding: EdgeInsets.zero,
               title: const Text('Translation Target'),
               subtitle: Text(
-                  'Currently: ${widget.controller.targetLanguage.toUpperCase()}'),
+                  'Currently: ${_getLanguageName(widget.controller.targetLanguage)} (${widget.controller.targetLanguage.toUpperCase()})'),
               trailing: const Icon(Icons.arrow_forward_ios, size: 14),
               onTap: () => _showLanguagePicker(false),
             ),
@@ -131,6 +133,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  // 2. AI Execution Tier & Privacy
   Widget _buildAIModeCard(BuildContext context) {
     return Card(
       child: Padding(
@@ -146,17 +149,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             const Text(
-              'Control where AI reasoning runs. In Private/Offline mode, zero network calls leave your device.',
-              style: TextStyle(fontSize: 13, color: Colors.grey),
+              'Control where AI reasoning runs. In Offline Only mode, zero network calls leave your device.',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             RadioListTile<ExecutionMode>(
               title: const Text('Offline Only (Strict Privacy Invariant)',
                   style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
               subtitle: const Text(
-                  'Android AICore & local models only. No internet transmission under any circumstance.',
+                  'Local models & Android AICore only. Zero internet transmission under any circumstance.',
                   style: TextStyle(fontSize: 12)),
               value: ExecutionMode.privateOffline,
               groupValue: widget.controller.executionMode,
@@ -168,7 +171,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               title: const Text('Automatic Mode',
                   style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
               subtitle: const Text(
-                  'Prefers fastest on-device AI; routes to local or cloud according to availability.',
+                  'Routes to fastest working provider according to availability.',
                   style: TextStyle(fontSize: 12)),
               value: ExecutionMode.auto,
               groupValue: widget.controller.executionMode,
@@ -180,7 +183,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               title: const Text('Hybrid Mode',
                   style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
               subtitle: const Text(
-                  'Local-first with user-permitted cloud fallback for rare or high-complexity queries.',
+                  'Local-first with user-permitted cloud fallback for complex queries.',
                   style: TextStyle(fontSize: 12)),
               value: ExecutionMode.hybrid,
               groupValue: widget.controller.executionMode,
@@ -192,7 +195,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               title: const Text('Cloud Preferred',
                   style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
               subtitle: const Text(
-                  'Routes to configured enterprise cloud LLM with local fallback on network failure.',
+                  'Routes to configured cloud LLM with local fallback on network failure.',
                   style: TextStyle(fontSize: 12)),
               value: ExecutionMode.cloud,
               groupValue: widget.controller.executionMode,
@@ -206,6 +209,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  // 3. Android Built-in AI (AICore)
   Widget _buildAndroidAICoreCard(BuildContext context) {
     final status = widget.controller.aicoreStatus;
     final isAvail = status?.isAvailable ?? false;
@@ -218,7 +222,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
             Row(
               children: [
-                const Icon(Icons.android, color: UnicomTheme.accentCyan, size: 20),
+                const Icon(Icons.android, size: 20, color: UnicomTheme.accentCyan),
                 const SizedBox(width: 8),
                 const Text('Android Built-in AI (AICore)',
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
@@ -249,20 +253,71 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       'Android AICore system service is not detected on this host.'),
               style: const TextStyle(fontSize: 12, color: Colors.grey),
             ),
+            if (!isAvail) ...[
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 6,
+                children: [
+                  ActionChip(
+                    avatar: const Icon(Icons.download_for_offline, size: 16),
+                    label: const Text('Use Downloaded Offline AI',
+                        style: TextStyle(fontSize: 11)),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ModelManagerScreen(
+                            modelManager: widget.controller.modelManager,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  ActionChip(
+                    avatar: const Icon(Icons.cloud_outlined, size: 16),
+                    label: const Text('Use Cloud AI',
+                        style: TextStyle(fontSize: 11)),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => AIProvidersScreen(
+                            controller: widget.controller,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  ActionChip(
+                    avatar: const Icon(Icons.info_outline, size: 16),
+                    label: const Text('Learn About Device Support',
+                        style: TextStyle(fontSize: 11)),
+                    onPressed: () {
+                      _showAICoreInfoDialog(context);
+                    },
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
       ),
     );
   }
 
-  Widget _buildLocalModelsCard(BuildContext context) {
+  // 4. Downloaded Local Models
+  Widget _buildOfflineAIDownloadsSection(BuildContext context) {
     return Card(
       child: ListTile(
-        leading: const Icon(Icons.memory, color: UnicomTheme.primaryBlueLight),
+        leading: const Icon(Icons.download_for_offline_outlined,
+            color: UnicomTheme.accentCyan),
         title: const Text('Downloaded Local Models',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
         subtitle: const Text(
-            'Manage offline language packages and on-device AI models.'),
+          'Manage offline Whisper STT, Q4 Transformer LLM, and offline neural translation models.',
+          style: TextStyle(fontSize: 12),
+        ),
         trailing: const Icon(Icons.arrow_forward_ios, size: 14),
         onTap: () {
           Navigator.push(
@@ -278,6 +333,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  // 5. Cloud AI & Model Configuration
   Widget _buildCloudAICard(BuildContext context) {
     return Card(
       child: Padding(
@@ -285,18 +341,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Row(
+            Row(
               children: [
-                Icon(Icons.cloud_outlined,
+                const Icon(Icons.cloud_outlined,
                     color: UnicomTheme.primaryBlueLight, size: 20),
-                SizedBox(width: 8),
-                Text('Cloud AI & Model Configuration',
+                const SizedBox(width: 8),
+                const Text('Cloud AI & Model Configuration',
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                const Spacer(),
+                TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => AIProvidersScreen(controller: widget.controller),
+                      ),
+                    );
+                  },
+                  child: const Text('All Providers', style: TextStyle(fontSize: 12)),
+                ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             const Text(
-              'Configure Google Gemini API key (BYOK). Stored securely in encrypted local vault.',
+              'Configure Google Gemini API key (BYOK). Stored securely in encrypted OS credential vault.',
               style: TextStyle(fontSize: 12, color: Colors.grey),
             ),
             const SizedBox(height: 12),
@@ -347,6 +415,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  // 6. Active Intelligence Mode
   Widget _buildApplicationModeCard(BuildContext context) {
     return Card(
       child: Padding(
@@ -363,7 +432,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             const Text(
               'Select the intelligence persona and analysis workflow.',
               style: TextStyle(fontSize: 12, color: Colors.grey),
@@ -403,6 +472,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  // 7. Data Hygiene & Retention
   Widget _buildDataHygieneCard(BuildContext context) {
     return Card(
       child: Padding(
@@ -418,7 +488,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             const Text(
               'All transcripts, audio frames, and reports are stored locally on your device.',
               style: TextStyle(fontSize: 12, color: Colors.grey),
@@ -430,11 +500,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
               label: const Text('Clear All Local Data',
                   style: TextStyle(color: UnicomTheme.dangerRed)),
               onPressed: () {
+                widget.controller.clearAllData();
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                       content: Text('All local data cleared successfully.')),
                 );
-                widget.controller.clearAllData();
               },
             ),
           ],
@@ -443,6 +513,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  // 8. Appearance
   Widget _buildAppearanceSection(BuildContext context) {
     return Card(
       child: Padding(
@@ -467,11 +538,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 SegmentedButton<ThemeMode>(
                   segments: const [
-                    ButtonSegment(value: ThemeMode.dark, label: Text('Dark')),
-                    ButtonSegment(value: ThemeMode.light, label: Text('Light')),
+                    ButtonSegment(
+                      value: ThemeMode.system,
+                      label: Text('System'),
+                      icon: Icon(Icons.brightness_auto, size: 16),
+                    ),
+                    ButtonSegment(
+                      value: ThemeMode.dark,
+                      label: Text('Dark'),
+                      icon: Icon(Icons.dark_mode_outlined, size: 16),
+                    ),
+                    ButtonSegment(
+                      value: ThemeMode.light,
+                      label: Text('Light'),
+                      icon: Icon(Icons.light_mode_outlined, size: 16),
+                    ),
                   ],
-                  selected: const {ThemeMode.dark},
-                  onSelectionChanged: (_) {},
+                  selected: {widget.controller.themeMode},
+                  onSelectionChanged: (set) {
+                    if (set.isNotEmpty) {
+                      widget.controller.setThemeMode(set.first);
+                    }
+                  },
                 ),
               ],
             ),
@@ -481,6 +569,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  // 9. About UNICOM AI
   Widget _buildAboutSection(BuildContext context) {
     return const Card(
       child: Padding(
@@ -498,7 +587,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             SizedBox(height: 8),
             Text(
-              'Version 1.0.0-production\nUniversal Communication & Intelligence Platform\nDesigned for privacy-first, on-device translation and multi-persona explanations.',
+              'Version 1.0.0-production\n'
+              'Universal Communication & Real-Time Intelligence Platform\n'
+              'Designed for privacy-first, on-device translation, multi-persona explanations, and verified multi-provider cloud AI.',
               style: TextStyle(fontSize: 12, height: 1.5, color: Colors.grey),
             ),
           ],
@@ -507,6 +598,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  // 10. Advanced: AI & Models
   Widget _buildAdvancedSection(BuildContext context) {
     return const ExpansionTile(
       leading: Icon(Icons.tune, color: UnicomTheme.accentCyan),
@@ -520,19 +612,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('Architecture & Quantization',
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
-              SizedBox(height: 6),
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+              SizedBox(height: 4),
               Text(
-                'LLM: Quantized Transformer Q4_0 / INT4 (50 MB)\nSTT: Mel-Spectral VAD + Acoustic INT8 (39 MB)\nTTS: Klatt Formant Resonator Cascade + Android TTS\nTranslation: Neural Sequence Alignment + Offline Lexicon (45 MB)',
-                style: TextStyle(fontSize: 12, height: 1.5, fontFamily: 'monospace', color: Colors.grey),
+                'LLM: Quantized Transformer Q4_0 / INT4 (50 MB)\n'
+                'STT: Mel-Spectral VAD + Acoustic INT8 (39 MB)\n'
+                'TTS: Klatt Formant Resonator Cascade + Android TTS\n'
+                'Translation: Neural Sequence Alignment + Offline Lexicon (45 MB)',
+                style: TextStyle(
+                    fontSize: 11,
+                    height: 1.5,
+                    fontFamily: 'monospace',
+                    color: Colors.grey),
               ),
-              Divider(height: 24),
+              Divider(height: 20),
+
               Text('Network Gate Status',
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
-              SizedBox(height: 6),
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+              SizedBox(height: 4),
               Text(
                 'Private Offline Mode enforces hard socket/HTTP transport layer block. Outbound network attempts throw OfflineViolationException with 0 egress bytes.',
-                style: TextStyle(fontSize: 12, color: Colors.grey),
+                style: TextStyle(fontSize: 11, color: Colors.grey, height: 1.4),
               ),
             ],
           ),
@@ -557,6 +657,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
             : 'Failed: ${res.errorMessage ?? "Error"}';
       });
     }
+  }
+
+  void _showAICoreInfoDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Android AICore Support'),
+        content: const SingleChildScrollView(
+          child: Text(
+            'Android AICore is Google\'s system service that powers on-device foundation models like Gemini Nano.\n\n'
+            'Requirements:\n'
+            '• Android 14 (API 34) or higher\n'
+            '• Hardware support (e.g. Google Pixel 8+, Samsung Galaxy S24+, or compatible flagship SoC)\n'
+            '• AICore system package installed and enabled via Google Play Services\n\n'
+            'For devices without AICore, UniCom automatically falls back to downloaded offline models or configured cloud AI providers.',
+            style: TextStyle(fontSize: 13, height: 1.5),
+          ),
+        ),
+        actions: [
+          TextButton(
+            child: const Text('Close'),
+            onPressed: () => Navigator.pop(ctx),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showLanguagePicker(bool isSource) {
@@ -588,6 +714,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ],
       ),
     );
+  }
+
+  String _getLanguageName(String code) {
+    final found = _langs.firstWhere(
+      (l) => l['code']?.toLowerCase() == code.toLowerCase(),
+      orElse: () => {'name': code.toUpperCase()},
+    );
+    return found['name'] ?? code.toUpperCase();
   }
 
   static const List<Map<String, String>> _langs = [

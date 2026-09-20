@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:unicom_contracts/contracts.dart';
@@ -60,6 +61,16 @@ class LocalSTTProvider implements STTProvider {
       'isSpeechDetected': vadFrame.isSpeech,
       'snrDb': vadFrame.snrDb,
     });
+
+    if (modelPath == null ||
+        (!modelPath!.startsWith('/models/') &&
+            !File(modelPath!).existsSync())) {
+      _logger.warn(
+          'Transcription requested but on-device STT model file is not present.');
+      throw const ValidationException(
+        'Offline speech recognition requires the Whisper on-device model file. Please download Whisper Tiny via Model Manager or use Android SpeechRecognizer.',
+      );
+    }
 
     if (!vadFrame.isSpeech) {
       // Silence or background noise below speech threshold

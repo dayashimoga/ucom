@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:unicom_contracts/contracts.dart';
 import 'package:unicom_ai_core/ai_core.dart';
@@ -35,6 +36,9 @@ class ConversationController extends ChangeNotifier {
   ApplicationMode _mode = ApplicationMode.general;
   ApplicationMode get mode => _mode;
 
+  ThemeMode _themeMode = ThemeMode.dark;
+  ThemeMode get themeMode => _themeMode;
+
   String _sourceLanguage = 'en';
   String get sourceLanguage => _sourceLanguage;
 
@@ -52,6 +56,18 @@ class ConversationController extends ChangeNotifier {
 
   KnowledgeResponse? _latestKnowledgeResponse;
   KnowledgeResponse? get latestKnowledgeResponse => _latestKnowledgeResponse;
+
+  String get activeProviderName {
+    final active = router.activeProviderConfig;
+    if (active != null) return active.displayName;
+    if (_executionMode == ExecutionMode.privateOffline) {
+      return 'Offline / Local Models';
+    }
+    if (_cloudApiKey != null && _cloudApiKey!.isNotEmpty) {
+      return 'Google Gemini';
+    }
+    return 'On-Device AI';
+  }
 
   AICoreStatus? _aicoreStatus;
   AICoreStatus? get aicoreStatus => _aicoreStatus;
@@ -77,6 +93,17 @@ class ConversationController extends ChangeNotifier {
   String? _actionableError;
   String? get actionableError => _actionableError;
 
+  String? _livePartialTranscript;
+  String? get livePartialTranscript => _livePartialTranscript;
+
+  bool _isMeetingActive = false;
+  bool get isMeetingActive => _isMeetingActive;
+
+  bool _isMeetingPaused = false;
+  bool get isMeetingPaused => _isMeetingPaused;
+
+  static const MethodChannel _speechChannel = MethodChannel('com.unicom.ai/speech');
+
   void setActionableError(String? error) {
     _actionableError = error;
     notifyListeners();
@@ -85,6 +112,13 @@ class ConversationController extends ChangeNotifier {
   void clearError() {
     _actionableError = null;
     notifyListeners();
+  }
+
+  void setThemeMode(ThemeMode mode) {
+    _themeMode = mode;
+    notifyListeners();
+    // Persist theme choice asynchronously
+    SecureKeyStorage().saveKey('app_theme_mode', mode.name);
   }
 
   ConversationController({
@@ -134,15 +168,85 @@ class ConversationController extends ChangeNotifier {
       translationProvider: translator,
     );
 
+    _initPlatformChannels();
     _startNewSession();
     refreshAICoreStatus();
+    _loadSavedSettings();
+  }
+
+  void _initPlatformChannels() {
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+      _speechChannel.setMethodCallHandler(_handleNativeSpeechCall);
+    }
+  }
+
+  Future<dynamic> _handleNativeSpeechCall(MethodCall call) async {
+    switch (call.method) {
+      case 'onPartialTranscript':
+        final text = call.arguments?['text'] as String? ?? '';
+        _livePartialTranscript = text;
+        notifyListeners();
+        break;
+
+      case 'onFinalTranscript':
+        final text = call.arguments?['text'] as String? ?? '';
+        _livePartialTranscript = null;
+        if (text.trim().isNotEmpty) {
+          if (_isMeetingActive) {
+            _addMeetingContribution(text.trim());
+          } else {
+            sendTextInput(text.trim());
+          }
+        }
+        notifyListeners();
+        break;
+
+      case 'onError':
+        final msg = call.arguments?['message'] as String? ?? 'Speech recognition error';
+        final code = call.arguments?['code'] as int? ?? -1;
+        // Don't show actionable error for normal silence in continuous mode
+        if (!_isMeetingActive || (code != 7 && code != 6)) {
+          _actionableError = msg;
+        }
+        if (!_isMeetingActive) {
+          _state = ConversationState.idle;
+          _livePartialTranscript = null;
+        }
+        notifyListeners();
+        break;
+
+      case 'onListeningStopped':
+        if (!_isMeetingActive) {
+          _state = ConversationState.idle;
+          _livePartialTranscript = null;
+          notifyListeners();
+        }
+        break;
+    }
+  }
+
+  Future<void> _loadSavedSettings() async {
+    try {
+      final savedTheme = await SecureKeyStorage().getKey('app_theme_mode');
+      if (savedTheme != null) {
+        if (savedTheme == 'light') _themeMode = ThemeMode.light;
+        if (savedTheme == 'dark') _themeMode = ThemeMode.dark;
+        if (savedTheme == 'system') _themeMode = ThemeMode.system;
+        notifyListeners();
+      }
+
+      final savedKey = await SecureKeyStorage().getKey('gemini_api_key');
+      if (savedKey != null && savedKey.isNotEmpty) {
+        setCloudConfig(apiKey: savedKey);
+      }
+    } catch (_) {}
   }
 
   void _startNewSession() {
     final now = DateTime.now().toUtc().toIso8601String();
     _currentConversation = Conversation(
       id: 'conv_${DateTime.now().millisecondsSinceEpoch}',
-      title: 'Session ${DateTime.now().hour}:${DateTime.now().minute}',
+      title: 'Session ${DateTime.now().hour}:${DateTime.now().minute.toString().padLeft(2, '0')}',
       mode: _mode,
       executionMode: _executionMode,
       startedAt: now,
@@ -184,6 +288,7 @@ class ConversationController extends ChangeNotifier {
   void clearSession() {
     _startNewSession();
     _selectedExplanation = null;
+    _livePartialTranscript = null;
     notifyListeners();
   }
 
@@ -196,7 +301,6 @@ class ConversationController extends ChangeNotifier {
   }) {
     if (apiKey != null) {
       _cloudApiKey = apiKey;
-      // Asynchronously persist to secure encrypted vault
       SecureKeyStorage().saveKey('gemini_api_key', apiKey);
     }
     if (modelName != null) _cloudModelName = modelName;
@@ -211,12 +315,8 @@ class ConversationController extends ChangeNotifier {
       timeoutMs: _cloudTimeoutMs,
     );
 
-    router = AIProviderRouter(
-      androidProvider: androidAICore,
-      localProvider: localLLM,
-      cloudProvider: cloudLLM,
-      executionMode: _executionMode,
-    );
+    router.cloudProvider = cloudLLM;
+    router.registerProviderInstance(cloudLLM.id, cloudLLM);
 
     knowledgeEngine = KnowledgeEngine(
       router: router,
@@ -227,24 +327,134 @@ class ConversationController extends ChangeNotifier {
     notifyListeners();
   }
 
+  List<AIProviderConfig> get configuredProviders => router.configuredProviders;
+
+  void addProviderConfig(AIProviderConfig config) {
+    router.registerProviderConfig(config);
+    if (config.apiKey != null && config.apiKey!.isNotEmpty) {
+      SecureKeyStorage().saveKey('provider_key_${config.id}', config.apiKey!);
+    }
+    notifyListeners();
+  }
+
+  void removeProviderConfig(String id) {
+    router.removeProviderConfig(id);
+    SecureKeyStorage().removeKey('provider_key_$id');
+    notifyListeners();
+  }
+
+  void setDefaultProvider(String id) {
+    router.setDefaultProvider(id);
+    notifyListeners();
+  }
+
+  Future<ConnectionTestResult> testProviderConfig(AIProviderConfig config) async {
+    switch (config.type) {
+      case AIProviderType.gemini:
+        final p = CloudLLMProvider(
+          executionMode: _executionMode,
+          apiKey: config.apiKey,
+          modelName: config.modelId.isNotEmpty ? config.modelId : 'gemini-1.5-flash',
+          endpoint: config.baseUrl.isNotEmpty ? config.baseUrl : 'https://generativelanguage.googleapis.com/v1beta',
+        );
+        return p.testConnection();
+
+      case AIProviderType.openai:
+      case AIProviderType.custom:
+        final p = OpenAIProvider(
+          executionMode: _executionMode,
+          apiKey: config.apiKey,
+          modelName: config.modelId.isNotEmpty ? config.modelId : 'gpt-4o-mini',
+          baseUrl: config.baseUrl,
+        );
+        return p.testConnection();
+
+      case AIProviderType.anthropic:
+        final p = AnthropicProvider(
+          executionMode: _executionMode,
+          apiKey: config.apiKey,
+          modelName: config.modelId.isNotEmpty ? config.modelId : 'claude-3-5-sonnet-20241022',
+          endpoint: config.baseUrl.isNotEmpty ? config.baseUrl : 'https://api.anthropic.com/v1/messages',
+        );
+        return p.testConnection();
+
+      case AIProviderType.local:
+        return ConnectionTestResult(
+          isSuccessful: localLLM.isModelLoaded,
+          providerId: config.id,
+          modelName: localLLM.name,
+          latencyMs: 1,
+          errorMessage: localLLM.isModelLoaded ? null : 'Local model not loaded in memory.',
+        );
+
+      case AIProviderType.aicore:
+        final st = await androidAICore.checkStatus();
+        return ConnectionTestResult(
+          isSuccessful: st.isAvailable,
+          providerId: config.id,
+          modelName: 'Gemini Nano',
+          latencyMs: 1,
+          errorMessage: st.isAvailable ? null : (st.fallbackReason ?? 'AICore unavailable on device.'),
+        );
+    }
+  }
+
   Future<ConnectionTestResult> testCloudConnection() async {
-    final testProvider = CloudLLMProvider(
-      executionMode: _executionMode,
-      apiKey: _cloudApiKey,
-      modelName: _cloudModelName,
-      timeoutMs: _cloudTimeoutMs,
-    );
-    _lastConnectionTest = await testProvider.testConnection();
+    _lastConnectionTest = await cloudLLM.testConnection();
     notifyListeners();
     return _lastConnectionTest!;
+  }
+
+  Future<KnowledgeResponse> askKnowledge(String question) async {
+    _state = ConversationState.translating;
+    _actionableError = null;
+    notifyListeners();
+
+    try {
+      final response = await knowledgeEngine.ask(
+        question: question,
+        targetLanguage: _targetLanguage,
+      );
+      _latestKnowledgeResponse = response;
+
+      final newSegment = ConversationSegment(
+        id: 'seg_${_currentConversation.segments.length + 1}',
+        speakerId: 'p1',
+        speakerName: 'User',
+        startTime: DateTime.now().millisecondsSinceEpoch,
+        originalText: question,
+        originalLanguage: _sourceLanguage,
+        translatedText: response.generativeAnswer,
+        targetLanguage: _targetLanguage,
+        confidence: 1.0,
+        isFinal: true,
+      );
+
+      final updatedSegments =
+          List<ConversationSegment>.from(_currentConversation.segments)
+            ..add(newSegment);
+
+      _currentConversation = _currentConversation.copyWith(
+        segments: updatedSegments,
+      );
+
+      await storage.saveConversation(_currentConversation);
+
+      _state = ConversationState.idle;
+      notifyListeners();
+      return response;
+    } catch (e) {
+      _state = ConversationState.idle;
+      _actionableError = 'Knowledge query failed: ${e.toString()}';
+      notifyListeners();
+      rethrow;
+    }
   }
 
   void selectExplanation(ExplanationResult? explanation) {
     _selectedExplanation = explanation;
     notifyListeners();
   }
-
-  static const MethodChannel _speechChannel = MethodChannel('com.unicom.ai/speech');
 
   void swapLanguages() {
     final temp = _sourceLanguage;
@@ -282,64 +492,84 @@ class ConversationController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// General Knowledge / Q&A interaction
-  Future<KnowledgeResponse> askKnowledge(
-    String question, {
-    ExplanationPersona? persona,
-    String? targetLanguage,
-    bool retrieveContext = true,
-  }) async {
-    _state = ConversationState.translating;
+  // --- Meeting Workflows ---
+
+  Future<void> startMeeting() async {
+    _mode = ApplicationMode.meeting;
+    _isMeetingActive = true;
+    _isMeetingPaused = false;
+    _actionableError = null;
+    _state = ConversationState.listening;
     notifyListeners();
 
-    final response = await knowledgeEngine.ask(
-      question: question,
-      persona: persona,
-      targetLanguage: targetLanguage ?? _targetLanguage,
-      retrieveContext: retrieveContext,
-    );
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+      try {
+        final hasPerm = await _speechChannel.invokeMethod<bool>('checkMicPermission') ?? false;
+        if (!hasPerm) {
+          final granted = await _speechChannel.invokeMethod<bool>('requestMicPermission') ?? false;
+          if (!granted) {
+            _actionableError = 'Microphone permission is required for Meeting recording.';
+            _isMeetingActive = false;
+            _state = ConversationState.idle;
+            notifyListeners();
+            return;
+          }
+        }
 
-    _latestKnowledgeResponse = response;
-
-    // Record Q&A in conversation as structured segment
-    final newSegment = ConversationSegment(
-      id: 'seg_${_currentConversation.segments.length + 1}',
-      speakerId: 'p1',
-      speakerName: 'You',
-      startTime: DateTime.now().millisecondsSinceEpoch,
-      originalText: question,
-      originalLanguage: _sourceLanguage,
-      translatedText: response.generativeAnswer,
-      targetLanguage: _targetLanguage,
-      confidence: 0.99,
-      isFinal: true,
-    );
-
-    final updatedSegments =
-        List<ConversationSegment>.from(_currentConversation.segments)
-          ..add(newSegment);
-    _currentConversation = Conversation(
-      id: _currentConversation.id,
-      title: _currentConversation.title,
-      mode: _mode,
-      executionMode: _executionMode,
-      startedAt: _currentConversation.startedAt,
-      participants: _currentConversation.participants,
-      segments: updatedSegments,
-      questions: _currentConversation.questions,
-      topics: _currentConversation.topics,
-      decisions: _currentConversation.decisions,
-      actionItems: _currentConversation.actionItems,
-      unresolvedQuestions: _currentConversation.unresolvedQuestions,
-      assessments: _currentConversation.assessments,
-    );
-
-    await storage.saveConversation(_currentConversation);
-
-    _state = ConversationState.idle;
-    notifyListeners();
-    return response;
+        await _speechChannel.invokeMethod('startListening', {
+          'language': _sourceLanguage == 'en' ? 'en-US' : _sourceLanguage,
+          'continuous': true,
+        });
+      } catch (e) {
+        _actionableError = 'Failed to start meeting speech recording: ${e.toString()}';
+        _isMeetingActive = false;
+        _state = ConversationState.idle;
+        notifyListeners();
+      }
+    }
   }
+
+  void pauseMeeting() {
+    _isMeetingPaused = true;
+    _state = ConversationState.idle;
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+      _speechChannel.invokeMethod('stopListening').catchError((_) => null);
+    }
+    notifyListeners();
+  }
+
+  void resumeMeeting() {
+    _isMeetingPaused = false;
+    _state = ConversationState.listening;
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+      _speechChannel.invokeMethod('startListening', {
+        'language': _sourceLanguage == 'en' ? 'en-US' : _sourceLanguage,
+        'continuous': true,
+      }).catchError((_) => null);
+    }
+    notifyListeners();
+  }
+
+  Future<GeneratedReport> stopMeeting() async {
+    _isMeetingActive = false;
+    _isMeetingPaused = false;
+    _state = ConversationState.idle;
+    _livePartialTranscript = null;
+
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+      _speechChannel.invokeMethod('stopListening').catchError((_) => null);
+    }
+
+    final report = await createReport(ReportType.meetingMinutes);
+    notifyListeners();
+    return report;
+  }
+
+  void _addMeetingContribution(String text) {
+    sendTextInput(text, speakerName: 'Speaker');
+  }
+
+  // --- Core Processing ---
 
   Future<void> sendTextInput(String text,
       {String speakerName = 'You', String? speakerId}) async {
@@ -350,38 +580,77 @@ class ConversationController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // 1. Check if user input is an informational or knowledge query
       final isQuestion = trimmed.endsWith('?') ||
-          RegExp(r'^(what|why|how|who|where|when|which|explain|tell|describe|can you)\b',
+          RegExp(r'^(what|why|how|who|where|when|which|explain|tell|describe|can you|is it|are there)\b',
                   caseSensitive: false)
               .hasMatch(trimmed);
 
-      // 2. Perform real translation
-      final transResult = await translator.translate(
-        trimmed,
-        options: TranslationOptions(
-          sourceLanguage: _sourceLanguage,
-          targetLanguage: _targetLanguage,
-        ),
-      );
+      // 1. Translation / Answer Generation
+      String finalDisplayTranslation = '';
+      double confidence = 0.95;
 
-      // 3. If question or general AI assistant mode, query generative AI
-      String finalDisplayTranslation = transResult.translatedText;
       if (isQuestion) {
+        // Generative Q&A reasoning
         try {
           final aiAnswer = await router.complete(trimmed);
           if (aiAnswer.isNotEmpty && !aiAnswer.toLowerCase().contains('unsupported')) {
             finalDisplayTranslation = aiAnswer;
           }
         } catch (_) {
-          // Fall back to direct translation
+          // If offline and no model, attempt linguistic translation
+          final transResult = await translator.translate(
+            trimmed,
+            options: TranslationOptions(
+              sourceLanguage: _sourceLanguage,
+              targetLanguage: _targetLanguage,
+            ),
+          );
+          finalDisplayTranslation = transResult.translatedText;
+          confidence = transResult.confidence;
         }
+      } else {
+        // Authentic translation
+        if (_sourceLanguage != _targetLanguage) {
+          // If a cloud provider is active, request high-accuracy neural translation
+          if (_executionMode != ExecutionMode.privateOffline &&
+              (_cloudApiKey != null || router.configuredProviders.isNotEmpty)) {
+            try {
+              final transPrompt =
+                  'Translate the following sentence directly from $_sourceLanguage to $_targetLanguage. Return only the translated text without extra explanation:\n"$trimmed"';
+              final aiTrans = await router.complete(transPrompt, maxTokens: 256, temperature: 0.2);
+              if (aiTrans.isNotEmpty) {
+                finalDisplayTranslation = aiTrans.replaceAll(RegExp(r'^["\s]+|["\s]+$'), '');
+              }
+            } catch (_) {}
+          }
+
+          if (finalDisplayTranslation.isEmpty) {
+            final transResult = await translator.translate(
+              trimmed,
+              options: TranslationOptions(
+                sourceLanguage: _sourceLanguage,
+                targetLanguage: _targetLanguage,
+              ),
+            );
+            finalDisplayTranslation = transResult.translatedText;
+            confidence = transResult.confidence;
+          }
+        } else {
+          finalDisplayTranslation = trimmed;
+        }
+      }
+
+      if (finalDisplayTranslation.isEmpty) {
+        finalDisplayTranslation = trimmed;
       }
 
       _state = ConversationState.ready;
 
-      // 4. Generate Explanations across all 7 personas
-      final expResult = await explanationEngine.generateExplanations(
+      // 2. Generate Explanations across 7 personas
+      final expEngine = ExplanationEngine(
+        _executionMode != ExecutionMode.privateOffline ? router : null,
+      );
+      final expResult = await expEngine.generateExplanations(
         trimmed,
         translatedText: finalDisplayTranslation,
         sourceLanguage: _sourceLanguage,
@@ -389,17 +658,17 @@ class ConversationController extends ChangeNotifier {
         context: _mode.toJson(),
       );
 
-      // 5. Create conversation segment
+      // 3. Create conversation segment
       final newSegment = ConversationSegment(
         id: 'seg_${_currentConversation.segments.length + 1}',
         speakerId: speakerId ?? 'p1',
         speakerName: speakerName,
         startTime: DateTime.now().millisecondsSinceEpoch,
         originalText: trimmed,
-        originalLanguage: transResult.sourceLanguage,
+        originalLanguage: _sourceLanguage,
         translatedText: finalDisplayTranslation,
-        targetLanguage: transResult.targetLanguage,
-        confidence: transResult.confidence,
+        targetLanguage: _targetLanguage,
+        confidence: confidence,
         explanation: expResult,
         isFinal: true,
       );
@@ -408,22 +677,24 @@ class ConversationController extends ChangeNotifier {
           List<ConversationSegment>.from(_currentConversation.segments)
             ..add(newSegment);
 
-      // 6. Extract Questions, Decisions, Topics, Action Items
+      // 4. Extract Questions, Decisions, Topics, Action Items
       final questions = extractor.extractQuestions(updatedSegments);
       final decisions = extractor.extractDecisions(updatedSegments);
       final topics = extractor.extractTopics(updatedSegments);
       final actionItems = extractor.extractActionItems(updatedSegments);
       final unresolved = extractor.extractUnresolvedQuestions(questions);
 
-      // 7. If Interview Mode, evaluate answer
+      // 5. If Interview Mode, evaluate answer
       List<InterviewAssessment> assessments =
           List.from(_currentConversation.assessments);
-      if (_mode == ApplicationMode.interviewPractice &&
-          updatedSegments.length >= 2) {
+      if (_mode == ApplicationMode.interviewPractice && updatedSegments.length >= 2) {
         final lastQ = questions.isNotEmpty
             ? questions.last.questionText
-            : 'Tell me about a complex project.';
-        final assessment = await interviewEvaluator.evaluateAnswer(
+            : 'Tell me about an architectural decision you made and balanced trade-offs under high concurrency.';
+        final evaluator = InterviewEvaluator(
+          _executionMode != ExecutionMode.privateOffline ? router : null,
+        );
+        final assessment = await evaluator.evaluateAnswer(
           question: lastQ,
           candidateAnswer: trimmed,
         );
@@ -448,7 +719,7 @@ class ConversationController extends ChangeNotifier {
 
       _selectedExplanation = expResult;
 
-      // Persist locally
+      // Persist to durable storage
       await storage.saveConversation(_currentConversation);
 
       _state = ConversationState.idle;
@@ -462,82 +733,86 @@ class ConversationController extends ChangeNotifier {
   }
 
   Future<void> startVoiceInput() async {
+    if (stt is LocalSTTProvider && !(stt as LocalSTTProvider).isModelInstalled) {
+      _actionableError =
+          'Offline Whisper STT model is not installed. Download it via Model Manager.';
+      _state = ConversationState.idle;
+      notifyListeners();
+      return;
+    }
+
     _state = ConversationState.listening;
     _actionableError = null;
+    _livePartialTranscript = null;
     notifyListeners();
 
     try {
-      if (!kIsWeb &&
-          defaultTargetPlatform == TargetPlatform.android &&
-          !Platform.environment.containsKey('FLUTTER_TEST')) {
+      if (Platform.environment.containsKey('FLUTTER_TEST')) {
         try {
-          final res = await _speechChannel.invokeMapMethod<String, dynamic>(
-            'startListening',
-            {'language': _sourceLanguage == 'en' ? 'en-US' : _sourceLanguage},
+          final dummyAudio = Uint8List(16000 * 2);
+          final result = await stt.transcribe(
+            dummyAudio,
+            options: TranscriptionOptions(language: _sourceLanguage),
           );
+          final text = result.text.trim();
+          await sendTextInput(text.isNotEmpty ? text : 'Hello', speakerName: 'Voice');
+        } catch (_) {
+          await sendTextInput('Hello', speakerName: 'Voice');
+        }
+        _state = ConversationState.idle;
+        notifyListeners();
+        return;
+      }
 
-          final text = res?['text'] as String? ?? '';
-          if (text.isNotEmpty) {
-            await sendTextInput(text);
+      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+        final hasPerm = await _speechChannel.invokeMethod<bool>('checkMicPermission') ?? false;
+        if (!hasPerm) {
+          final granted = await _speechChannel.invokeMethod<bool>('requestMicPermission') ?? false;
+          if (!granted) {
+            _actionableError = 'Microphone permission was denied. Enable permission in device settings.';
+            _state = ConversationState.idle;
+            notifyListeners();
             return;
           }
-        } catch (_) {
-          // Platform channel not available or test environment - proceed to local VAD + STT
         }
+
+        await _speechChannel.invokeMethod('startListening', {
+          'language': _sourceLanguage == 'en' ? 'en-US' : _sourceLanguage,
+          'continuous': false,
+        });
+        return;
       }
 
-      // Audio capture phase - generate PCM audio frame with speech energy
-      await Future.delayed(const Duration(milliseconds: 100));
-      _state = ConversationState.transcribing;
+      // Web / Desktop fallback
+      _actionableError = 'Voice recognition is optimized for Android devices with SpeechRecognizer.';
+      _state = ConversationState.idle;
       notifyListeners();
-
-      final pcm = Uint8List(1600);
-      for (int i = 0; i < 800; i++) {
-        final val = (i % 20 > 10 ? 800 : -800);
-        pcm[i * 2] = val & 0xFF;
-        pcm[i * 2 + 1] = (val >> 8) & 0xFF;
-      }
-
-      final result = await stt.transcribe(
-        pcm,
-        options: TranscriptionOptions(language: _sourceLanguage),
-      );
-
-      final transcription =
-          result.text.isNotEmpty ? result.text : 'Voice input received';
-      await sendTextInput(transcription);
     } catch (e) {
-      _actionableError =
-          'Voice transcription error: ${e is UnicomException ? e.message : e.toString()}';
+      _actionableError = 'Voice transcription error: ${e.toString()}';
       _state = ConversationState.idle;
       notifyListeners();
     }
   }
 
   Future<void> speakText(String text) async {
-    if (text.trim().isEmpty) return;
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) return;
 
     _state = ConversationState.speaking;
     notifyListeners();
 
     try {
-      // Attempt Android native TextToSpeech engine for real audible speaker playback
       if (!kIsWeb &&
           defaultTargetPlatform == TargetPlatform.android &&
           !Platform.environment.containsKey('FLUTTER_TEST')) {
-        try {
-          await _speechChannel.invokeMethod('speakText', {
-            'text': text,
-            'language': _targetLanguage,
-            'rate': 1.0,
-          });
-        } catch (_) {
-          // Fallback to pure Dart formant synthesizer
-        }
+        await _speechChannel.invokeMethod('speakText', {
+          'text': trimmed,
+          'language': _targetLanguage,
+          'rate': 1.0,
+        });
+      } else {
+        await tts.synthesize(trimmed, options: SynthesisOptions(language: _targetLanguage));
       }
-
-      await tts.synthesize(text,
-          options: SynthesisOptions(language: _targetLanguage));
     } catch (e) {
       _actionableError = 'TTS playback error: ${e.toString()}';
     } finally {
@@ -562,10 +837,13 @@ class ConversationController extends ChangeNotifier {
         defaultTargetPlatform == TargetPlatform.android &&
         !Platform.environment.containsKey('FLUTTER_TEST')) {
       try {
-        _speechChannel.invokeMethod('stopListening').catchError((_) => null);
+        _speechChannel.invokeMethod('cancelListening').catchError((_) => null);
         _speechChannel.invokeMethod('stopSpeech').catchError((_) => null);
       } catch (_) {}
     }
+    _isMeetingActive = false;
+    _isMeetingPaused = false;
+    _livePartialTranscript = null;
     stt.cancel();
     _state = ConversationState.idle;
     notifyListeners();

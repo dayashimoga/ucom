@@ -1,0 +1,99 @@
+{
+  "$schema": "http://cyclonedx.org/schema/bom-1.5.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "serialNumber": "urn:uuid:78363a0e-0754-d49b-408a-d147f810af92",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-09-20T11:23:30Z",
+    "tools": [
+      {
+        "vendor": "UNICOM DevOps",
+        "name": "UNICOM SBOM Generator",
+        "version": "1.0.0"
+      }
+    ],
+    "component": {
+      "type": "application",
+      "bom-ref": "pkg:apk/com.unicom.ai@1.0.0+1",
+      "name": "UNICOM AI Android App",
+      "version": "1.0.0+1",
+      "description": "Universal Communication Intelligence Android Release Application",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "78363A0E0754D49B408AD147F810AF92F9DA73EA00CF046822B6584F2DAA0EB1"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Proprietary"
+          }
+        }
+      ]
+    }
+  },
+  "components": [
+    {
+      "type": "framework",
+      "bom-ref": "pkg:flutter/flutter-sdk@3.24.3",
+      "name": "Flutter SDK",
+      "version": "3.24.3",
+      "licenses": [{ "license": { "id": "BSD-3-Clause" } }]
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:dart/unicom_contracts@1.0.0",
+      "name": "unicom_contracts",
+      "version": "1.0.0",
+      "scope": "required",
+      "description": "Domain data models, state contracts, and provider interfaces"
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:dart/unicom_shared@1.0.0",
+      "name": "unicom_shared",
+      "version": "1.0.0",
+      "scope": "required",
+      "description": "Security gates, cryptographic utilities, privacy logger, and secure storage"
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:dart/unicom_ai_core@1.0.0",
+      "name": "unicom_ai_core",
+      "version": "1.0.0",
+      "scope": "required",
+      "description": "Multi-provider AI router, local quantized transformer runtime, neural translation, speech engines"
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:dart/unicom_reporting@1.0.0",
+      "name": "unicom_reporting",
+      "version": "1.0.0",
+      "scope": "required",
+      "description": "Structured report generation (Meeting, Interview, Executive, Action Items)"
+    },
+    {
+      "type": "library",
+      "bom-ref": "pkg:dart/unicom_model_runtime@1.0.0",
+      "name": "unicom_model_runtime",
+      "version": "1.0.0",
+      "scope": "required",
+      "description": "On-device model manager with atomic installation and SHA-256 verification"
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "pkg:apk/com.unicom.ai@1.0.0+1",
+      "dependsOn": [
+        "pkg:flutter/flutter-sdk@3.24.3",
+        "pkg:dart/unicom_contracts@1.0.0",
+        "pkg:dart/unicom_shared@1.0.0",
+        "pkg:dart/unicom_ai_core@1.0.0",
+        "pkg:dart/unicom_reporting@1.0.0",
+        "pkg:dart/unicom_model_runtime@1.0.0"
+      ]
+    }
+  ]
+}

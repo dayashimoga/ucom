@@ -16,8 +16,35 @@ class SecureKeyStorage {
   }) : _storageFileName = storageFileName;
 
   File _getVaultFile() {
-    final dir = storageDir ?? Directory.systemTemp;
+    final dir = storageDir ?? _resolveDefaultDir();
+    if (!dir.existsSync()) {
+      try {
+        dir.createSync(recursive: true);
+      } catch (_) {}
+    }
     return File('${dir.path}/$_storageFileName');
+  }
+
+  static Directory _resolveDefaultDir() {
+    try {
+      if (Platform.isAndroid) {
+        final d = Directory('/data/user/0/com.unicom.ai/files');
+        if (d.existsSync()) return d;
+      }
+      if (Platform.isWindows) {
+        final appData = Platform.environment['APPDATA'] ?? Platform.environment['LOCALAPPDATA'];
+        if (appData != null && appData.isNotEmpty) {
+          return Directory('$appData/UniComAI');
+        }
+      }
+      if (Platform.isLinux || Platform.isMacOS) {
+        final home = Platform.environment['HOME'];
+        if (home != null && home.isNotEmpty) {
+          return Directory('$home/.unicom_ai');
+        }
+      }
+    } catch (_) {}
+    return Directory.systemTemp;
   }
 
   /// Derives an AES/HMAC encryption key from platform environment entropy and app isolation salt.

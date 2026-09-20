@@ -12,12 +12,33 @@ class LocalStorageProvider implements StorageProvider {
   LocalStorageProvider([Directory? storageDirectory])
       : _delegate = (!kIsWeb)
             ? DurableFileStorageProvider(
-                baseDirectory: storageDirectory ??
-                    Directory('${Directory.systemTemp.path}/unicom_app_data'),
+                baseDirectory: storageDirectory ?? _resolveDefaultStorageDir(),
               )
             : InMemoryStorageProvider();
 
   LocalStorageProvider.inMemory() : _delegate = InMemoryStorageProvider();
+
+  static Directory _resolveDefaultStorageDir() {
+    try {
+      if (Platform.isAndroid) {
+        final d = Directory('/data/user/0/com.unicom.ai/files/unicom_app_data');
+        return d;
+      }
+      if (Platform.isWindows) {
+        final appData = Platform.environment['APPDATA'] ?? Platform.environment['LOCALAPPDATA'];
+        if (appData != null && appData.isNotEmpty) {
+          return Directory('$appData/UniComAI/data');
+        }
+      }
+      if (Platform.isLinux || Platform.isMacOS) {
+        final home = Platform.environment['HOME'];
+        if (home != null && home.isNotEmpty) {
+          return Directory('$home/.unicom_ai/data');
+        }
+      }
+    } catch (_) {}
+    return Directory('${Directory.systemTemp.path}/unicom_app_data');
+  }
 
   @override
   String get id => _delegate.id;

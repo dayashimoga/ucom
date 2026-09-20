@@ -443,6 +443,41 @@ class Conversation {
     this.metadata,
   });
 
+  Conversation copyWith({
+    String? id,
+    String? title,
+    ApplicationMode? mode,
+    ExecutionMode? executionMode,
+    String? startedAt,
+    String? endedAt,
+    List<Participant>? participants,
+    List<ConversationSegment>? segments,
+    List<ExtractedQuestion>? questions,
+    List<TopicItem>? topics,
+    List<DecisionItem>? decisions,
+    List<ActionItem>? actionItems,
+    List<String>? unresolvedQuestions,
+    List<InterviewAssessment>? assessments,
+    Map<String, dynamic>? metadata,
+  }) =>
+      Conversation(
+        id: id ?? this.id,
+        title: title ?? this.title,
+        mode: mode ?? this.mode,
+        executionMode: executionMode ?? this.executionMode,
+        startedAt: startedAt ?? this.startedAt,
+        endedAt: endedAt ?? this.endedAt,
+        participants: participants ?? this.participants,
+        segments: segments ?? this.segments,
+        questions: questions ?? this.questions,
+        topics: topics ?? this.topics,
+        decisions: decisions ?? this.decisions,
+        actionItems: actionItems ?? this.actionItems,
+        unresolvedQuestions: unresolvedQuestions ?? this.unresolvedQuestions,
+        assessments: assessments ?? this.assessments,
+        metadata: metadata ?? this.metadata,
+      );
+
   Map<String, dynamic> toJson() => {
         'id': id,
         'title': title,
@@ -646,3 +681,94 @@ class ModelMetadata {
         installPath: json['installPath'] as String?,
       );
 }
+
+enum AIProviderType {
+  gemini,
+  openai,
+  anthropic,
+  custom,
+  local,
+  aicore;
+
+  String toJson() => name;
+  static AIProviderType fromJson(String val) {
+    return AIProviderType.values.firstWhere(
+      (e) => e.name.toLowerCase() == val.toLowerCase(),
+      orElse: () => AIProviderType.custom,
+    );
+  }
+}
+
+class AIProviderConfig {
+  final String id;
+  final AIProviderType type;
+  final String displayName;
+  final String baseUrl;
+  final String? apiKey;
+  final String modelId;
+  final bool isEnabled;
+  final bool isDefault;
+  final List<String> supportedCapabilities;
+
+  AIProviderConfig({
+    required this.id,
+    required this.type,
+    required this.displayName,
+    required this.baseUrl,
+    this.apiKey,
+    required this.modelId,
+    this.isEnabled = true,
+    this.isDefault = false,
+    this.supportedCapabilities = const ['qa', 'translation'],
+  });
+
+  AIProviderConfig copyWith({
+    String? id,
+    AIProviderType? type,
+    String? displayName,
+    String? baseUrl,
+    String? apiKey,
+    String? modelId,
+    bool? isEnabled,
+    bool? isDefault,
+    List<String>? supportedCapabilities,
+  }) => AIProviderConfig(
+    id: id ?? this.id,
+    type: type ?? this.type,
+    displayName: displayName ?? this.displayName,
+    baseUrl: baseUrl ?? this.baseUrl,
+    apiKey: apiKey ?? this.apiKey,
+    modelId: modelId ?? this.modelId,
+    isEnabled: isEnabled ?? this.isEnabled,
+    isDefault: isDefault ?? this.isDefault,
+    supportedCapabilities: supportedCapabilities ?? this.supportedCapabilities,
+  );
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'type': type.toJson(),
+    'displayName': displayName,
+    'baseUrl': baseUrl,
+    if (apiKey != null) 'apiKey': apiKey,
+    'modelId': modelId,
+    'isEnabled': isEnabled,
+    'isDefault': isDefault,
+    'supportedCapabilities': supportedCapabilities,
+  };
+
+  factory AIProviderConfig.fromJson(Map<String, dynamic> json) => AIProviderConfig(
+    id: json['id'] as String,
+    type: AIProviderType.fromJson(json['type'] as String),
+    displayName: json['displayName'] as String,
+    baseUrl: json['baseUrl'] as String? ?? '',
+    apiKey: json['apiKey'] as String?,
+    modelId: json['modelId'] as String,
+    isEnabled: json['isEnabled'] as bool? ?? true,
+    isDefault: json['isDefault'] as bool? ?? false,
+    supportedCapabilities: (json['supportedCapabilities'] as List<dynamic>?)
+        ?.map((e) => e as String)
+        .toList() ??
+        const ['qa', 'translation'],
+  );
+}
+

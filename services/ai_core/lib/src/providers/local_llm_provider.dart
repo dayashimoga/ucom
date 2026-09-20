@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:unicom_contracts/contracts.dart';
@@ -325,8 +326,22 @@ class LocalLLMProvider implements LLMProvider {
   }) async {
     if (!isModelLoaded) {
       throw const ValidationException(
-        'Local LLM model is not loaded in memory. Activate or load a model via ModelManager.',
+        'Offline AI model is not installed or loaded. Download an offline model via Model Manager or configure a Cloud AI provider in Settings.',
       );
+    }
+
+    if (activeModel != null) {
+      if (!activeModel!.isInstalled) {
+        throw const ValidationException(
+          'Offline AI model is not installed or loaded. Download an offline model via Model Manager or configure a Cloud AI provider in Settings.',
+        );
+      }
+      if (activeModel!.installPath != null &&
+          !File(activeModel!.installPath!).existsSync()) {
+        throw const ValidationException(
+          'Offline AI model weights file not found on disk. Please download the model via Model Manager.',
+        );
+      }
     }
 
     final sw = Stopwatch()..start();

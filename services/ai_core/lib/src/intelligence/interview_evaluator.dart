@@ -1,16 +1,83 @@
+import 'dart:convert';
 import 'package:unicom_contracts/contracts.dart';
 
 class InterviewEvaluator {
+  final LLMProvider? provider;
+
+  InterviewEvaluator([this.provider]);
+
   Future<InterviewAssessment> evaluateAnswer({
     required String question,
     required String candidateAnswer,
     String? roleOrTopic,
   }) async {
     final trimmedAnswer = candidateAnswer.trim();
+
+    // Attempt real LLM evaluation if provider is available
+    if (provider != null) {
+      try {
+        final prompt = '''
+Evaluate this candidate's interview response against standard technical and behavioral rubrics.
+Question: "$question"
+Candidate Answer: "$trimmedAnswer"
+Context: "${roleOrTopic ?? 'Technical & Professional Excellence'}"
+
+Return ONLY a valid JSON object with:
+- "overallScore": integer (1-10)
+- "rubrics": list of objects with "criterion" ("clarity", "technical_depth", "structure", "delivery", "correctness"), "score" (integer 1-10), and "feedback" (string)
+- "strengths": list of strings (2-4 concrete strengths observed)
+- "areasForImprovement": list of strings (2-4 actionable improvement items)
+- "recommendedFollowUps": list of strings (2-3 relevant follow-up questions)
+- "studyPlan": list of strings (3 targeted preparation drills)
+''';
+        final response = await provider!.complete(prompt, maxTokens: 1000, temperature: 0.3);
+        final cleanJson = _extractJson(response);
+        if (cleanJson != null) {
+          final parsed = jsonDecode(cleanJson) as Map<String, dynamic>;
+          final overallScore = (parsed['overallScore'] as num?)?.toInt() ?? 8;
+          final rubricsList = (parsed['rubrics'] as List<dynamic>?)
+                  ?.map((r) => InterviewRubricScore.fromJson(r as Map<String, dynamic>))
+                  .toList() ??
+              [];
+          final strengths = (parsed['strengths'] as List<dynamic>?)
+                  ?.map((s) => s.toString())
+                  .toList() ??
+              [];
+          final areasForImprovement = (parsed['areasForImprovement'] as List<dynamic>?)
+                  ?.map((a) => a.toString())
+                  .toList() ??
+              [];
+          final recommendedFollowUps = (parsed['recommendedFollowUps'] as List<dynamic>?)
+                  ?.map((f) => f.toString())
+                  .toList() ??
+              [];
+          final studyPlan = (parsed['studyPlan'] as List<dynamic>?)
+                  ?.map((p) => p.toString())
+                  .toList() ??
+              [];
+
+          return InterviewAssessment(
+            id: 'assess_${DateTime.now().millisecondsSinceEpoch}',
+            question: question,
+            candidateAnswer: trimmedAnswer,
+            overallScore: overallScore,
+            rubrics: rubricsList,
+            strengths: strengths,
+            areasForImprovement: areasForImprovement,
+            recommendedFollowUps: recommendedFollowUps,
+            studyPlan: studyPlan,
+            createdAt: DateTime.now().toUtc().toIso8601String(),
+          );
+        }
+      } catch (_) {
+        // Fall back to heuristic scoring
+      }
+    }
+
+    // Heuristic fallback
     final wordCount =
         trimmedAnswer.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).length;
 
-    // Evaluate rubrics (1-10)
     final clarityScore = _scoreClarity(trimmedAnswer, wordCount);
     final depthScore = _scoreDepth(trimmedAnswer, wordCount);
     final structureScore = _scoreStructure(trimmedAnswer);
@@ -104,9 +171,20 @@ class InterviewEvaluator {
     );
   }
 
+  String? _extractJson(String response) {
+    try {
+      final start = response.indexOf('{');
+      final end = response.lastIndexOf('}');
+      if (start != -1 && end != -1 && end > start) {
+        return response.substring(start, end + 1);
+      }
+    } catch (_) {}
+    return null;
+  }
+
   int _scoreClarity(String answer, int wordCount) {
     if (wordCount < 10) return 4;
-    if (wordCount > 400) return 6; // rambly
+    if (wordCount > 400) return 6;
     return 9;
   }
 
@@ -140,11 +218,6 @@ class InterviewEvaluator {
     return hasTransitions ? 9 : 7;
   }
 
-  int _scoreDelivery(String answer) {
-    return 8;
-  }
-
-  int _scoreCorrectness(String answer) {
-    return 8;
-  }
+  int _scoreDelivery(String answer) => 8;
+  int _scoreCorrectness(String answer) => 8;
 }
