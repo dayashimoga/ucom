@@ -1,12 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:test/test.dart';
 import 'package:unicom_contracts/contracts.dart';
 import 'package:unicom_shared/shared.dart';
 import 'package:unicom_ai_core/ai_core.dart';
-import 'package:unicom_model_runtime/model_runtime.dart';
 
 class _FakeLLMProvider implements LLMProvider {
   final Future<String> Function(String prompt) onComplete;
@@ -533,7 +531,7 @@ void main() {
 
       server.listen((HttpRequest request) async {
         requestCount++;
-        final bodyStr = await utf8.decoder.bind(request).join();
+        await utf8.decoder.bind(request).join();
 
         if (requestCount == 1) {
           // Healthcheck / testConnection
@@ -667,7 +665,7 @@ void main() {
 
       server.listen((HttpRequest request) async {
         requestCount++;
-        final bodyStr = await utf8.decoder.bind(request).join();
+        await utf8.decoder.bind(request).join();
 
         if (requestCount == 1) {
           // Healthcheck / testConnection
