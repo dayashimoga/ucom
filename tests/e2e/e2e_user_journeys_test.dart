@@ -223,6 +223,9 @@ void main() {
       final activated =
           await modelManager.activateModel('whisper-tiny-quantized');
       expect(activated, isTrue);
+
+      // Clean up downloaded model
+      await modelManager.removeModel('whisper-tiny-quantized');
     });
   });
 }

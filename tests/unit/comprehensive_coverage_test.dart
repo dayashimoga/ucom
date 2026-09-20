@@ -466,27 +466,34 @@ void main() {
     });
 
     test('model manager error branches coverage', () async {
-      final manager = LocalModelManager();
+      final tempDir = Directory.systemTemp.createTempSync('unicom_model_err_');
+      try {
+        final manager = LocalModelManager(storageDirectory: tempDir);
 
-      // Download non-existent model throws NotFoundException
-      expect(() async => await manager.downloadModel('non-existent'),
-          throwsA(isA<NotFoundException>()));
+        // Download non-existent model throws NotFoundException
+        expect(() async => await manager.downloadModel('non-existent'),
+            throwsA(isA<NotFoundException>()));
 
-      // Checksum non-existent model throws NotFoundException
-      expect(() async => await manager.verifyChecksum('non-existent'),
-          throwsA(isA<NotFoundException>()));
+        // Checksum non-existent model throws NotFoundException
+        expect(() async => await manager.verifyChecksum('non-existent'),
+            throwsA(isA<NotFoundException>()));
 
-      // Activate uninstalled model throws ValidationException
-      expect(() async => await manager.activateModel('whisper-tiny-quantized'),
-          throwsA(isA<ValidationException>()));
+        // Activate uninstalled model throws ValidationException
+        expect(() async => await manager.activateModel('whisper-tiny-quantized'),
+            throwsA(isA<ValidationException>()));
 
-      // Remove non-existent model throws NotFoundException
-      expect(() async => await manager.removeModel('non-existent'),
-          throwsA(isA<NotFoundException>()));
+        // Remove non-existent model throws NotFoundException
+        expect(() async => await manager.removeModel('non-existent'),
+            throwsA(isA<NotFoundException>()));
 
-      // Remove uninstalled model returns false
-      final removed = await manager.removeModel('piper-neural-voice-en');
-      expect(removed, isFalse);
+        // Remove uninstalled model returns false
+        final removed = await manager.removeModel('piper-neural-voice-en');
+        expect(removed, isFalse);
+      } finally {
+        if (tempDir.existsSync()) {
+          tempDir.deleteSync(recursive: true);
+        }
+      }
     });
 
     test('phrasebook getForLanguage fallback and all languages coverage', () {

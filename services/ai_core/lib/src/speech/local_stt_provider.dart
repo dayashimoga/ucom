@@ -62,9 +62,9 @@ class LocalSTTProvider implements STTProvider {
       'snrDb': vadFrame.snrDb,
     });
 
-    if (modelPath == null ||
-        (!modelPath!.startsWith('/models/') &&
-            !File(modelPath!).existsSync())) {
+    if (modelPath != null &&
+        !modelPath!.startsWith('/models/') &&
+        !File(modelPath!).existsSync()) {
       _logger.warn(
           'Transcription requested but on-device STT model file is not present.');
       throw const ValidationException(
