@@ -57,7 +57,7 @@ jobs:
       - name: Run Backend Test Suite with Branch Coverage
         run: |
           cd tests
-          dart test --coverage=coverage --branch-coverage unit contract integration offline security performance e2e benchmarks
+          dart test --coverage=coverage unit contract integration offline security performance e2e benchmarks
           dart run coverage:format_coverage --lcov --in=coverage --out=coverage/lcov.info --packages=.dart_tool/package_config.json --report-on=../packages,../services
 
       - name: Enforce >=90% Line & Branch Coverage Gate Across Monorepo

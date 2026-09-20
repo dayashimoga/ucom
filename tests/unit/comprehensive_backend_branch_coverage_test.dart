@@ -57,6 +57,97 @@ class _IdentityNeuralEngine extends NeuralTranslationEngine {
   }
 }
 
+class _FakeHttpHeaders implements HttpHeaders {
+  final Map<String, List<String>> _headers = {};
+
+  @override
+  void set(String name, Object value, {bool preserveHeaderCase = false}) {
+    _headers[name.toLowerCase()] = [value.toString()];
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _FakeHttpClientRequest implements HttpClientRequest {
+  final _FakeHttpHeaders _headers = _FakeHttpHeaders();
+  final Completer<HttpClientResponse> _completer = Completer<HttpClientResponse>();
+  final List<String> writtenData = [];
+
+  void completeWith(HttpClientResponse response) {
+    if (!_completer.isCompleted) {
+      _completer.complete(response);
+    }
+  }
+
+  void completeError(Object error) {
+    if (!_completer.isCompleted) {
+      _completer.completeError(error);
+    }
+  }
+
+  @override
+  HttpHeaders get headers => _headers;
+
+  @override
+  void write(Object? obj) {
+    if (obj != null) writtenData.add(obj.toString());
+  }
+
+  @override
+  Future<HttpClientResponse> close() => _completer.future;
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _FakeHttpClientResponse extends Stream<List<int>> implements HttpClientResponse {
+  @override
+  final int statusCode;
+  final String body;
+
+  _FakeHttpClientResponse({required this.statusCode, required this.body});
+
+  @override
+  StreamSubscription<List<int>> listen(
+    void Function(List<int> event)? onData, {
+    Function? onError,
+    void Function()? onDone,
+    bool? cancelOnError,
+  }) {
+    final stream = Stream.value(utf8.encode(body));
+    return stream.listen(onData, onError: onError, onDone: onDone, cancelOnError: cancelOnError);
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _MockHttpClient implements HttpClient {
+  final Future<HttpClientResponse> Function(Uri uri, String? method) onPost;
+  bool isClosed = false;
+
+  _MockHttpClient({required this.onPost});
+
+  @override
+  Duration? connectionTimeout;
+
+  @override
+  Future<HttpClientRequest> postUrl(Uri url) async {
+    final req = _FakeHttpClientRequest();
+    onPost(url, 'POST').then(req.completeWith, onError: req.completeError);
+    return req;
+  }
+
+  @override
+  void close({bool force = false}) {
+    isClosed = true;
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
 void main() {
   group('Comprehensive Backend Branch Coverage Tests', () {
     test('InterviewEvaluator LLM provider success, missing fields, and error fallback', () async {
@@ -946,6 +1037,408 @@ void main() {
       expect(aicoreSubclass.name, contains('Android AICore'));
       final aicoreStatus = await aicoreSubclass.checkStatus();
       expect(aicoreStatus.isAvailable, isTrue);
+    });
+
+    test('OpenAIProvider complete, completeStream, testConnection, retry and error handling', () async {
+      NetworkGate().setOfflineEnforcement(false);
+
+      // 1. testConnection in offline mode
+      final offlineProvider = OpenAIProvider(executionMode: ExecutionMode.privateOffline, apiKey: 'key');
+      final offlineConn = await offlineProvider.testConnection();
+      expect(offlineConn.isSuccessful, isFalse);
+      expect(offlineConn.errorMessage, contains('private_offline'));
+
+      // 2. testConnection 200 OK
+      final clientOk = _MockHttpClient(
+        onPost: (uri, method) async => _FakeHttpClientResponse(
+          statusCode: HttpStatus.ok,
+          body: jsonEncode({'choices': [{'message': {'content': 'ok'}}]}),
+        ),
+      );
+      final providerOk = OpenAIProvider(
+        executionMode: ExecutionMode.cloud,
+        apiKey: 'sk-test',
+        httpClientFactory: () => clientOk,
+      );
+      expect(providerOk.id, equals('openai_llm'));
+      expect(providerOk.isOfflineCapable, isFalse);
+      expect(providerOk.name, contains('OpenAI-Compatible'));
+      final connOk = await providerOk.testConnection();
+      expect(connOk.isSuccessful, isTrue);
+
+      // 3. testConnection 401 error with JSON and non-JSON
+      final client401 = _MockHttpClient(
+        onPost: (uri, method) async => _FakeHttpClientResponse(
+          statusCode: HttpStatus.unauthorized,
+          body: jsonEncode({'error': {'message': 'Invalid key'}}),
+        ),
+      );
+      final provider401 = OpenAIProvider(
+        executionMode: ExecutionMode.cloud,
+        apiKey: 'sk-bad',
+        httpClientFactory: () => client401,
+      );
+      final conn401 = await provider401.testConnection();
+      expect(conn401.isSuccessful, isFalse);
+      expect(conn401.errorMessage, contains('Invalid key'));
+
+      // 4. testConnection SocketException
+      final clientSocket = _MockHttpClient(
+        onPost: (uri, method) async => throw const SocketException('Connection refused'),
+      );
+      final providerSocket = OpenAIProvider(
+        executionMode: ExecutionMode.cloud,
+        apiKey: 'sk-test',
+        httpClientFactory: () => clientSocket,
+      );
+      final connSocket = await providerSocket.testConnection();
+      expect(connSocket.isSuccessful, isFalse);
+      expect(connSocket.errorMessage, contains('Connection failed'));
+
+      // 5. complete in offline mode
+      await expectLater(
+        offlineProvider.complete('test'),
+        throwsA(isA<OfflineViolationException>()),
+      );
+      await expectLater(
+        offlineProvider.completeStream('test').drain(),
+        throwsA(isA<OfflineViolationException>()),
+      );
+
+      // 6. complete with system prompt and valid choices
+      final clientComplete = _MockHttpClient(
+        onPost: (uri, method) async => _FakeHttpClientResponse(
+          statusCode: HttpStatus.ok,
+          body: jsonEncode({
+            'choices': [
+              {
+                'message': {'content': 'OpenAI completion result'}
+              }
+            ]
+          }),
+        ),
+      );
+      final providerComplete = OpenAIProvider(
+        executionMode: ExecutionMode.cloud,
+        apiKey: 'sk-test',
+        baseUrl: 'https://custom.api.com/',
+        httpClientFactory: () => clientComplete,
+      );
+      final compResult = await providerComplete.complete('prompt', systemPrompt: 'sys');
+      expect(compResult, equals('OpenAI completion result'));
+
+      // 7. complete with empty choices and null content
+      final clientEmpty = _MockHttpClient(
+        onPost: (uri, method) async => _FakeHttpClientResponse(
+          statusCode: HttpStatus.ok,
+          body: jsonEncode({'choices': []}),
+        ),
+      );
+      final providerEmpty = OpenAIProvider(
+        executionMode: ExecutionMode.cloud,
+        apiKey: 'sk-test',
+        httpClientFactory: () => clientEmpty,
+      );
+      expect(await providerEmpty.complete('hi'), equals('No response generated.'));
+
+      final clientNull = _MockHttpClient(
+        onPost: (uri, method) async => _FakeHttpClientResponse(
+          statusCode: HttpStatus.ok,
+          body: jsonEncode({'choices': [{'message': {'content': null}}]}),
+        ),
+      );
+      final providerNull = OpenAIProvider(
+        executionMode: ExecutionMode.cloud,
+        apiKey: 'sk-test',
+        httpClientFactory: () => clientNull,
+      );
+      expect(await providerNull.complete('hi'), equals('No response generated.'));
+
+      // 8. complete retry on 429 then success
+      int attempts429 = 0;
+      final client429 = _MockHttpClient(
+        onPost: (uri, method) async {
+          attempts429++;
+          if (attempts429 == 1) {
+            return _FakeHttpClientResponse(statusCode: 429, body: 'Rate limit');
+          }
+          return _FakeHttpClientResponse(
+            statusCode: HttpStatus.ok,
+            body: jsonEncode({'choices': [{'message': {'content': 'Success after 429'}}]}),
+          );
+        },
+      );
+      final provider429 = OpenAIProvider(
+        executionMode: ExecutionMode.cloud,
+        apiKey: 'sk-test',
+        httpClientFactory: () => client429,
+      );
+      expect(await provider429.complete('test'), equals('Success after 429'));
+
+      // 9. complete permanent 500 error
+      final client500 = _MockHttpClient(
+        onPost: (uri, method) async => _FakeHttpClientResponse(
+          statusCode: HttpStatus.internalServerError,
+          body: 'Server error',
+        ),
+      );
+      final provider500 = OpenAIProvider(
+        executionMode: ExecutionMode.cloud,
+        apiKey: 'sk-test',
+        httpClientFactory: () => client500,
+      );
+      await expectLater(
+        provider500.complete('err'),
+        throwsA(isA<ProviderException>()),
+      );
+
+      // 10. complete SocketException retry exceeded
+      final clientSocketErr = _MockHttpClient(
+        onPost: (uri, method) async => throw const SocketException('Host unreachable'),
+      );
+      final providerSocketErr = OpenAIProvider(
+        executionMode: ExecutionMode.cloud,
+        apiKey: 'sk-test',
+        httpClientFactory: () => clientSocketErr,
+      );
+      await expectLater(
+        providerSocketErr.complete('sock'),
+        throwsA(isA<ProviderException>()),
+      );
+
+      // 11. completeStream
+      final streamChunks = await providerComplete.completeStream('Stream test').toList();
+      expect(streamChunks.join(''), equals('OpenAI completion result'));
+    });
+
+    test('AnthropicProvider complete, completeStream, testConnection, retry and error handling', () async {
+      NetworkGate().setOfflineEnforcement(false);
+
+      // 1. testConnection in offline mode and missing API key
+      final offlineProvider = AnthropicProvider(executionMode: ExecutionMode.privateOffline, apiKey: 'key');
+      final offlineConn = await offlineProvider.testConnection();
+      expect(offlineConn.isSuccessful, isFalse);
+      expect(offlineConn.errorMessage, contains('private_offline'));
+
+      final missingKeyProvider = AnthropicProvider(executionMode: ExecutionMode.cloud, apiKey: '');
+      final missingConn = await missingKeyProvider.testConnection();
+      expect(missingConn.isSuccessful, isFalse);
+      expect(missingConn.errorMessage, contains('Missing Anthropic API key'));
+
+      // 2. testConnection 200 OK
+      final clientOk = _MockHttpClient(
+        onPost: (uri, method) async => _FakeHttpClientResponse(
+          statusCode: HttpStatus.ok,
+          body: jsonEncode({'content': [{'text': 'ok'}]}),
+        ),
+      );
+      final providerOk = AnthropicProvider(
+        executionMode: ExecutionMode.cloud,
+        apiKey: 'sk-ant-test',
+        httpClientFactory: () => clientOk,
+      );
+      expect(providerOk.id, equals('anthropic_llm'));
+      expect(providerOk.isOfflineCapable, isFalse);
+      expect(providerOk.name, contains('Anthropic Claude'));
+      final connOk = await providerOk.testConnection();
+      expect(connOk.isSuccessful, isTrue);
+
+      // 3. testConnection 401 error
+      final client401 = _MockHttpClient(
+        onPost: (uri, method) async => _FakeHttpClientResponse(
+          statusCode: HttpStatus.unauthorized,
+          body: jsonEncode({'error': {'message': 'Invalid key'}}),
+        ),
+      );
+      final provider401 = AnthropicProvider(
+        executionMode: ExecutionMode.cloud,
+        apiKey: 'sk-ant-bad',
+        httpClientFactory: () => client401,
+      );
+      final conn401 = await provider401.testConnection();
+      expect(conn401.isSuccessful, isFalse);
+      expect(conn401.errorMessage, contains('Invalid key'));
+
+      // 4. testConnection SocketException
+      final clientSocket = _MockHttpClient(
+        onPost: (uri, method) async => throw const SocketException('Connection refused'),
+      );
+      final providerSocket = AnthropicProvider(
+        executionMode: ExecutionMode.cloud,
+        apiKey: 'sk-ant-test',
+        httpClientFactory: () => clientSocket,
+      );
+      final connSocket = await providerSocket.testConnection();
+      expect(connSocket.isSuccessful, isFalse);
+      expect(connSocket.errorMessage, contains('Connection failed'));
+
+      // 5. complete in offline mode and missing API key
+      await expectLater(
+        offlineProvider.complete('test'),
+        throwsA(isA<OfflineViolationException>()),
+      );
+      await expectLater(
+        offlineProvider.completeStream('test').drain(),
+        throwsA(isA<OfflineViolationException>()),
+      );
+      await expectLater(
+        missingKeyProvider.complete('test'),
+        throwsA(isA<ProviderException>()),
+      );
+
+      // 6. complete with system prompt and valid content
+      final clientComplete = _MockHttpClient(
+        onPost: (uri, method) async => _FakeHttpClientResponse(
+          statusCode: HttpStatus.ok,
+          body: jsonEncode({
+            'content': [
+              {'type': 'text', 'text': 'Claude completion result'}
+            ]
+          }),
+        ),
+      );
+      final providerComplete = AnthropicProvider(
+        executionMode: ExecutionMode.cloud,
+        apiKey: 'sk-ant-test',
+        httpClientFactory: () => clientComplete,
+      );
+      final compResult = await providerComplete.complete('prompt', systemPrompt: 'sys');
+      expect(compResult, equals('Claude completion result'));
+
+      // 7. complete with empty content and null text
+      final clientEmpty = _MockHttpClient(
+        onPost: (uri, method) async => _FakeHttpClientResponse(
+          statusCode: HttpStatus.ok,
+          body: jsonEncode({'content': []}),
+        ),
+      );
+      final providerEmpty = AnthropicProvider(
+        executionMode: ExecutionMode.cloud,
+        apiKey: 'sk-ant-test',
+        httpClientFactory: () => clientEmpty,
+      );
+      expect(await providerEmpty.complete('hi'), equals('No response generated.'));
+
+      final clientNull = _MockHttpClient(
+        onPost: (uri, method) async => _FakeHttpClientResponse(
+          statusCode: HttpStatus.ok,
+          body: jsonEncode({'content': [{'text': null}]}),
+        ),
+      );
+      final providerNull = AnthropicProvider(
+        executionMode: ExecutionMode.cloud,
+        apiKey: 'sk-ant-test',
+        httpClientFactory: () => clientNull,
+      );
+      expect(await providerNull.complete('hi'), equals('No response generated.'));
+
+      // 8. complete retry on 503 then success
+      int attempts503 = 0;
+      final client503 = _MockHttpClient(
+        onPost: (uri, method) async {
+          attempts503++;
+          if (attempts503 == 1) {
+            return _FakeHttpClientResponse(statusCode: 503, body: 'Service Unavailable');
+          }
+          return _FakeHttpClientResponse(
+            statusCode: HttpStatus.ok,
+            body: jsonEncode({'content': [{'text': 'Success after 503'}]}),
+          );
+        },
+      );
+      final provider503 = AnthropicProvider(
+        executionMode: ExecutionMode.cloud,
+        apiKey: 'sk-ant-test',
+        httpClientFactory: () => client503,
+      );
+      expect(await provider503.complete('test'), equals('Success after 503'));
+
+      // 9. complete permanent 400 error
+      final client400 = _MockHttpClient(
+        onPost: (uri, method) async => _FakeHttpClientResponse(
+          statusCode: HttpStatus.badRequest,
+          body: 'Bad request',
+        ),
+      );
+      final provider400 = AnthropicProvider(
+        executionMode: ExecutionMode.cloud,
+        apiKey: 'sk-ant-test',
+        httpClientFactory: () => client400,
+      );
+      await expectLater(
+        provider400.complete('err'),
+        throwsA(isA<ProviderException>()),
+      );
+
+      // 10. complete SocketException retry exceeded
+      final clientSocketErr = _MockHttpClient(
+        onPost: (uri, method) async => throw const SocketException('Host unreachable'),
+      );
+      final providerSocketErr = AnthropicProvider(
+        executionMode: ExecutionMode.cloud,
+        apiKey: 'sk-ant-test',
+        httpClientFactory: () => clientSocketErr,
+      );
+      await expectLater(
+        providerSocketErr.complete('sock'),
+        throwsA(isA<ProviderException>()),
+      );
+
+      // 11. completeStream
+      final streamChunks = await providerComplete.completeStream('Stream test').toList();
+      expect(streamChunks.join(''), equals('Claude completion result'));
+    });
+
+    test('ModelMetadata serialization and deserialization with enriched fields', () {
+      final model = ModelMetadata(
+        id: 'test-model',
+        name: 'Test Model',
+        version: '1.0.0',
+        type: 'llm',
+        sizeBytes: 10485760,
+        sha256: 'abcdef1234567890',
+        license: 'Apache-2.0',
+        isInstalled: true,
+        isActive: true,
+        isDownloadable: false,
+        downloadUrl: 'https://example.com/model.bin',
+        supportedLanguages: ['en', 'ta'],
+        capabilities: ['qa', 'streaming'],
+        runtime: 'GGML',
+        quantization: 'Q4_K_M',
+        minRamMb: 256,
+        supportedAccelerators: ['CPU', 'NPU'],
+        isLoadedInMemory: true,
+        installPath: '/models/test-model.bin',
+        family: 'Transformer-Q4',
+        parameters: '110M',
+        tokenizer: 'BPE',
+        format: 'GGUF',
+        contextLength: 2048,
+        ttftMs: 45.0,
+        tokensPerSec: 36.5,
+      );
+
+      final json = model.toJson();
+      expect(json['id'], equals('test-model'));
+      expect(json['family'], equals('Transformer-Q4'));
+      expect(json['parameters'], equals('110M'));
+      expect(json['tokenizer'], equals('BPE'));
+      expect(json['format'], equals('GGUF'));
+      expect(json['contextLength'], equals(2048));
+      expect(json['ttftMs'], equals(45.0));
+      expect(json['tokensPerSec'], equals(36.5));
+
+      final fromJson = ModelMetadata.fromJson(json);
+      expect(fromJson.id, equals(model.id));
+      expect(fromJson.name, equals(model.name));
+      expect(fromJson.family, equals('Transformer-Q4'));
+      expect(fromJson.parameters, equals('110M'));
+      expect(fromJson.tokenizer, equals('BPE'));
+      expect(fromJson.format, equals('GGUF'));
+      expect(fromJson.contextLength, equals(2048));
+      expect(fromJson.ttftMs, equals(45.0));
+      expect(fromJson.tokensPerSec, equals(36.5));
     });
   });
 }

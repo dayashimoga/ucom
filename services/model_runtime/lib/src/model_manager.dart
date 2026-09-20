@@ -314,24 +314,11 @@ class LocalModelManager implements ModelManagerProvider {
       if (finalFile.existsSync()) finalFile.deleteSync();
       partFile.renameSync(finalFile.path);
 
-      final updated = ModelMetadata(
-        id: model.id,
-        name: model.name,
-        version: model.version,
-        type: model.type,
-        sizeBytes: model.sizeBytes,
+      final updated = model.copyWith(
         sha256: (mockDownloadedBytes != null) ? model.sha256 : actualChecksum,
-        license: model.license,
         isInstalled: true,
         isActive: false,
         isDownloadable: false,
-        downloadUrl: model.downloadUrl,
-        supportedLanguages: model.supportedLanguages,
-        capabilities: model.capabilities,
-        runtime: model.runtime,
-        quantization: model.quantization,
-        minRamMb: model.minRamMb,
-        supportedAccelerators: model.supportedAccelerators,
         isLoadedInMemory: false,
         installPath: finalFile.path,
       );
@@ -372,26 +359,8 @@ class LocalModelManager implements ModelManagerProvider {
       throw ValidationException("Cannot load uninstalled model '$id'.");
     }
 
-    _registry[id] = ModelMetadata(
-      id: model.id,
-      name: model.name,
-      version: model.version,
-      type: model.type,
-      sizeBytes: model.sizeBytes,
-      sha256: model.sha256,
-      license: model.license,
-      isInstalled: true,
-      isActive: model.isActive,
-      isDownloadable: false,
-      downloadUrl: model.downloadUrl,
-      supportedLanguages: model.supportedLanguages,
-      capabilities: model.capabilities,
-      runtime: model.runtime,
-      quantization: model.quantization,
-      minRamMb: model.minRamMb,
-      supportedAccelerators: model.supportedAccelerators,
+    _registry[id] = model.copyWith(
       isLoadedInMemory: true,
-      installPath: model.installPath,
     );
 
     _logger.info('Model loaded into memory',
@@ -404,26 +373,8 @@ class LocalModelManager implements ModelManagerProvider {
     final model = _registry[id];
     if (model == null) throw NotFoundException('Model', id);
 
-    _registry[id] = ModelMetadata(
-      id: model.id,
-      name: model.name,
-      version: model.version,
-      type: model.type,
-      sizeBytes: model.sizeBytes,
-      sha256: model.sha256,
-      license: model.license,
-      isInstalled: model.isInstalled,
-      isActive: model.isActive,
-      isDownloadable: model.isDownloadable,
-      downloadUrl: model.downloadUrl,
-      supportedLanguages: model.supportedLanguages,
-      capabilities: model.capabilities,
-      runtime: model.runtime,
-      quantization: model.quantization,
-      minRamMb: model.minRamMb,
-      supportedAccelerators: model.supportedAccelerators,
+    _registry[id] = model.copyWith(
       isLoadedInMemory: false,
-      installPath: model.installPath,
     );
 
     _logger.info('Model unloaded from memory', {'modelId': id});
@@ -445,50 +396,18 @@ class LocalModelManager implements ModelManagerProvider {
     // Deactivate other models of same type
     _registry.forEach((k, v) {
       if (v.type == model.type && v.isActive && v.id != id) {
-        _registry[k] = ModelMetadata(
-          id: v.id,
-          name: v.name,
-          version: v.version,
-          type: v.type,
-          sizeBytes: v.sizeBytes,
-          sha256: v.sha256,
-          license: v.license,
-          isInstalled: v.isInstalled,
+        _registry[k] = v.copyWith(
           isActive: false,
-          isDownloadable: v.isDownloadable,
-          downloadUrl: v.downloadUrl,
-          supportedLanguages: v.supportedLanguages,
-          capabilities: v.capabilities,
-          runtime: v.runtime,
-          quantization: v.quantization,
-          minRamMb: v.minRamMb,
-          supportedAccelerators: v.supportedAccelerators,
           isLoadedInMemory: false,
-          installPath: v.installPath,
         );
       }
     });
 
-    _registry[id] = ModelMetadata(
-      id: model.id,
-      name: model.name,
-      version: model.version,
-      type: model.type,
-      sizeBytes: model.sizeBytes,
-      sha256: model.sha256,
-      license: model.license,
+    _registry[id] = model.copyWith(
       isInstalled: true,
       isActive: true,
       isDownloadable: false,
-      downloadUrl: model.downloadUrl,
-      supportedLanguages: model.supportedLanguages,
-      capabilities: model.capabilities,
-      runtime: model.runtime,
-      quantization: model.quantization,
-      minRamMb: model.minRamMb,
-      supportedAccelerators: model.supportedAccelerators,
       isLoadedInMemory: true,
-      installPath: model.installPath,
     );
 
     return true;
@@ -531,6 +450,13 @@ class LocalModelManager implements ModelManagerProvider {
       supportedAccelerators: model.supportedAccelerators,
       isLoadedInMemory: false,
       installPath: null,
+      family: model.family,
+      parameters: model.parameters,
+      tokenizer: model.tokenizer,
+      format: model.format,
+      contextLength: model.contextLength,
+      ttftMs: model.ttftMs,
+      tokensPerSec: model.tokensPerSec,
     );
 
     _logger.info('Model removed and deleted from disk', {'modelId': id});
