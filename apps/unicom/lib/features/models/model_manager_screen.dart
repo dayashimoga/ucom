@@ -162,6 +162,13 @@ class _ModelManagerScreenState extends State<ModelManagerScreen> {
                           style: const TextStyle(
                               fontSize: 11, color: Colors.grey),
                         ),
+                        if (m.family != null || m.parameters != null) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            'Family: ${m.family ?? "N/A"} • Params: ${m.parameters ?? "N/A"} • Tokenizer: ${m.tokenizer ?? "N/A"} • Format: ${m.format ?? "N/A"}${m.tokensPerSec != null ? " • ${m.tokensPerSec!.toStringAsFixed(0)} tok/s" : ""}',
+                            style: const TextStyle(fontSize: 10.5, color: Colors.grey),
+                          ),
+                        ],
                         if (isDownloading) ...[
                           const SizedBox(height: 12),
                           LinearProgressIndicator(value: progress),

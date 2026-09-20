@@ -149,5 +149,36 @@ void main() {
       await tester.pumpAndSettle();
       expect(controller.configuredProviders.length, equals(1));
     });
+
+    testWidgets('taps capability route and selects new target via modal bottom sheet',
+        (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1200));
+      await tester.pumpWidget(
+        MaterialApp(
+          home: AIProvidersScreen(controller: controller),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Tap General Q&A route
+      await tester.tap(find.text('General Q&A'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Select Route for General Q&A'), findsOneWidget);
+      await tester.tap(find.text('Google Gemini (Cloud)'));
+      await tester.pumpAndSettle();
+
+      expect(controller.qaRoute, equals('Google Gemini (Cloud)'));
+
+      // Tap Translation route
+      await tester.tap(find.text('Translation'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Select Route for Translation'), findsOneWidget);
+      await tester.tap(find.text('IndicTrans2 On-Device (Tamil & Hindi)'));
+      await tester.pumpAndSettle();
+
+      expect(controller.translationRoute, equals('IndicTrans2 On-Device (Tamil & Hindi)'));
+    });
   });
 }

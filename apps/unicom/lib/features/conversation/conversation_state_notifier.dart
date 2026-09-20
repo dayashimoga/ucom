@@ -102,6 +102,42 @@ class ConversationController extends ChangeNotifier {
   bool _isMeetingPaused = false;
   bool get isMeetingPaused => _isMeetingPaused;
 
+  String _qaRoute = 'Active LLM Provider / Local Fallback';
+  String get qaRoute => _qaRoute;
+
+  String _translationRoute = 'Active Neural Provider / Offline Lexicon';
+  String get translationRoute => _translationRoute;
+
+  String _sttRoute = 'Android SpeechRecognizer / Device Audio';
+  String get sttRoute => _sttRoute;
+
+  String _ttsRoute = 'Android Native TextToSpeech Engine';
+  String get ttsRoute => _ttsRoute;
+
+  String _summarizationRoute = 'Active LLM Provider / Local Extractor';
+  String get summarizationRoute => _summarizationRoute;
+
+  void setCapabilityRoute(String capability, String target) {
+    switch (capability) {
+      case 'qa':
+        _qaRoute = target;
+        break;
+      case 'translation':
+        _translationRoute = target;
+        break;
+      case 'stt':
+        _sttRoute = target;
+        break;
+      case 'tts':
+        _ttsRoute = target;
+        break;
+      case 'summarization':
+        _summarizationRoute = target;
+        break;
+    }
+    notifyListeners();
+  }
+
   static const MethodChannel _speechChannel = MethodChannel('com.unicom.ai/speech');
 
   void setActionableError(String? error) {

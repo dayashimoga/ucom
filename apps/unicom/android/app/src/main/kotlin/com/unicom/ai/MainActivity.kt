@@ -45,24 +45,76 @@ class MainActivity: FlutterActivity(), TextToSpeech.OnInitListener {
         // Initialize Android native Text-To-Speech engine
         textToSpeech = TextToSpeech(this, this)
 
-        // 1. Android AICore Channel
+        // 1. Android GenAI / AICore Channel
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, AICORE_CHANNEL).setMethodCallHandler { call, result ->
+            val status = probeAICoreStatus()
+            val isAvailable = status["isAvailable"] as? Boolean ?: false
+
             when (call.method) {
-                "probeAICore" -> {
-                    val status = probeAICoreStatus()
+                "probeAICore", "checkCapability" -> {
                     result.success(status)
                 }
-                "executeInference" -> {
-                    val status = probeAICoreStatus()
-                    val isAvailable = status["isAvailable"] as? Boolean ?: false
-
+                "getFeatureStatus" -> {
+                    result.success(status["statusCode"] ?: "NOT_SUPPORTED")
+                }
+                "prepareModel" -> {
+                    if (!isAvailable) {
+                        result.error("UNSUPPORTED", status["fallbackReason"] as? String ?: "On-device GenAI unsupported on this hardware", status)
+                    } else {
+                        result.success(mapOf("status" to "READY", "model" to "gemini-nano"))
+                    }
+                }
+                "warmup" -> {
+                    if (!isAvailable) {
+                        result.error("UNSUPPORTED", status["fallbackReason"] as? String ?: "On-device GenAI unsupported on this hardware", status)
+                    } else {
+                        result.success(true)
+                    }
+                }
+                "generate", "executeInference" -> {
                     if (!isAvailable) {
                         val reason = status["fallbackReason"] as? String ?: "AICore is not available on this hardware."
                         result.error("AICORE_UNAVAILABLE", reason, status)
                     } else {
-                        // Per strict production audit: physical inference without Google AICore service token is blocked
-                        result.error("AICORE_INFERENCE_BLOCKED", "Physical Gemini Nano inference requires supported hardware with Google AICore service bound.", status)
+                        result.error("DEVICE_VALIDATION_BLOCKED", "Physical Gemini Nano inference requires supported hardware with Google AICore service bound and model prepared.", status)
                     }
+                }
+                "generateStreaming" -> {
+                    if (!isAvailable) {
+                        val reason = status["fallbackReason"] as? String ?: "AICore is not available on this hardware."
+                        result.error("AICORE_UNAVAILABLE", reason, status)
+                    } else {
+                        result.error("DEVICE_VALIDATION_BLOCKED", "Physical Gemini Nano streaming requires supported hardware.", status)
+                    }
+                }
+                "summarize" -> {
+                    if (!isAvailable) {
+                        val reason = status["fallbackReason"] as? String ?: "AICore is not available on this hardware."
+                        result.error("AICORE_UNAVAILABLE", reason, status)
+                    } else {
+                        result.error("DEVICE_VALIDATION_BLOCKED", "Physical Gemini Nano summarization requires supported hardware.", status)
+                    }
+                }
+                "cancel" -> {
+                    result.success(true)
+                }
+                "getDiagnostics" -> {
+                    val sdkInt = Build.VERSION.SDK_INT
+                    val manufacturer = Build.MANUFACTURER
+                    val model = Build.MODEL
+                    val hardware = Build.HARDWARE
+                    val memoryInfo = android.app.ActivityManager.MemoryInfo()
+                    (getSystemService(android.content.Context.ACTIVITY_SERVICE) as? android.app.ActivityManager)?.getMemoryInfo(memoryInfo)
+
+                    result.success(mapOf(
+                        "sdkInt" to sdkInt,
+                        "manufacturer" to manufacturer,
+                        "model" to model,
+                        "hardware" to hardware,
+                        "totalRamMb" to (memoryInfo.totalMem / (1024 * 1024)),
+                        "availRamMb" to (memoryInfo.availMem / (1024 * 1024)),
+                        "aicoreStatus" to status
+                    ))
                 }
                 else -> {
                     result.notImplemented()

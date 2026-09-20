@@ -884,5 +884,70 @@ void main() {
         throwsA(anything),
       );
     });
+
+    test('AndroidGenAIProvider full interface and capability tests', () async {
+      // 1. When unavailable / unsupported
+      final unsupportedProvider = AndroidGenAIProvider(simulateAvailable: false);
+      expect(unsupportedProvider.id, equals('android_aicore_gemini_nano'));
+      expect(unsupportedProvider.name, contains('Android GenAI'));
+      expect(unsupportedProvider.isOfflineCapable, isTrue);
+
+      final status = await unsupportedProvider.checkCapability();
+      expect(status.isAvailable, isFalse);
+      expect(await unsupportedProvider.getFeatureStatus(), equals('NOT_SUPPORTED'));
+      expect(await unsupportedProvider.warmup(), isFalse);
+
+      final diag = await unsupportedProvider.getDiagnostics();
+      expect(diag['isAvailable'], isFalse);
+      expect(diag['statusCode'], equals('NOT_SUPPORTED'));
+
+      await expectLater(
+        unsupportedProvider.prepareModel(),
+        throwsA(isA<ProviderException>()),
+      );
+      await expectLater(
+        unsupportedProvider.generate('Hello'),
+        throwsA(isA<ProviderException>()),
+      );
+      await expectLater(
+        unsupportedProvider.generateStreaming('Hello').toList(),
+        throwsA(isA<ProviderException>()),
+      );
+      await expectLater(
+        unsupportedProvider.summarize('Long text'),
+        throwsA(isA<ProviderException>()),
+      );
+
+      await unsupportedProvider.cancel(); // Should not throw
+
+      // 2. When available / supported
+      final supportedProvider = AndroidGenAIProvider(simulateAvailable: true);
+      final supStatus = await supportedProvider.checkCapability();
+      expect(supStatus.isAvailable, isTrue);
+      expect(await supportedProvider.getFeatureStatus(), equals('AVAILABLE'));
+      expect(await supportedProvider.warmup(), isTrue);
+
+      final prep = await supportedProvider.prepareModel();
+      expect(prep['status'], equals('READY'));
+
+      final gen = await supportedProvider.generate('Tell me a joke');
+      expect(gen, contains('Gemini Nano on-device output'));
+
+      final streamChunks = await supportedProvider.generateStreaming('Tell me a story').toList();
+      expect(streamChunks.join(''), contains('Gemini Nano on-device output'));
+
+      final sum = await supportedProvider.summarize('Text to summarize');
+      expect(sum, contains('Gemini Nano on-device output'));
+
+      final supDiag = await supportedProvider.getDiagnostics();
+      expect(supDiag['isAvailable'], isTrue);
+      expect(supDiag['statusCode'], equals('AVAILABLE'));
+
+      // 3. AndroidAICoreProvider subclass checkStatus
+      final aicoreSubclass = AndroidAICoreProvider(simulateAvailable: true);
+      expect(aicoreSubclass.name, contains('Android AICore'));
+      final aicoreStatus = await aicoreSubclass.checkStatus();
+      expect(aicoreStatus.isAvailable, isTrue);
+    });
   });
 }

@@ -606,6 +606,14 @@ class ModelMetadata {
   final bool isLoadedInMemory;
   final String? installPath;
 
+  final String? family; // e.g. Whisper, Transformer, IndicTrans, Piper, Lexicon
+  final String? parameters; // e.g. 39M, 110M, 70M
+  final String? tokenizer; // e.g. Byte-Pair Encoding (BPE), SentencePiece
+  final String? format; // e.g. GGUF, ONNX, Custom Binary
+  final int? contextLength; // e.g. 2048, 4096
+  final double? ttftMs; // Time To First Token in ms
+  final double? tokensPerSec; // Token generation throughput
+
   ModelMetadata({
     required this.id,
     required this.name,
@@ -626,6 +634,13 @@ class ModelMetadata {
     this.supportedAccelerators = const ['CPU'],
     this.isLoadedInMemory = false,
     this.installPath,
+    this.family,
+    this.parameters,
+    this.tokenizer,
+    this.format,
+    this.contextLength,
+    this.ttftMs,
+    this.tokensPerSec,
   });
 
   Map<String, dynamic> toJson() => {
@@ -648,6 +663,13 @@ class ModelMetadata {
         'supportedAccelerators': supportedAccelerators,
         'isLoadedInMemory': isLoadedInMemory,
         if (installPath != null) 'installPath': installPath,
+        if (family != null) 'family': family,
+        if (parameters != null) 'parameters': parameters,
+        if (tokenizer != null) 'tokenizer': tokenizer,
+        if (format != null) 'format': format,
+        if (contextLength != null) 'contextLength': contextLength,
+        if (ttftMs != null) 'ttftMs': ttftMs,
+        if (tokensPerSec != null) 'tokensPerSec': tokensPerSec,
       };
 
   factory ModelMetadata.fromJson(Map<String, dynamic> json) => ModelMetadata(
@@ -679,6 +701,13 @@ class ModelMetadata {
             const ['CPU'],
         isLoadedInMemory: json['isLoadedInMemory'] as bool? ?? false,
         installPath: json['installPath'] as String?,
+        family: json['family'] as String?,
+        parameters: json['parameters'] as String?,
+        tokenizer: json['tokenizer'] as String?,
+        format: json['format'] as String?,
+        contextLength: json['contextLength'] as int?,
+        ttftMs: (json['ttftMs'] as num?)?.toDouble(),
+        tokensPerSec: (json['tokensPerSec'] as num?)?.toDouble(),
       );
 }
 

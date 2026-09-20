@@ -111,38 +111,136 @@ class _AIProvidersScreenState extends State<AIProvidersScreen> {
             ),
             const SizedBox(height: 8),
             const Text(
-              'Route specific intelligence tasks to specialized models or devices.',
+              'Route specific intelligence tasks to specialized models or devices. Tap to reconfigure.',
               style: TextStyle(fontSize: 12, color: Colors.grey),
             ),
             const Divider(height: 20),
-            _buildRouteTile('General Q&A', 'Active LLM Provider / Local Fallback', Icons.chat_bubble_outline),
-            _buildRouteTile('Translation', 'Active Neural Provider / Offline Lexicon', Icons.translate),
-            _buildRouteTile('Speech-to-Text (STT)', 'Android SpeechRecognizer / Device Audio', Icons.mic),
-            _buildRouteTile('Text-to-Speech (TTS)', 'Android Native TextToSpeech Engine', Icons.volume_up),
+            _buildRouteTile(
+              'General Q&A',
+              widget.controller.qaRoute,
+              Icons.chat_bubble_outline,
+              () => _showRouteSelectionSheet(
+                'General Q&A',
+                'qa',
+                [
+                  'Active LLM Provider / Local Fallback',
+                  'Google Gemini (Cloud)',
+                  'OpenAI / Claude (Cloud)',
+                  'On-Device Quantized LLM',
+                  'Android Gemini Nano (AICore)',
+                ],
+              ),
+            ),
+            _buildRouteTile(
+              'Translation',
+              widget.controller.translationRoute,
+              Icons.translate,
+              () => _showRouteSelectionSheet(
+                'Translation',
+                'translation',
+                [
+                  'Active Neural Provider / Offline Lexicon',
+                  'IndicTrans2 On-Device (Tamil & Hindi)',
+                  'Compact Offline Lexicon',
+                  'Cloud Translation Adapter',
+                ],
+              ),
+            ),
+            _buildRouteTile(
+              'Speech-to-Text (STT)',
+              widget.controller.sttRoute,
+              Icons.mic,
+              () => _showRouteSelectionSheet(
+                'Speech-to-Text (STT)',
+                'stt',
+                [
+                  'Android SpeechRecognizer / Device Audio',
+                  'Whisper Tiny INT8 On-Device',
+                  'Local Acoustic + Energy VAD',
+                ],
+              ),
+            ),
+            _buildRouteTile(
+              'Text-to-Speech (TTS)',
+              widget.controller.ttsRoute,
+              Icons.volume_up,
+              () => _showRouteSelectionSheet(
+                'Text-to-Speech (TTS)',
+                'tts',
+                [
+                  'Android Native TextToSpeech Engine',
+                  'Piper Fast Neural TTS',
+                  'Offline Klatt Formant Resonator',
+                ],
+              ),
+            ),
+            _buildRouteTile(
+              'Summarization',
+              widget.controller.summarizationRoute,
+              Icons.summarize,
+              () => _showRouteSelectionSheet(
+                'Summarization',
+                'summarization',
+                [
+                  'Active LLM Provider / Local Extractor',
+                  'Android Gemini Nano (AICore)',
+                  'Local Quantized Model',
+                ],
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildRouteTile(String title, String currentRoute, IconData icon) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          Icon(icon, size: 16, color: Colors.grey),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                Text(currentRoute, style: const TextStyle(fontSize: 11, color: Colors.grey)),
-              ],
+  Widget _buildRouteTile(String title, String currentRoute, IconData icon, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+        child: Row(
+          children: [
+            Icon(icon, size: 16, color: Colors.grey),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                  Text(currentRoute, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                ],
+              ),
             ),
-          ),
-          const Icon(Icons.check_circle, size: 16, color: UnicomTheme.successGreen),
-        ],
+            const Icon(Icons.chevron_right, size: 16, color: Colors.grey),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showRouteSelectionSheet(String title, String capabilityKey, List<String> options) {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Select Route for $title', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            const SizedBox(height: 12),
+            ...options.map((opt) => ListTile(
+                  title: Text(opt, style: const TextStyle(fontSize: 13)),
+                  trailing: const Icon(Icons.check, size: 16),
+                  onTap: () {
+                    widget.controller.setCapabilityRoute(capabilityKey, opt);
+                    Navigator.pop(ctx);
+                  },
+                )),
+          ],
+        ),
       ),
     );
   }

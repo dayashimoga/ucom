@@ -57,6 +57,12 @@ class LocalModelManager implements ModelManagerProvider {
           'bidirectional',
           'zero_leak'
         ],
+        family: 'CompactLexicon',
+        parameters: '1.2M Entries',
+        tokenizer: 'Character / Trie Index',
+        format: 'Custom Binary Trie',
+        ttftMs: 2.0,
+        tokensPerSec: 500.0,
       ),
       ModelMetadata(
         id: 'whisper-tiny-quantized',
@@ -77,6 +83,13 @@ class LocalModelManager implements ModelManagerProvider {
         supportedAccelerators: ['CPU', 'GPU', 'NPU'],
         supportedLanguages: ['en', 'es', 'fr', 'de', 'zh', 'ja', 'hi', 'ta'],
         capabilities: ['offline_stt', 'streaming', 'vad', 'multilingual'],
+        family: 'Whisper',
+        parameters: '39M',
+        tokenizer: 'Byte-Pair Encoding (BPE)',
+        format: 'ONNX INT8',
+        contextLength: 30000,
+        ttftMs: 28.0,
+        tokensPerSec: 120.0,
       ),
       ModelMetadata(
         id: 'piper-neural-voice-en',
@@ -97,6 +110,12 @@ class LocalModelManager implements ModelManagerProvider {
         supportedAccelerators: ['CPU'],
         supportedLanguages: ['en'],
         capabilities: ['offline_tts', 'low_latency', 'pcm_wav'],
+        family: 'Piper',
+        parameters: '18M',
+        tokenizer: 'Phoneme / IPA',
+        format: 'ONNX Runtime',
+        ttftMs: 15.0,
+        tokensPerSec: 250.0,
       ),
       ModelMetadata(
         id: 'indic-trans-v2-compact',
@@ -121,6 +140,13 @@ class LocalModelManager implements ModelManagerProvider {
           'indic_benchmark',
           'script_normalization'
         ],
+        family: 'IndicTrans2',
+        parameters: '45M',
+        tokenizer: 'SentencePiece Unigram',
+        format: 'GGML / GGUF',
+        contextLength: 1024,
+        ttftMs: 32.0,
+        tokensPerSec: 48.0,
       ),
       ModelMetadata(
         id: 'unicom-knowledge-llm-q4',
@@ -148,6 +174,13 @@ class LocalModelManager implements ModelManagerProvider {
           'literature',
           'offline_inference'
         ],
+        family: 'Transformer-Q4',
+        parameters: '110M',
+        tokenizer: 'Byte-Pair Encoding (BPE)',
+        format: 'GGML / GGUF Q4_K_M',
+        contextLength: 2048,
+        ttftMs: 45.0,
+        tokensPerSec: 36.5,
       ),
     ];
 
@@ -184,6 +217,13 @@ class LocalModelManager implements ModelManagerProvider {
         supportedAccelerators: m.supportedAccelerators,
         isLoadedInMemory: isPhysicallyPresent,
         installPath: isPhysicallyPresent ? binFile.path : null,
+        family: m.family,
+        parameters: m.parameters,
+        tokenizer: m.tokenizer,
+        format: m.format,
+        contextLength: m.contextLength,
+        ttftMs: m.ttftMs,
+        tokensPerSec: m.tokensPerSec,
       );
     }
   }

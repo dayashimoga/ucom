@@ -150,13 +150,12 @@ class DefaultAICoreHardwareProbe implements AICoreHardwareProbe {
   }
 }
 
-/// Android on-device generative AI adapter using Google Android AICore / Gemini Nano APIs.
-/// Operates 100% on-device without requiring API keys or transmitting data off-device.
-class AndroidAICoreProvider implements LLMProvider {
+/// Android GenAI Provider implementing the supported Google on-device GenAI interface.
+class AndroidGenAIProvider implements LLMProvider {
   final AICoreHardwareProbe probe;
-  final PrivacyLogger _logger = const PrivacyLogger(context: 'AICORE_PROVIDER');
+  final PrivacyLogger _logger = const PrivacyLogger(context: 'ANDROID_GENAI_PROVIDER');
 
-  AndroidAICoreProvider({
+  AndroidGenAIProvider({
     AICoreHardwareProbe? probe,
     bool simulateAvailable = false,
     String? simulatedError,
@@ -171,14 +170,80 @@ class AndroidAICoreProvider implements LLMProvider {
   String get id => 'android_aicore_gemini_nano';
 
   @override
-  String get name => 'Android AICore (Gemini Nano On-Device)';
+  String get name => 'Android GenAI (Gemini Nano On-Device)';
 
   @override
   bool get isOfflineCapable => true;
 
-  /// Runtime capability discovery
-  Future<AICoreStatus> checkStatus() async {
-    return probe.probeStatus();
+  Future<AICoreStatus> checkCapability() async => probe.probeStatus();
+
+  Future<String> getFeatureStatus() async {
+    final status = await checkCapability();
+    return status.statusCode;
+  }
+
+  Future<Map<String, dynamic>> prepareModel() async {
+    final status = await checkCapability();
+    if (!status.isAvailable) {
+      throw ProviderException(
+        id,
+        status.fallbackReason ??
+            'On-device Android AI unavailable on this phone. Use Downloaded Offline AI or Cloud AI.',
+      );
+    }
+    return {'status': 'READY', 'model': status.modelName ?? 'gemini-nano'};
+  }
+
+  Future<bool> warmup() async {
+    final status = await checkCapability();
+    return status.isAvailable;
+  }
+
+  Future<String> generate(
+    String prompt, {
+    String? systemPrompt,
+    double temperature = 0.7,
+    int maxTokens = 1000,
+  }) async {
+    return complete(prompt,
+        systemPrompt: systemPrompt,
+        temperature: temperature,
+        maxTokens: maxTokens);
+  }
+
+  Stream<String> generateStreaming(
+    String prompt, {
+    String? systemPrompt,
+    double temperature = 0.7,
+    int maxTokens = 1000,
+  }) {
+    return completeStream(prompt,
+        systemPrompt: systemPrompt,
+        temperature: temperature,
+        maxTokens: maxTokens);
+  }
+
+  Future<String> summarize(String text, {int maxTokens = 250}) async {
+    return complete('Summarize the following text:\n\n$text',
+        maxTokens: maxTokens);
+  }
+
+  Future<void> cancel() async {
+    _logger.info('Cancelled on-device GenAI operation');
+  }
+
+  Future<Map<String, dynamic>> getDiagnostics() async {
+    final status = await checkCapability();
+    return {
+      'isAvailable': status.isAvailable,
+      'isSupportedOnDevice': status.isSupportedOnDevice,
+      'statusCode': status.statusCode,
+      'modelName': status.modelName,
+      'runtimeVersion': status.runtimeVersion,
+      'maxContextTokens': status.maxContextTokens,
+      'supportedCapabilities': status.supportedCapabilities,
+      'fallbackReason': status.fallbackReason,
+    };
   }
 
   @override
@@ -188,11 +253,11 @@ class AndroidAICoreProvider implements LLMProvider {
     double temperature = 0.7,
     int maxTokens = 1000,
   }) async {
-    final status = await checkStatus();
+    final status = await checkCapability();
     if (!status.isAvailable) {
       throw ProviderException(
         id,
-        'Android AICore inference unavailable: ${status.statusCode} (${status.fallbackReason})',
+        'On-device Android AI unavailable on this phone: ${status.statusCode} (${status.fallbackReason}). Use Downloaded Offline AI or Cloud AI.',
       );
     }
 
@@ -230,4 +295,20 @@ class AndroidAICoreProvider implements LLMProvider {
       await Future.delayed(const Duration(milliseconds: 5));
     }
   }
+}
+
+/// Android on-device generative AI adapter using Google Android AICore / Gemini Nano APIs.
+/// Operates 100% on-device without requiring API keys or transmitting data off-device.
+class AndroidAICoreProvider extends AndroidGenAIProvider {
+  AndroidAICoreProvider({
+    super.probe,
+    super.simulateAvailable,
+    super.simulatedError,
+  });
+
+  @override
+  String get name => 'Android AICore (Gemini Nano On-Device)';
+
+  /// Runtime capability discovery
+  Future<AICoreStatus> checkStatus() async => checkCapability();
 }
