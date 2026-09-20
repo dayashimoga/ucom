@@ -153,7 +153,7 @@ class OfflineTranslationEngine implements TranslationProvider {
     if (options.formality == 'more') {
       if (targetLang == 'es') {
         result = result.replaceAll(
-            RegExp(r'\b(tú|tu)\b', caseSensitive: false, unicode: true),
+            RegExp(r'(?<=^|\s)(tú|tu)(?=\s|$|[.,!?])', caseSensitive: false),
             'usted');
       } else if (targetLang == 'de') {
         result =

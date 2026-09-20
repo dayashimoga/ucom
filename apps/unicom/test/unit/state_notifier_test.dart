@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:unicom_contracts/contracts.dart';
 import 'package:unicom_ai_core/ai_core.dart';
@@ -153,6 +154,12 @@ void main() {
       await controller.deleteConversation(id);
       expect(controller.currentConversation.id, isNot(equals(id)));
 
+      // Delete conversation when id is not current conversation
+      await controller.deleteConversation('non_existent_id');
+
+      // Load conversation when conv does not exist
+      await controller.loadConversation('non_existent_id');
+
       await controller.sendTextInput('Another session');
       await controller.clearAllData();
       expect(controller.currentConversation.segments, isEmpty);
@@ -168,6 +175,154 @@ void main() {
 
       controller.selectExplanation(exp);
       expect(controller.selectedExplanation, equals(exp));
+    });
+
+    test('theme mode switching and persistence', () {
+      controller.setThemeMode(ThemeMode.light);
+      expect(controller.themeMode, equals(ThemeMode.light));
+
+      controller.setThemeMode(ThemeMode.dark);
+      expect(controller.themeMode, equals(ThemeMode.dark));
+
+      controller.setThemeMode(ThemeMode.system);
+      expect(controller.themeMode, equals(ThemeMode.system));
+    });
+
+    test('activeProviderName reflects offline, cloud key, and custom router providers', () {
+      // Offline mode
+      controller.setExecutionMode(ExecutionMode.privateOffline);
+      expect(controller.activeProviderName, contains('Offline'));
+
+      // Cloud mode with key
+      controller.setExecutionMode(ExecutionMode.cloud);
+      controller.setCloudConfig(apiKey: 'gemini_test_key');
+      expect(controller.activeProviderName, contains('Gemini'));
+
+      // With custom registered provider
+      controller.addProviderConfig(const AIProviderConfig(
+        id: 'p-custom',
+        type: AIProviderType.openai,
+        displayName: 'Custom GPT-4o',
+        isDefault: true,
+      ));
+      expect(controller.activeProviderName, equals('Custom GPT-4o'));
+    });
+
+    test('addProviderConfig, removeProviderConfig, and setDefaultProvider', () {
+      const config = AIProviderConfig(
+        id: 'cfg_test',
+        type: AIProviderType.anthropic,
+        displayName: 'Claude Sonnet',
+        apiKey: 'ant_key_123',
+      );
+
+      controller.addProviderConfig(config);
+      expect(controller.configuredProviders.any((c) => c.id == 'cfg_test'), isTrue);
+
+      controller.setDefaultProvider('cfg_test');
+      expect(controller.router.defaultProviderId, equals('cfg_test'));
+
+      controller.removeProviderConfig('cfg_test');
+      expect(controller.configuredProviders.any((c) => c.id == 'cfg_test'), isFalse);
+    });
+
+    test('testProviderConfig exercises all provider types', () async {
+      // Gemini
+      final geminiRes = await controller.testProviderConfig(const AIProviderConfig(
+        id: 't-gemini',
+        type: AIProviderType.gemini,
+        displayName: 'Gemini',
+        apiKey: 'test-key',
+      ));
+      expect(geminiRes, isNotNull);
+
+      // OpenAI
+      final openaiRes = await controller.testProviderConfig(const AIProviderConfig(
+        id: 't-openai',
+        type: AIProviderType.openai,
+        displayName: 'OpenAI',
+        apiKey: 'sk-test',
+      ));
+      expect(openaiRes, isNotNull);
+
+      // Anthropic
+      final anthropicRes = await controller.testProviderConfig(const AIProviderConfig(
+        id: 't-anthropic',
+        type: AIProviderType.anthropic,
+        displayName: 'Anthropic',
+        apiKey: 'sk-ant',
+      ));
+      expect(anthropicRes, isNotNull);
+
+      // Local
+      final localRes = await controller.testProviderConfig(const AIProviderConfig(
+        id: 't-local',
+        type: AIProviderType.local,
+        displayName: 'Local LLM',
+      ));
+      expect(localRes, isNotNull);
+
+      // AICore
+      final aicoreRes = await controller.testProviderConfig(const AIProviderConfig(
+        id: 't-aicore',
+        type: AIProviderType.aicore,
+        displayName: 'AICore',
+      ));
+      expect(aicoreRes, isNotNull);
+    });
+
+    test('meeting lifecycle: startMeeting, pauseMeeting, resumeMeeting, and stopMeeting', () async {
+      await controller.startMeeting();
+      expect(controller.isMeetingActive, isTrue);
+      expect(controller.isMeetingPaused, isFalse);
+      expect(controller.mode, equals(ApplicationMode.meeting));
+      expect(controller.state, equals(ConversationState.listening));
+
+      controller.pauseMeeting();
+      expect(controller.isMeetingPaused, isTrue);
+      expect(controller.state, equals(ConversationState.idle));
+
+      controller.resumeMeeting();
+      expect(controller.isMeetingPaused, isFalse);
+      expect(controller.state, equals(ConversationState.listening));
+
+      final report = await controller.stopMeeting();
+      expect(controller.isMeetingActive, isFalse);
+      expect(controller.isMeetingPaused, isFalse);
+      expect(controller.state, equals(ConversationState.idle));
+      expect(report.reportType, equals(ReportType.meetingMinutes));
+    });
+
+    test('interview practice mode evaluates answer when segments >= 2', () async {
+      controller.setApplicationMode(ApplicationMode.interviewPractice);
+
+      // Segment 1: Question
+      await controller.sendTextInput('What is your greatest technical achievement?');
+
+      // Segment 2: Answer
+      await controller.sendTextInput(
+        'First, I redesigned the data pipeline to scale under load. '
+        'Because latency was high, we introduced caching and verified the result with automated tests.',
+      );
+
+      expect(controller.currentConversation.assessments, isNotEmpty);
+      final assess = controller.currentConversation.assessments.first;
+      expect(assess.overallScore, greaterThan(0));
+      expect(assess.rubrics, isNotEmpty);
+    });
+
+    test('speakText with empty text returns early', () async {
+      await controller.speakText('   ');
+      expect(controller.state, equals(ConversationState.idle));
+    });
+
+    test('clearSession resets session and clears explanation', () async {
+      await controller.sendTextInput('Temporary note');
+      expect(controller.selectedExplanation, isNotNull);
+
+      controller.clearSession();
+      expect(controller.currentConversation.segments, isEmpty);
+      expect(controller.selectedExplanation, isNull);
     });
   });
 }

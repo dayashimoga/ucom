@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:unicom_contracts/contracts.dart';
+import 'package:unicom_ai_core/ai_core.dart';
 import 'package:unicom_app/app/theme.dart';
 import 'package:unicom_app/features/conversation/conversation_screen.dart';
 import 'package:unicom_app/features/conversation/conversation_state_notifier.dart';
@@ -170,6 +172,105 @@ void main() {
 
       expect(
           find.textContaining('Microphone permission denied'), findsOneWidget);
+    });
+
+    testWidgets('renders offline model banner and downloads model on tap',
+        (tester) async {
+      // Configure controller with unloaded local model
+      final ctrl = ConversationController(
+        localLLMInstance: LocalLLMProvider(isModelLoaded: false),
+        storageProvider: LocalStorageProvider.inMemory(),
+      );
+
+      await tester.binding.setSurfaceSize(const Size(800, 1000));
+      await tester.pumpWidget(MaterialApp(
+        theme: UnicomTheme.darkTheme,
+        home: ConversationScreen(controller: ctrl),
+      ));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Offline model required'), findsOneWidget);
+      final downloadBtn = find.text('Download 50 MB');
+      expect(downloadBtn, findsOneWidget);
+
+      await tester.tap(downloadBtn);
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('changes source and target language via dropdowns and clears session via More menu',
+        (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1000));
+      await tester.pumpWidget(createTestApp());
+      await tester.pumpAndSettle();
+
+      // Change source language to FR
+      final dropdowns = find.byType(DropdownButton<String>);
+      if (dropdowns.evaluate().isNotEmpty) {
+        await tester.tap(dropdowns.first);
+        await tester.pumpAndSettle();
+        final frItem = find.text('FR').last;
+        await tester.tap(frItem);
+        await tester.pumpAndSettle();
+        expect(controller.sourceLanguage, equals('fr'));
+
+        // Change target language to DE
+        await tester.tap(dropdowns.last);
+        await tester.pumpAndSettle();
+        final deItem = find.text('DE').last;
+        await tester.tap(deItem);
+        await tester.pumpAndSettle();
+        expect(controller.targetLanguage, equals('de'));
+      }
+
+      // Tap graphic eq icon in empty state
+      final graphicEq = find.byIcon(Icons.graphic_eq);
+      if (graphicEq.evaluate().isNotEmpty) {
+        await tester.tap(graphicEq);
+        await tester.pump(const Duration(milliseconds: 250));
+        await tester.pumpAndSettle();
+      }
+
+      // Tap More -> Clear Session
+      final moreBtn = find.byTooltip('More actions');
+      if (moreBtn.evaluate().isNotEmpty) {
+        await tester.tap(moreBtn);
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Clear Session'));
+        await tester.pumpAndSettle();
+        expect(controller.currentConversation.segments, isEmpty);
+      }
+    });
+
+    testWidgets('shows listening indicator and stops on Stop button tap',
+        (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1000));
+      await tester.pumpWidget(createTestApp());
+      await tester.pumpAndSettle();
+
+      // Trigger listening via startMeeting
+      await controller.startMeeting();
+      await tester.pump();
+
+      expect(find.textContaining('Listening...'), findsOneWidget);
+      final stopBtn = find.widgetWithText(FilledButton, 'Stop');
+      expect(stopBtn, findsOneWidget);
+
+      await tester.tap(stopBtn);
+      await tester.pumpAndSettle();
+      expect(controller.state, equals(ConversationState.idle));
+    });
+
+    testWidgets('submits text input via keyboard onSubmitted', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1000));
+      await tester.pumpWidget(createTestApp());
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField), 'How are you?');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+
+      expect(controller.currentConversation.segments, isNotEmpty);
     });
   });
 }

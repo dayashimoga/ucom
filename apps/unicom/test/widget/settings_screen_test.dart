@@ -177,5 +177,42 @@ void main() {
       await tester.tap(lightBtn);
       await tester.pumpAndSettle();
     });
+
+    testWidgets('AICore info dialog and action chips in settings',
+        (tester) async {
+      tester.view.physicalSize = const Size(1280, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+
+      await tester.pumpWidget(createTestApp());
+      await tester.pumpAndSettle();
+
+      // Tap Learn About Device Support
+      final learnChip = find.text('Learn About Device Support');
+      await tester.tap(learnChip);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Android AICore Support'), findsOneWidget);
+      await tester.tap(find.text('Close'));
+      await tester.pumpAndSettle();
+
+      // Tap Downloaded Local Models tile
+      final modelsTile = find.text('Downloaded Local Models');
+      await tester.tap(modelsTile);
+      await tester.pumpAndSettle();
+
+      // Pop back to settings
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+      navigator.pop();
+      await tester.pumpAndSettle();
+
+      // Tap All Providers button
+      final allProvidersBtn = find.text('All Providers');
+      await tester.tap(allProvidersBtn);
+      await tester.pumpAndSettle();
+
+      navigator.pop();
+      await tester.pumpAndSettle();
+    });
   });
 }

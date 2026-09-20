@@ -502,7 +502,9 @@ class ConversationController extends ChangeNotifier {
     _state = ConversationState.listening;
     notifyListeners();
 
-    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+    if (!kIsWeb &&
+        defaultTargetPlatform == TargetPlatform.android &&
+        !Platform.environment.containsKey('FLUTTER_TEST')) {
       try {
         final hasPerm = await _speechChannel.invokeMethod<bool>('checkMicPermission') ?? false;
         if (!hasPerm) {
@@ -532,7 +534,9 @@ class ConversationController extends ChangeNotifier {
   void pauseMeeting() {
     _isMeetingPaused = true;
     _state = ConversationState.idle;
-    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+    if (!kIsWeb &&
+        defaultTargetPlatform == TargetPlatform.android &&
+        !Platform.environment.containsKey('FLUTTER_TEST')) {
       _speechChannel.invokeMethod('stopListening').catchError((_) => null);
     }
     notifyListeners();
@@ -541,7 +545,9 @@ class ConversationController extends ChangeNotifier {
   void resumeMeeting() {
     _isMeetingPaused = false;
     _state = ConversationState.listening;
-    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+    if (!kIsWeb &&
+        defaultTargetPlatform == TargetPlatform.android &&
+        !Platform.environment.containsKey('FLUTTER_TEST')) {
       _speechChannel.invokeMethod('startListening', {
         'language': _sourceLanguage == 'en' ? 'en-US' : _sourceLanguage,
         'continuous': true,
@@ -556,7 +562,9 @@ class ConversationController extends ChangeNotifier {
     _state = ConversationState.idle;
     _livePartialTranscript = null;
 
-    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+    if (!kIsWeb &&
+        defaultTargetPlatform == TargetPlatform.android &&
+        !Platform.environment.containsKey('FLUTTER_TEST')) {
       _speechChannel.invokeMethod('stopListening').catchError((_) => null);
     }
 

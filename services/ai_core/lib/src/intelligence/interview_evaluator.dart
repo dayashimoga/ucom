@@ -215,7 +215,7 @@ Return ONLY a valid JSON object with:
         lower.contains('then') ||
         lower.contains('because') ||
         lower.contains('result');
-    return hasTransitions ? 9 : 7;
+    return hasTransitions ? 9 : 6;
   }
 
   int _scoreDelivery(String answer) => 8;

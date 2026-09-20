@@ -710,13 +710,13 @@ class AIProviderConfig {
   final bool isDefault;
   final List<String> supportedCapabilities;
 
-  AIProviderConfig({
+  const AIProviderConfig({
     required this.id,
     required this.type,
     required this.displayName,
-    required this.baseUrl,
+    this.baseUrl = '',
     this.apiKey,
-    required this.modelId,
+    this.modelId = '',
     this.isEnabled = true,
     this.isDefault = false,
     this.supportedCapabilities = const ['qa', 'translation'],

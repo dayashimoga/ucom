@@ -36,60 +36,98 @@ class _MeetingScreenState extends State<MeetingScreen> {
 
         return Scaffold(
           appBar: AppBar(
-            title: const Text(
-              'Meeting Intelligence & Minutes',
-              style: TextStyle(fontWeight: FontWeight.bold),
+            title: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                isPhone ? 'Meeting' : 'Meeting Intelligence & Minutes',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
             ),
             actions: [
-              FilledButton.tonalIcon(
-                icon: const Icon(Icons.description_outlined, size: 18),
-                label: const Text('Minutes'),
-                onPressed: () async {
-                  final report =
-                      await widget.controller.createReport(ReportType.meetingMinutes);
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Meeting minutes generated: ${report.title}'),
-                        backgroundColor: UnicomTheme.successGreen,
-                      ),
-                    );
-                  }
-                },
-              ),
-              const SizedBox(width: 8),
-              if (isActive)
+              if (!isPhone) ...[
                 FilledButton.tonalIcon(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: isPaused ? UnicomTheme.warningAmber.withOpacity(0.2) : UnicomTheme.dangerRed.withOpacity(0.2),
-                  ),
-                  icon: Icon(
-                    isPaused ? Icons.play_arrow : Icons.pause,
-                    size: 18,
-                    color: isPaused ? UnicomTheme.warningAmber : UnicomTheme.dangerRed,
-                  ),
-                  label: Text(
-                    isPaused ? 'Resume' : 'Pause',
-                    style: TextStyle(
-                      color: isPaused ? UnicomTheme.warningAmber : UnicomTheme.dangerRed,
-                      fontSize: 13,
-                    ),
-                  ),
-                  onPressed: () {
-                    if (isPaused) {
-                      widget.controller.resumeMeeting();
-                    } else {
-                      widget.controller.pauseMeeting();
+                  icon: const Icon(Icons.description_outlined, size: 18),
+                  label: const Text('Minutes'),
+                  onPressed: () async {
+                    final report =
+                        await widget.controller.createReport(ReportType.meetingMinutes);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Meeting minutes generated: ${report.title}'),
+                          backgroundColor: UnicomTheme.successGreen,
+                        ),
+                      );
                     }
                   },
                 ),
-              const SizedBox(width: 8),
+                const SizedBox(width: 8),
+              ] else ...[
+                IconButton(
+                  icon: const Icon(Icons.description_outlined),
+                  tooltip: 'Minutes',
+                  onPressed: () async {
+                    final report =
+                        await widget.controller.createReport(ReportType.meetingMinutes);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Meeting minutes generated: ${report.title}'),
+                          backgroundColor: UnicomTheme.successGreen,
+                        ),
+                      );
+                    }
+                  },
+                ),
+              ],
+              if (isActive) ...[
+                if (!isPhone)
+                  FilledButton.tonalIcon(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: isPaused ? UnicomTheme.warningAmber.withOpacity(0.2) : UnicomTheme.dangerRed.withOpacity(0.2),
+                    ),
+                    icon: Icon(
+                      isPaused ? Icons.play_arrow : Icons.pause,
+                      size: 18,
+                      color: isPaused ? UnicomTheme.warningAmber : UnicomTheme.dangerRed,
+                    ),
+                    label: Text(
+                      isPaused ? 'Resume' : 'Pause',
+                      style: TextStyle(
+                        color: isPaused ? UnicomTheme.warningAmber : UnicomTheme.dangerRed,
+                        fontSize: 13,
+                      ),
+                    ),
+                    onPressed: () {
+                      if (isPaused) {
+                        widget.controller.resumeMeeting();
+                      } else {
+                        widget.controller.pauseMeeting();
+                      }
+                    },
+                  )
+                else
+                  IconButton(
+                    icon: Icon(isPaused ? Icons.play_arrow : Icons.pause),
+                    tooltip: isPaused ? 'Resume' : 'Pause',
+                    onPressed: () {
+                      if (isPaused) {
+                        widget.controller.resumeMeeting();
+                      } else {
+                        widget.controller.pauseMeeting();
+                      }
+                    },
+                  ),
+                const SizedBox(width: 8),
+              ],
               FilledButton.icon(
                 style: FilledButton.styleFrom(
                   backgroundColor: isActive ? UnicomTheme.dangerRed : UnicomTheme.primaryBlue,
+                  padding: isPhone ? const EdgeInsets.symmetric(horizontal: 10) : null,
                 ),
                 icon: Icon(isActive ? Icons.stop : Icons.fiber_manual_record, size: 18),
-                label: Text(isActive ? 'End Meeting' : 'Start Meeting'),
+                label: Text(isActive ? (isPhone ? 'End' : 'End Meeting') : (isPhone ? 'Start' : 'Start Meeting')),
                 onPressed: () async {
                   if (isActive) {
                     final report = await widget.controller.stopMeeting();
