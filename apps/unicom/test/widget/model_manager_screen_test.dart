@@ -119,6 +119,24 @@ void main() {
       }
     });
 
+    testWidgets('removes installed non-active model via Remove button',
+        (tester) async {
+      tester.view.physicalSize = const Size(1280, 2000);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+
+      await modelManager.downloadModel('whisper-tiny-quantized');
+      await tester.pumpWidget(createTestApp());
+      await tester.pumpAndSettle();
+
+      final removeBtn = find.text('Remove');
+      expect(removeBtn, findsWidgets);
+      await tester.tap(removeBtn.first);
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('uninstalled'), findsOneWidget);
+    });
+
     testWidgets('handles download error and displays failure snackbar',
         (tester) async {
       tester.view.physicalSize = const Size(1280, 2000);

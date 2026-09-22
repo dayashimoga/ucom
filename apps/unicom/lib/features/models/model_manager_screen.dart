@@ -218,7 +218,7 @@ class _ModelManagerScreenState extends State<ModelManagerScreen> {
                                 },
                               ),
                               const SizedBox(width: 8),
-                              if (m.isDownloadable)
+                              if (m.isDownloadable || m.downloadUrl != null)
                                 OutlinedButton.icon(
                                   icon: const Icon(Icons.delete_outline,
                                       size: 16, color: UnicomTheme.dangerRed),
@@ -245,7 +245,7 @@ class _ModelManagerScreenState extends State<ModelManagerScreen> {
                                 ],
                               ),
                               const Spacer(),
-                              if (m.isDownloadable)
+                              if (m.isDownloadable || m.downloadUrl != null)
                                 TextButton.icon(
                                   icon: const Icon(Icons.delete_outline,
                                       size: 16, color: UnicomTheme.dangerRed),

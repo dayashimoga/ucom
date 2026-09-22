@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:unicom_contracts/contracts.dart';
 import 'package:unicom_ai_core/ai_core.dart';
@@ -323,6 +325,185 @@ void main() {
       controller.clearSession();
       expect(controller.currentConversation.segments, isEmpty);
       expect(controller.selectedExplanation, isNull);
+    });
+
+    test('QA mode, autoTts, speaker, and capability routing methods', () {
+      expect(controller.isQaMode, isFalse);
+      controller.setQaMode(true);
+      expect(controller.isQaMode, isTrue);
+      controller.toggleQaMode();
+      expect(controller.isQaMode, isFalse);
+
+      expect(controller.autoTts, isFalse);
+      controller.setAutoTts(true);
+      expect(controller.autoTts, isTrue);
+
+      expect(controller.activeListeningSpeaker, equals('You'));
+      controller.setActiveListeningSpeaker('Partner');
+      expect(controller.activeListeningSpeaker, equals('Partner'));
+
+      controller.setCapabilityRoute('qa', 'Local GGUF');
+      expect(controller.qaRoute, equals('Local GGUF'));
+      controller.setCapabilityRoute('translation', 'Cloud Translation');
+      expect(controller.translationRoute, equals('Cloud Translation'));
+      controller.setCapabilityRoute('stt', 'VOSK Offline');
+      expect(controller.sttRoute, equals('VOSK Offline'));
+      controller.setCapabilityRoute('tts', 'Device TTS');
+      expect(controller.ttsRoute, equals('Device TTS'));
+      controller.setCapabilityRoute('summarization', 'Gemini Nano');
+      expect(controller.summarizationRoute, equals('Gemini Nano'));
+      controller.setCapabilityRoute('unknown', 'Fallback');
+
+      controller.setActionableError('Test error message');
+      expect(controller.actionableError, equals('Test error message'));
+      controller.clearError();
+      expect(controller.actionableError, isNull);
+    });
+
+    test('Q&A pipeline routes /ask, ask:, explicit intent, and isQaMode to askQuestion', () async {
+      // 1. /ask prefix
+      await controller.sendTextInput('/ask What is quantum computing?');
+      expect(controller.currentConversation.segments.length, equals(2));
+      final userSeg = controller.currentConversation.segments.first;
+      final aiSeg = controller.currentConversation.segments.last;
+      expect(userSeg.originalText, equals('What is quantum computing?'));
+      expect(userSeg.intent, equals(InteractionIntent.qa));
+      expect(aiSeg.isAiResponse, isTrue);
+      expect(aiSeg.originalText, isNotEmpty);
+
+      // 2. ask: prefix
+      await controller.sendTextInput('ask: What is photosynthesis?');
+      expect(controller.currentConversation.segments.length, equals(4));
+
+      // 3. Explicit intent
+      await controller.sendTextInput(
+        'What is distributed consensus?',
+        intent: InteractionIntent.qa,
+      );
+      expect(controller.currentConversation.segments.length, equals(6));
+
+      // 4. isQaMode = true
+      controller.setQaMode(true);
+      await controller.sendTextInput('What is a neural network?');
+      expect(controller.currentConversation.segments.length, equals(8));
+      controller.setQaMode(false);
+    });
+
+    test('sendTranslation handles same source and target language and autoTts', () async {
+      controller.setAutoTts(true);
+      // Source == Target: skips translation and uses original text
+      await controller.sendTranslation(
+        'Same language text',
+        sourceLang: 'en',
+        targetLang: 'en',
+      );
+      final lastSeg = controller.currentConversation.segments.last;
+      expect(lastSeg.translatedText, equals('Same language text'));
+      controller.setAutoTts(false);
+    });
+
+    test('sendTranslation executes cloud neural translation prompt path', () async {
+      controller.setExecutionMode(ExecutionMode.cloud);
+      controller.setCloudConfig(apiKey: 'dummy_cloud_key');
+      await controller.sendTranslation('Good morning', sourceLang: 'en', targetLang: 'es');
+      expect(controller.currentConversation.segments, isNotEmpty);
+      controller.setExecutionMode(ExecutionMode.privateOffline);
+    });
+
+    test('startVoiceInput with Partner and QA mode', () async {
+      // Voice input as Partner
+      await controller.startVoiceInput(speakerName: 'Partner', language: 'es');
+      expect(controller.activeListeningSpeaker, equals('Partner'));
+
+      // Voice input with QA mode
+      controller.setQaMode(true);
+      await controller.startVoiceInput(speakerName: 'You');
+      controller.setQaMode(false);
+    });
+
+    test('speakText with specific language option', () async {
+      await controller.speakText('Hola amigos', language: 'es');
+      expect(controller.state, equals(ConversationState.idle));
+    });
+
+    test('Android platform speech recognition callbacks via MethodChannel', () async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.android;
+      addTearDown(() {
+        debugDefaultTargetPlatformOverride = null;
+      });
+
+      final androidController = ConversationController();
+
+      // Send onPartialTranscript
+      final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+      final codec = const StandardMethodCodec();
+
+      await messenger.handlePlatformMessage(
+        'com.unicom.ai/speech',
+        codec.encodeMethodCall(const MethodCall('onPartialTranscript', {'text': 'Partial speech...'})),
+        (data) {},
+      );
+      expect(androidController.livePartialTranscript, equals('Partial speech...'));
+
+      // Send onFinalTranscript in normal translation mode (You)
+      await messenger.handlePlatformMessage(
+        'com.unicom.ai/speech',
+        codec.encodeMethodCall(const MethodCall('onFinalTranscript', {'text': 'Final speech You'})),
+        (data) {},
+      );
+      expect(androidController.livePartialTranscript, isNull);
+
+      // Send onFinalTranscript in normal translation mode (Partner)
+      androidController.setActiveListeningSpeaker('Partner');
+      await messenger.handlePlatformMessage(
+        'com.unicom.ai/speech',
+        codec.encodeMethodCall(const MethodCall('onFinalTranscript', {'text': 'Final speech Partner'})),
+        (data) {},
+      );
+
+      // Send onFinalTranscript in QA mode
+      androidController.setQaMode(true);
+      await messenger.handlePlatformMessage(
+        'com.unicom.ai/speech',
+        codec.encodeMethodCall(const MethodCall('onFinalTranscript', {'text': 'What is deep learning? final'})),
+        (data) {},
+      );
+      androidController.setQaMode(false);
+
+      // Send onFinalTranscript in Meeting mode
+      await androidController.startMeeting();
+      await messenger.handlePlatformMessage(
+        'com.unicom.ai/speech',
+        codec.encodeMethodCall(const MethodCall('onFinalTranscript', {'text': 'Meeting contribution speech'})),
+        (data) {},
+      );
+      await androidController.stopMeeting();
+
+      // Send onError normal silence (code 7) during meeting
+      await androidController.startMeeting();
+      await messenger.handlePlatformMessage(
+        'com.unicom.ai/speech',
+        codec.encodeMethodCall(const MethodCall('onError', {'message': 'No speech', 'code': 7})),
+        (data) {},
+      );
+      expect(androidController.actionableError, isNull);
+      await androidController.stopMeeting();
+
+      // Send onError non-silence error
+      await messenger.handlePlatformMessage(
+        'com.unicom.ai/speech',
+        codec.encodeMethodCall(const MethodCall('onError', {'message': 'Mic hardware error', 'code': 9})),
+        (data) {},
+      );
+      expect(androidController.actionableError, equals('Mic hardware error'));
+
+      // Send onListeningStopped
+      await messenger.handlePlatformMessage(
+        'com.unicom.ai/speech',
+        codec.encodeMethodCall(const MethodCall('onListeningStopped', {})),
+        (data) {},
+      );
+      expect(androidController.state, equals(ConversationState.idle));
     });
   });
 }

@@ -99,5 +99,51 @@ void main() {
             reason: 'RenderFlex overflow at text scale $scaleFactor');
       }
     });
+
+    testWidgets('UnicomApp navigates between tabs on phone, desktop, and short desktop',
+        (tester) async {
+      // 1. Phone navigation
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+
+      await tester.pumpWidget(UnicomApp(
+        controller: controller,
+        modelManager: modelManager,
+      ));
+      await tester.pumpAndSettle();
+
+      for (final tabName in ['History', 'Tools', 'Settings', 'Live']) {
+        final dest = find.text(tabName);
+        expect(dest, findsOneWidget);
+        await tester.tap(dest);
+        await tester.pumpAndSettle();
+      }
+
+      // 2. Desktop navigation
+      tester.view.physicalSize = const Size(1280, 800);
+      await tester.pumpWidget(UnicomApp(
+        controller: controller,
+        modelManager: modelManager,
+      ));
+      await tester.pumpAndSettle();
+
+      for (final tabName in ['History', 'Tools', 'Settings', 'Live']) {
+        final dest = find.text(tabName);
+        expect(dest, findsOneWidget);
+        await tester.tap(dest);
+        await tester.pumpAndSettle();
+      }
+
+      // 3. Short desktop (< 550px height) exercises NavigationRailLabelType.none branch
+      tester.view.physicalSize = const Size(1280, 480);
+      await tester.pumpWidget(UnicomApp(
+        controller: controller,
+        modelManager: modelManager,
+      ));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(NavigationRail), findsOneWidget);
+    });
   });
 }

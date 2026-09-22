@@ -207,17 +207,19 @@ class _MeetingScreenState extends State<MeetingScreen> {
               color: isPaused ? UnicomTheme.warningAmber : UnicomTheme.successGreen,
             ),
           ),
-          const SizedBox(width: 8),
-          Text(
-            isPaused ? 'Meeting Paused' : 'Recording Continuous Audio...',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: isPaused ? UnicomTheme.warningAmber : UnicomTheme.successGreen,
+          Flexible(
+            child: Text(
+              isPaused ? 'Meeting Paused' : 'Recording Continuous Audio...',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: isPaused ? UnicomTheme.warningAmber : UnicomTheme.successGreen,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-          const SizedBox(width: 12),
-          if (partial != null && partial.isNotEmpty)
+          if (partial != null && partial.isNotEmpty) ...[
+            const SizedBox(width: 8),
             Expanded(
               child: Text(
                 '"$partial"',
@@ -226,6 +228,7 @@ class _MeetingScreenState extends State<MeetingScreen> {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
+          ],
         ],
       ),
     );

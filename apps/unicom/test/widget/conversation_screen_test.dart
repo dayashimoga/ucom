@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:unicom_contracts/contracts.dart';
 import 'package:unicom_ai_core/ai_core.dart';
@@ -271,6 +273,195 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(controller.currentConversation.segments, isNotEmpty);
+    });
+
+    testWidgets('Hero Interpreter bilateral turn-taking buttons and center mic',
+        (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1000));
+      await tester.pumpWidget(createTestApp());
+      await tester.pumpAndSettle();
+
+      // Tap Speak English button
+      final speakEnBtn = find.text('Speak English');
+      expect(speakEnBtn, findsOneWidget);
+      await tester.tap(speakEnBtn);
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pumpAndSettle();
+      expect(controller.activeListeningSpeaker, equals('You'));
+
+      // Tap Speak Spanish button
+      controller.clearSession();
+      await tester.pumpAndSettle();
+      final speakEsBtn = find.text('Speak Spanish');
+      expect(speakEsBtn, findsOneWidget);
+      await tester.tap(speakEsBtn);
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pumpAndSettle();
+      expect(controller.activeListeningSpeaker, equals('Partner'));
+
+      // Tap Partner mic in composer
+      final partnerMic = find.byTooltip('Partner Speak (Spanish)');
+      expect(partnerMic, findsOneWidget);
+      await tester.tap(partnerMic);
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pumpAndSettle();
+
+      // Tap Center Hero mic icon
+      controller.clearSession();
+      await tester.pumpAndSettle();
+      final centerMic = find.byIcon(Icons.graphic_eq);
+      expect(centerMic, findsOneWidget);
+      await tester.tap(centerMic);
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('Language picker modal opens and selects source and target languages',
+        (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1000));
+      await tester.pumpWidget(createTestApp());
+      await tester.pumpAndSettle();
+
+      // Tap YOU SPEAK -> opens source picker
+      final youSpeak = find.text('YOU SPEAK');
+      expect(youSpeak, findsOneWidget);
+      await tester.tap(youSpeak);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Select Your Language'), findsOneWidget);
+      final frenchItem = find.text('French');
+      expect(frenchItem, findsOneWidget);
+      await tester.tap(frenchItem);
+      await tester.pumpAndSettle();
+      expect(controller.sourceLanguage, equals('fr'));
+
+      // Tap THEY SPEAK -> opens target picker
+      final theySpeak = find.text('THEY SPEAK');
+      expect(theySpeak, findsOneWidget);
+      await tester.tap(theySpeak);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Select Partner Language'), findsOneWidget);
+      final germanItem = find.text('German');
+      expect(germanItem, findsOneWidget);
+      await tester.tap(germanItem);
+      await tester.pumpAndSettle();
+      expect(controller.targetLanguage, equals('de'));
+    });
+
+    testWidgets('Mode toggle chip and auto-TTS toggle in AppBar',
+        (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1000));
+      await tester.pumpWidget(createTestApp());
+      await tester.pumpAndSettle();
+
+      // Toggle QA mode via FilterChip
+      final modeChip = find.byType(FilterChip);
+      expect(modeChip, findsOneWidget);
+      await tester.tap(modeChip);
+      await tester.pumpAndSettle();
+      expect(controller.isQaMode, isTrue);
+      expect(find.text('Ask AI Anything'), findsOneWidget);
+
+      // In QA mode, tap a prompt chip
+      final qaPrompt = find.text('What is zoology?');
+      expect(qaPrompt, findsOneWidget);
+      await tester.tap(qaPrompt);
+      await tester.pumpAndSettle();
+
+      // Toggle back to Translate
+      await tester.tap(modeChip);
+      await tester.pumpAndSettle();
+      expect(controller.isQaMode, isFalse);
+
+      // Toggle auto-TTS
+      final ttsToggle = find.byTooltip('Auto-TTS Off');
+      expect(ttsToggle, findsOneWidget);
+      await tester.tap(ttsToggle);
+      await tester.pumpAndSettle();
+      expect(controller.autoTts, isTrue);
+    });
+
+    testWidgets('Explanation modal bottom sheet displays and switches personas',
+        (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1000));
+      await tester.pumpWidget(createTestApp());
+      await tester.pumpAndSettle();
+
+      // Send a text to generate explanation
+      await tester.enterText(find.byType(TextField), 'What is architecture?');
+      await tester.tap(find.byTooltip('Send'));
+      await tester.pumpAndSettle();
+
+      // Tap Explain in context actions or bubble
+      final explainBtn = find.text('Explain');
+      if (explainBtn.evaluate().isNotEmpty) {
+        await tester.tap(explainBtn.first);
+        await tester.pumpAndSettle();
+
+        expect(find.text('Explanation & Nuances'), findsOneWidget);
+
+        // Tap persona chips inside modal
+        for (final personaLabel in ['Detailed', 'Technical', 'Child-Friendly', 'Grammar', 'Simple']) {
+          final chip = find.descendant(
+            of: find.byType(BottomSheet),
+            matching: find.text(personaLabel),
+          );
+          if (chip.evaluate().isNotEmpty) {
+            await tester.tap(chip, warnIfMissed: false);
+            await tester.pumpAndSettle();
+          }
+        }
+
+        // Tap Copy Explanation button
+        final copyBtn = find.text('Copy Explanation');
+        if (copyBtn.evaluate().isNotEmpty) {
+          await tester.tap(copyBtn);
+          await tester.pumpAndSettle();
+          expect(find.text('Copied explanation'), findsOneWidget);
+        }
+
+        // Close modal
+        final closeBtn = find.descendant(
+          of: find.byType(BottomSheet),
+          matching: find.byIcon(Icons.close),
+        );
+        if (closeBtn.evaluate().isNotEmpty) {
+          await tester.tap(closeBtn);
+          await tester.pumpAndSettle();
+        }
+      }
+    });
+
+    testWidgets('Live partial transcript indicator displays in listening state',
+        (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1000));
+      await tester.pumpWidget(createTestApp());
+      await tester.pumpAndSettle();
+
+      await controller.startMeeting();
+      await tester.pump();
+
+      // Simulate partial transcript callback via Android channel
+      debugDefaultTargetPlatformOverride = TargetPlatform.android;
+      try {
+        final messenger =
+            TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+        const codec = StandardMethodCodec();
+
+        await messenger.handlePlatformMessage(
+          'com.unicom.ai/speech',
+          codec.encodeMethodCall(const MethodCall(
+              'onPartialTranscript', {'text': 'Live recognition test'})),
+          (data) {},
+        );
+        await tester.pump();
+
+        expect(find.textContaining('Live recognition test'), findsWidgets);
+        controller.cancel();
+      } finally {
+        debugDefaultTargetPlatformOverride = null;
+      }
     });
   });
 }

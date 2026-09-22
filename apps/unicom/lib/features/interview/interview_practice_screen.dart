@@ -182,14 +182,17 @@ class _InterviewPracticeScreenState extends State<InterviewPracticeScreen> {
                     children: [
                       Icon(Icons.tune, color: UnicomTheme.accentCyan, size: 20),
                       SizedBox(width: 8),
-                      Text('Practice Drill Setup',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                      Expanded(
+                        child: Text('Practice Drill Setup',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 12),
                   // Role
                   DropdownButtonFormField<String>(
                     value: _selectedRole,
+                    isExpanded: true,
                     decoration: const InputDecoration(
                       labelText: 'Role',
                       border: OutlineInputBorder(),
@@ -206,6 +209,7 @@ class _InterviewPracticeScreenState extends State<InterviewPracticeScreen> {
                   // Topic
                   DropdownButtonFormField<String>(
                     value: _selectedTopic,
+                    isExpanded: true,
                     decoration: const InputDecoration(
                       labelText: 'Topic',
                       border: OutlineInputBorder(),
@@ -226,6 +230,7 @@ class _InterviewPracticeScreenState extends State<InterviewPracticeScreen> {
                   // Difficulty
                   DropdownButtonFormField<String>(
                     value: _selectedDifficulty,
+                    isExpanded: true,
                     decoration: const InputDecoration(
                       labelText: 'Seniority Level',
                       border: OutlineInputBorder(),
@@ -271,9 +276,12 @@ class _InterviewPracticeScreenState extends State<InterviewPracticeScreen> {
                     children: [
                       const Icon(Icons.quiz, color: UnicomTheme.accentCyan, size: 18),
                       const SizedBox(width: 8),
-                      Text(
-                        '$_selectedRole • $_selectedDifficulty',
-                        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: Colors.grey),
+                      Expanded(
+                        child: Text(
+                          '$_selectedRole • $_selectedDifficulty',
+                          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: Colors.grey),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                     ],
                   ),

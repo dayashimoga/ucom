@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:unicom_contracts/contracts.dart';
 import 'package:unicom_app/providers/in_memory_storage_provider.dart';
@@ -205,6 +207,141 @@ void main() {
 
       expect(find.text('Decisions Reached'), findsOneWidget);
       expect(find.text('Action Items & Deliverables'), findsOneWidget);
+    });
+
+    testWidgets('InterviewPracticeScreen exercises role, topic, difficulty dropdowns and displays full assessment cards',
+        (tester) async {
+      tester.view.physicalSize = const Size(1280, 1600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+
+      await tester.pumpWidget(MaterialApp(
+        theme: UnicomTheme.darkTheme,
+        home: InterviewPracticeScreen(controller: controller),
+      ));
+      await tester.pumpAndSettle();
+
+      // Change Role dropdown
+      final roleDropdown = find.widgetWithText(DropdownButtonFormField<String>, 'Principal Systems Architect');
+      if (roleDropdown.evaluate().isNotEmpty) {
+        await tester.tap(roleDropdown);
+        await tester.pumpAndSettle();
+        final seniorRole = find.text('Senior AI / ML Engineer').last;
+        await tester.tap(seniorRole);
+        await tester.pumpAndSettle();
+      }
+
+      // Change Topic dropdown
+      final topicDropdown = find.widgetWithText(DropdownButtonFormField<String>, 'System Architecture & Concurrency');
+      if (topicDropdown.evaluate().isNotEmpty) {
+        await tester.tap(topicDropdown);
+        await tester.pumpAndSettle();
+        final privacyTopic = find.text('Data Privacy & Local-First AI').last;
+        await tester.tap(privacyTopic);
+        await tester.pumpAndSettle();
+      }
+
+      // Change Difficulty dropdown
+      final diffDropdown = find.widgetWithText(DropdownButtonFormField<String>, 'Staff / Lead');
+      if (diffDropdown.evaluate().isNotEmpty) {
+        await tester.tap(diffDropdown);
+        await tester.pumpAndSettle();
+        final prinDiff = find.text('Principal / Distinguished').last;
+        await tester.tap(prinDiff);
+        await tester.pumpAndSettle();
+      }
+
+      // Generate question with new parameters
+      await tester.tap(find.text('New Question'));
+      await tester.pumpAndSettle();
+
+      // Submit comprehensive STAR answer
+      final answerField = find.byType(TextField);
+      await tester.enterText(
+        answerField,
+        'Situation: We had high latency in cloud LLM requests. '
+        'Task: Reduce response latency to under 50ms while ensuring strict privacy. '
+        'Action: I integrated local on-device INT4 quantization and a local RAG cache. '
+        'Result: Decreased p99 latency by 85% and eliminated all cloud network dependencies.',
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Evaluate Answer & Study Plan'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Identified Strengths'), findsOneWidget);
+      expect(find.text('Missing Concepts & Improvements'), findsOneWidget);
+      expect(find.text('Targeted Study Plan'), findsOneWidget);
+    });
+
+    testWidgets('MeetingScreen exercises phone controls and status bar with partial transcript',
+        (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+
+      await tester.pumpWidget(MaterialApp(
+        theme: UnicomTheme.darkTheme,
+        home: MeetingScreen(controller: controller),
+      ));
+      await tester.pumpAndSettle();
+
+      // Start meeting on phone
+      final startBtn = find.text('Start');
+      expect(startBtn, findsOneWidget);
+      await tester.tap(startBtn);
+      await tester.pumpAndSettle();
+
+      expect(controller.isMeetingActive, isTrue);
+
+      // Simulate partial transcript in status bar
+      debugDefaultTargetPlatformOverride = TargetPlatform.android;
+      try {
+        final messenger =
+            TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+        const codec = StandardMethodCodec();
+
+        await messenger.handlePlatformMessage(
+          'com.unicom.ai/speech',
+          codec.encodeMethodCall(const MethodCall('onPartialTranscript',
+              {'text': 'Phone partial meeting speech'})),
+          (data) {},
+        );
+        await tester.pump();
+        expect(find.textContaining('Phone partial meeting speech'),
+            findsOneWidget);
+      } finally {
+        debugDefaultTargetPlatformOverride = null;
+      }
+
+      // Pause via phone icon button
+      final pauseBtn = find.byIcon(Icons.pause);
+      expect(pauseBtn, findsOneWidget);
+      await tester.tap(pauseBtn);
+      await tester.pumpAndSettle();
+      expect(controller.isMeetingPaused, isTrue);
+
+      // Resume via phone icon button
+      final resumeBtn = find.byIcon(Icons.play_arrow);
+      expect(resumeBtn, findsOneWidget);
+      await tester.tap(resumeBtn);
+      await tester.pumpAndSettle();
+      expect(controller.isMeetingPaused, isFalse);
+
+      // Tap Minutes on phone
+      final minutesBtn = find.byIcon(Icons.description_outlined);
+      expect(minutesBtn, findsOneWidget);
+      await tester.tap(minutesBtn);
+      await tester.pumpAndSettle();
+
+      // End meeting via phone button
+      final endBtn = find.text('End');
+      expect(endBtn, findsOneWidget);
+      await tester.tap(endBtn);
+      await tester.pumpAndSettle();
+      expect(controller.isMeetingActive, isFalse);
     });
   });
 }

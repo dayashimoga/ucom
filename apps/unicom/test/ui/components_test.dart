@@ -27,12 +27,29 @@ void main() {
     });
 
     testWidgets(
-        'ConversationBubble renders speaker, original, and translated text',
+        'ConversationBubble renders speaker, original, translated text, buttons, and handles interactions',
         (tester) async {
-      final segment = ConversationSegment(
+      bool spoken = false;
+      bool explained = false;
+      bool translated = false;
+
+      // 1. User Translation Segment
+      final exp = ExplanationResult(
+        id: 'exp_bubble',
+        originalText: 'Hello world',
+        explanations: {
+          ExplanationPersona.simple: ExplanationEntry(
+            persona: ExplanationPersona.simple,
+            content: 'Simple explanation',
+          ),
+        },
+        createdAt: '2026-09-22T10:00',
+      );
+
+      final userSegment = ConversationSegment(
         id: 'seg_1',
         speakerId: 'p1',
-        speakerName: 'Alice',
+        speakerName: 'You',
         startTime: 1000,
         originalText: 'Hello world',
         originalLanguage: 'en',
@@ -40,64 +57,159 @@ void main() {
         targetLanguage: 'es',
         confidence: 0.95,
         isFinal: true,
+        intent: InteractionIntent.translation,
+        explanation: exp,
       );
 
       await tester.pumpWidget(MaterialApp(
         theme: UnicomTheme.darkTheme,
         home: Scaffold(
           body: ConversationBubble(
-            segment: segment,
-            onSpeak: () {},
-            onExplain: () {},
+            segment: userSegment,
+            onSpeak: () => spoken = true,
+            onExplain: () => explained = true,
+            isExplanationActive: true,
           ),
         ),
       ));
       await tester.pumpAndSettle();
 
-      expect(find.text('Alice'), findsOneWidget);
+      expect(find.text('You'), findsOneWidget);
       expect(find.text('Hello world'), findsOneWidget);
       expect(find.text('Hola mundo'), findsOneWidget);
+      expect(find.text('ES TRANSLATION'), findsOneWidget);
+
+      // Tap Copy
+      await tester.tap(find.byIcon(Icons.copy));
+      await tester.pumpAndSettle();
+      expect(find.text('Copied to clipboard'), findsOneWidget);
+
+      // Tap Listen
+      await tester.tap(find.byIcon(Icons.volume_up));
+      await tester.pumpAndSettle();
+      expect(spoken, isTrue);
+
+      // Tap Explain
+      await tester.tap(find.byIcon(Icons.lightbulb_outline));
+      await tester.pumpAndSettle();
+      expect(explained, isTrue);
+
+      // 2. AI Answer Segment
+      final aiSegment = ConversationSegment(
+        id: 'seg_ai',
+        speakerId: 'ai_assistant',
+        speakerName: 'UniCom AI',
+        startTime: 2000,
+        originalText: 'Zoology is the scientific study of animals.',
+        originalLanguage: 'en',
+        translatedText: '',
+        targetLanguage: 'es',
+        confidence: 1.0,
+        isFinal: true,
+        intent: InteractionIntent.qa,
+        isAiResponse: true,
+        aiModelName: 'Local LLM INT4',
+      );
+
+      await tester.pumpWidget(MaterialApp(
+        theme: UnicomTheme.lightTheme,
+        home: Scaffold(
+          body: ConversationBubble(
+            segment: aiSegment,
+            onSpeak: () {},
+            onExplain: () {},
+            onTranslate: () => translated = true,
+          ),
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      expect(find.text('UniCom AI'), findsOneWidget);
+      expect(find.text('Local LLM INT4'), findsOneWidget);
+      expect(find.text('Zoology is the scientific study of animals.'), findsOneWidget);
+      expect(find.text('Translate to ES'), findsOneWidget);
+
+      // Tap AI Translate button
+      await tester.tap(find.text('Translate to ES'));
+      await tester.pumpAndSettle();
+      expect(translated, isTrue);
+
+      // Tap Copy on AI segment
+      await tester.tap(find.byIcon(Icons.copy));
+      await tester.pumpAndSettle();
+      expect(find.text('Copied to clipboard'), findsOneWidget);
     });
 
-    testWidgets('ExplanationCard renders personas and allows persona switching',
+    testWidgets('ExplanationCard renders all personas, keypoints, and empty states',
         (tester) async {
       final expResult = ExplanationResult(
-        id: 'exp_1',
+        id: 'exp_full',
         originalText: 'Architecture',
         explanations: {
           ExplanationPersona.simple: ExplanationEntry(
             persona: ExplanationPersona.simple,
             content: 'Simple explanation content',
+            keyPoints: ['Core structure', 'Blueprint'],
           ),
           ExplanationPersona.detailed: ExplanationEntry(
             persona: ExplanationPersona.detailed,
             content: 'Detailed technical explanation',
           ),
+          ExplanationPersona.terminology: ExplanationEntry(
+            persona: ExplanationPersona.terminology,
+            content: 'Terminology and nomenclature',
+          ),
+          ExplanationPersona.grammar: ExplanationEntry(
+            persona: ExplanationPersona.grammar,
+            content: 'Grammar analysis',
+          ),
+          ExplanationPersona.culturalContext: ExplanationEntry(
+            persona: ExplanationPersona.culturalContext,
+            content: 'Cultural context insights',
+          ),
+          ExplanationPersona.examples: ExplanationEntry(
+            persona: ExplanationPersona.examples,
+            content: 'Practical real-world examples',
+          ),
+          // childFriendly omitted intentionally to test unavailable fallback
         },
-        createdAt: DateTime.now().toUtc().toIso8601String(),
+        createdAt: '12:30', // < 16 chars branch
       );
+
+      tester.view.physicalSize = const Size(1280, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
 
       await tester.pumpWidget(MaterialApp(
         theme: UnicomTheme.darkTheme,
         home: Scaffold(
-          body: ExplanationCard(explanation: expResult),
+          body: SingleChildScrollView(
+            child: ExplanationCard(explanation: expResult),
+          ),
         ),
       ));
       await tester.pumpAndSettle();
 
       expect(find.textContaining('Simple explanation content'), findsOneWidget);
+      expect(find.text('Core structure'), findsOneWidget);
+      expect(find.text('Blueprint'), findsOneWidget);
+      expect(find.text('12:30'), findsOneWidget);
 
-      final detailedChip = find.text('Detailed');
-      if (detailedChip.evaluate().isNotEmpty) {
-        await tester.tap(detailedChip);
+      // Test switching through each persona chip
+      final personaChips = ['Detailed', 'Terms', 'Grammar', 'Culture', 'Examples', 'Child-Friendly'];
+      for (final label in personaChips) {
+        final chip = find.text(label);
+        expect(chip, findsOneWidget);
+        await tester.tap(chip);
         await tester.pumpAndSettle();
-        expect(find.textContaining('Detailed technical explanation'),
-            findsOneWidget);
       }
+
+      // Child-friendly was omitted, so it should render fallback message
+      expect(find.text('Explanation unavailable for this persona.'), findsOneWidget);
     });
 
     testWidgets(
-        'ResponsiveLayout correctly identifies phone, tablet, and desktop',
+        'ResponsiveLayout correctly identifies phone, tablet, desktop, and contentPadding',
         (tester) async {
       await tester.pumpWidget(MaterialApp(
         home: MediaQuery(
@@ -106,6 +218,7 @@ void main() {
             expect(ResponsiveLayout.isPhone(context), isTrue);
             expect(ResponsiveLayout.isTablet(context), isFalse);
             expect(ResponsiveLayout.isDesktop(context), isFalse);
+            expect(ResponsiveLayout.contentPadding(context), equals(12.0));
             return const SizedBox();
           }),
         ),
@@ -119,6 +232,7 @@ void main() {
             expect(ResponsiveLayout.isPhone(context), isFalse);
             expect(ResponsiveLayout.isTablet(context), isTrue);
             expect(ResponsiveLayout.isDesktop(context), isFalse);
+            expect(ResponsiveLayout.contentPadding(context), equals(20.0));
             return const SizedBox();
           }),
         ),
@@ -132,6 +246,7 @@ void main() {
             expect(ResponsiveLayout.isPhone(context), isFalse);
             expect(ResponsiveLayout.isTablet(context), isFalse);
             expect(ResponsiveLayout.isDesktop(context), isTrue);
+            expect(ResponsiveLayout.contentPadding(context), equals(32.0));
             return const SizedBox();
           }),
         ),
