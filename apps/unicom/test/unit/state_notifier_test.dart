@@ -436,7 +436,7 @@ void main() {
 
       // Send onPartialTranscript
       final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
-      final codec = const StandardMethodCodec();
+      const codec = StandardMethodCodec();
 
       await messenger.handlePlatformMessage(
         'com.unicom.ai/speech',
