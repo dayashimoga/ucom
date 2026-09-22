@@ -18,6 +18,16 @@ import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import java.util.Locale
+import java.io.File
+import java.security.KeyStore
+import javax.crypto.Cipher
+import javax.crypto.KeyGenerator
+import javax.crypto.SecretKey
+import javax.crypto.spec.GCMParameterSpec
+import android.security.keystore.KeyGenParameterSpec
+import android.security.keystore.KeyProperties
+import android.util.Base64
+import org.json.JSONObject
 
 class MainActivity: FlutterActivity(), TextToSpeech.OnInitListener {
     private val AICORE_CHANNEL = "com.unicom.ai/aicore"
@@ -230,6 +240,114 @@ class MainActivity: FlutterActivity(), TextToSpeech.OnInitListener {
                     result.notImplemented()
                 }
             }
+        }
+
+        // 3. Android Keystore Hardware-Backed Secure Storage Channel
+        val SECURE_STORAGE_CHANNEL = "com.unicom.ai/secure_storage"
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, SECURE_STORAGE_CHANNEL).setMethodCallHandler { call, result ->
+            val vaultFile = File(filesDir, ".secure_keystore_vault.json")
+            when (call.method) {
+                "saveKey" -> {
+                    val keyId = call.argument<String>("keyId") ?: ""
+                    val value = call.argument<String>("value") ?: ""
+                    try {
+                        val json = if (vaultFile.exists()) JSONObject(vaultFile.readText()) else JSONObject()
+                        if (value.isEmpty()) {
+                            json.remove(keyId)
+                        } else {
+                            json.put(keyId, encryptSecure(value))
+                        }
+                        vaultFile.writeText(json.toString())
+                        result.success(true)
+                    } catch (e: Exception) {
+                        result.error("SECURE_STORE_ERROR", e.localizedMessage, null)
+                    }
+                }
+                "getKey" -> {
+                    val keyId = call.argument<String>("keyId") ?: ""
+                    try {
+                        if (!vaultFile.exists()) {
+                            result.success(null)
+                            return@setMethodCallHandler
+                        }
+                        val json = JSONObject(vaultFile.readText())
+                        if (!json.has(keyId)) {
+                            result.success(null)
+                            return@setMethodCallHandler
+                        }
+                        val encrypted = json.getString(keyId)
+                        val decrypted = decryptSecure(encrypted)
+                        result.success(decrypted)
+                    } catch (e: Exception) {
+                        result.success(null)
+                    }
+                }
+                "removeKey" -> {
+                    val keyId = call.argument<String>("keyId") ?: ""
+                    try {
+                        if (vaultFile.exists()) {
+                            val json = JSONObject(vaultFile.readText())
+                            json.remove(keyId)
+                            vaultFile.writeText(json.toString())
+                        }
+                        result.success(true)
+                    } catch (e: Exception) {
+                        result.error("SECURE_REMOVE_ERROR", e.localizedMessage, null)
+                    }
+                }
+                else -> result.notImplemented()
+            }
+        }
+    }
+
+    private val KEY_ALIAS = "unicom_master_key"
+    private val ANDROID_KEYSTORE = "AndroidKeyStore"
+    private val TRANSFORMATION = "AES/GCM/NoPadding"
+
+    private fun getOrCreateSecretKey(): SecretKey {
+        val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
+        if (keyStore.containsAlias(KEY_ALIAS)) {
+            val entry = keyStore.getEntry(KEY_ALIAS, null) as KeyStore.SecretKeyEntry
+            return entry.secretKey
+        }
+        val keyGenerator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, ANDROID_KEYSTORE)
+        keyGenerator.init(
+            KeyGenParameterSpec.Builder(
+                KEY_ALIAS,
+                KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
+            )
+                .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+                .setKeySize(256)
+                .build()
+        )
+        return keyGenerator.generateKey()
+    }
+
+    private fun encryptSecure(plaintext: String): String {
+        val cipher = Cipher.getInstance(TRANSFORMATION)
+        cipher.init(Cipher.ENCRYPT_MODE, getOrCreateSecretKey())
+        val iv = cipher.iv
+        val ciphertext = cipher.doFinal(plaintext.toByteArray(Charsets.UTF_8))
+        val combined = ByteArray(iv.size + ciphertext.size)
+        System.arraycopy(iv, 0, combined, 0, iv.size)
+        System.arraycopy(ciphertext, 0, combined, iv.size, ciphertext.size)
+        return Base64.encodeToString(combined, Base64.NO_WRAP)
+    }
+
+    private fun decryptSecure(encoded: String): String? {
+        return try {
+            val combined = Base64.decode(encoded, Base64.NO_WRAP)
+            val iv = ByteArray(12)
+            val ciphertext = ByteArray(combined.size - 12)
+            System.arraycopy(combined, 0, iv, 0, 12)
+            System.arraycopy(combined, 12, ciphertext, 0, ciphertext.size)
+            val cipher = Cipher.getInstance(TRANSFORMATION)
+            val spec = GCMParameterSpec(128, iv)
+            cipher.init(Cipher.DECRYPT_MODE, getOrCreateSecretKey(), spec)
+            String(cipher.doFinal(ciphertext), Charsets.UTF_8)
+        } catch (e: Exception) {
+            null
         }
     }
 

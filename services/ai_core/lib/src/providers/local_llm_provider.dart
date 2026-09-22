@@ -441,6 +441,12 @@ class LocalLLMProvider implements LLMProvider {
       } else {
         buffer.write('Photosynthesis converts light energy, water, and carbon dioxide into chemical energy (glucose) and oxygen through light-dependent reactions in the thylakoid membrane and the Calvin cycle in the stroma.');
       }
+    } else if (lower.contains('zoology') || lower.contains('animal kingdom') || lower.contains('fauna')) {
+      if (isSimple) {
+        buffer.write('Zoology is the branch of biology that studies animals, their behaviors, habitats, and how they live.');
+      } else {
+        buffer.write('Zoology is the branch of biology devoted to the study of animals and animal life, including structure, embryology, evolution, classification, habits, and distribution of all animals, both living and extinct.');
+      }
     } else if (lower.contains('transistor') || lower.contains('semiconductor') || lower.contains('silicon')) {
       buffer.write('Transistor technology regulates electrical current flow and acts as a foundational digital logic switch, enabling binary computation across modern integrated circuits and microprocessors.');
     } else if (lower.contains('relativity') || lower.contains('einstein') || lower.contains('spacetime') || lower.contains('gravity')) {

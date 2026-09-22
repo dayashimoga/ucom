@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:unicom_contracts/contracts.dart';
@@ -35,9 +36,19 @@ class _CancellingModelManager extends LocalModelManager {
 void main() {
   group('ModelManagerScreen Widget Tests', () {
     late LocalModelManager modelManager;
+    late Directory tempDir;
 
     setUp(() {
-      modelManager = LocalModelManager();
+      tempDir = Directory.systemTemp.createTempSync('model_test_dir_');
+      modelManager = LocalModelManager(storageDirectory: tempDir);
+    });
+
+    tearDown(() {
+      try {
+        if (tempDir.existsSync()) {
+          tempDir.deleteSync(recursive: true);
+        }
+      } catch (_) {}
     });
 
     Widget createTestApp({LocalModelManager? mgr}) {

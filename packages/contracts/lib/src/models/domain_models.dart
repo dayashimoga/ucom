@@ -124,6 +124,9 @@ class ConversationSegment {
   final double confidence;
   final ExplanationResult? explanation;
   final bool isFinal;
+  final InteractionIntent intent;
+  final bool isAiResponse;
+  final String? aiModelName;
 
   ConversationSegment({
     required this.id,
@@ -138,7 +141,45 @@ class ConversationSegment {
     this.confidence = 1.0,
     this.explanation,
     this.isFinal = true,
+    this.intent = InteractionIntent.translation,
+    this.isAiResponse = false,
+    this.aiModelName,
   });
+
+  ConversationSegment copyWith({
+    String? id,
+    String? speakerId,
+    String? speakerName,
+    int? startTime,
+    int? endTime,
+    String? originalText,
+    String? originalLanguage,
+    String? translatedText,
+    String? targetLanguage,
+    double? confidence,
+    ExplanationResult? explanation,
+    bool? isFinal,
+    InteractionIntent? intent,
+    bool? isAiResponse,
+    String? aiModelName,
+  }) =>
+      ConversationSegment(
+        id: id ?? this.id,
+        speakerId: speakerId ?? this.speakerId,
+        speakerName: speakerName ?? this.speakerName,
+        startTime: startTime ?? this.startTime,
+        endTime: endTime ?? this.endTime,
+        originalText: originalText ?? this.originalText,
+        originalLanguage: originalLanguage ?? this.originalLanguage,
+        translatedText: translatedText ?? this.translatedText,
+        targetLanguage: targetLanguage ?? this.targetLanguage,
+        confidence: confidence ?? this.confidence,
+        explanation: explanation ?? this.explanation,
+        isFinal: isFinal ?? this.isFinal,
+        intent: intent ?? this.intent,
+        isAiResponse: isAiResponse ?? this.isAiResponse,
+        aiModelName: aiModelName ?? this.aiModelName,
+      );
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -153,6 +194,9 @@ class ConversationSegment {
         'confidence': confidence,
         if (explanation != null) 'explanation': explanation!.toJson(),
         'isFinal': isFinal,
+        'intent': intent.toJson(),
+        'isAiResponse': isAiResponse,
+        if (aiModelName != null) 'aiModelName': aiModelName,
       };
 
   factory ConversationSegment.fromJson(Map<String, dynamic> json) =>
@@ -172,6 +216,11 @@ class ConversationSegment {
                 json['explanation'] as Map<String, dynamic>)
             : null,
         isFinal: json['isFinal'] as bool? ?? true,
+        intent: json['intent'] != null
+            ? InteractionIntent.fromJson(json['intent'] as String)
+            : InteractionIntent.translation,
+        isAiResponse: json['isAiResponse'] as bool? ?? false,
+        aiModelName: json['aiModelName'] as String?,
       );
 }
 

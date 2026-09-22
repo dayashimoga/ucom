@@ -694,8 +694,8 @@ void main() {
         expect(result, equals('Response after retry'));
 
         // Test 3: complete with 400 error throws ProviderException
-        expect(
-          () => cloudProvider.complete('Failing prompt'),
+        await expectLater(
+          cloudProvider.complete('Failing prompt'),
           throwsA(isA<ProviderException>()),
         );
 
@@ -824,8 +824,8 @@ void main() {
         expect(result, equals('Claude response after retry'));
 
         // Test 3: complete with 400 error throws ProviderException
-        expect(
-          () => cloudProvider.complete('Failing prompt'),
+        await expectLater(
+          cloudProvider.complete('Failing prompt'),
           throwsA(isA<ProviderException>()),
         );
 

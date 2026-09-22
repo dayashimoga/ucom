@@ -200,16 +200,19 @@ class OfflineTranslationEngine implements TranslationProvider {
   }
 
   String _applyCaseAndPunctuation(String source, String target) {
-    final isCapitalized =
-        source.isNotEmpty && source[0] == source[0].toUpperCase();
-    var result = isCapitalized && target.isNotEmpty
-        ? target[0].toUpperCase() + target.substring(1)
-        : target;
+    var result = target;
+    if (result.startsWith('¿') && result.length > 1) {
+      result = '¿${result[1].toUpperCase()}${result.substring(2)}';
+    } else if (source.isNotEmpty && source[0] == source[0].toUpperCase() && result.isNotEmpty) {
+      result = result[0].toUpperCase() + result.substring(1);
+    }
 
-    final lastChar = source[source.length - 1];
+    final lastChar = source.isNotEmpty ? source[source.length - 1] : '';
     if (['!', '?', '.'].contains(lastChar) && !result.endsWith(lastChar)) {
       result += lastChar;
     }
+    // Strip any accidental multiple question/exclamation marks
+    result = result.replaceAll(RegExp(r'\?{2,}'), '?').replaceAll(RegExp(r'!{2,}'), '!');
     return result;
   }
 }

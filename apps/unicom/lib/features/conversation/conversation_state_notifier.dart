@@ -102,6 +102,31 @@ class ConversationController extends ChangeNotifier {
   bool _isMeetingPaused = false;
   bool get isMeetingPaused => _isMeetingPaused;
 
+  bool _isQaMode = false;
+  bool get isQaMode => _isQaMode;
+  void setQaMode(bool val) {
+    _isQaMode = val;
+    notifyListeners();
+  }
+  void toggleQaMode() {
+    _isQaMode = !_isQaMode;
+    notifyListeners();
+  }
+
+  bool _autoTts = false;
+  bool get autoTts => _autoTts;
+  void setAutoTts(bool val) {
+    _autoTts = val;
+    notifyListeners();
+  }
+
+  String _activeListeningSpeaker = 'You';
+  String get activeListeningSpeaker => _activeListeningSpeaker;
+  void setActiveListeningSpeaker(String speaker) {
+    _activeListeningSpeaker = speaker;
+    notifyListeners();
+  }
+
   String _qaRoute = 'Active LLM Provider / Local Fallback';
   String get qaRoute => _qaRoute;
 
@@ -230,8 +255,17 @@ class ConversationController extends ChangeNotifier {
         if (text.trim().isNotEmpty) {
           if (_isMeetingActive) {
             _addMeetingContribution(text.trim());
+          } else if (_isQaMode) {
+            askQuestion(text.trim(), speakerName: _activeListeningSpeaker);
           } else {
-            sendTextInput(text.trim());
+            final isYou = _activeListeningSpeaker.toLowerCase() == 'you';
+            sendTranslation(
+              text.trim(),
+              speakerName: _activeListeningSpeaker,
+              speakerId: isYou ? 'p1' : 'p2',
+              sourceLang: isYou ? _sourceLanguage : _targetLanguage,
+              targetLang: isYou ? _targetLanguage : _sourceLanguage,
+            );
           }
         }
         notifyListeners();
@@ -615,8 +649,40 @@ class ConversationController extends ChangeNotifier {
 
   // --- Core Processing ---
 
-  Future<void> sendTextInput(String text,
-      {String speakerName = 'You', String? speakerId}) async {
+  // --- Core Processing ---
+
+  Future<void> sendTextInput(
+    String text, {
+    String speakerName = 'You',
+    String? speakerId,
+    InteractionIntent? intent,
+  }) async {
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) return;
+
+    if (intent == InteractionIntent.qa ||
+        trimmed.startsWith('/ask ') ||
+        trimmed.toLowerCase().startsWith('ask: ') ||
+        (_isQaMode && intent == null)) {
+      await askQuestion(trimmed, speakerName: speakerName, speakerId: speakerId);
+      return;
+    }
+
+    await sendTranslation(
+      trimmed,
+      speakerName: speakerName,
+      speakerId: speakerId,
+    );
+  }
+
+  /// Authentic Real-Time Translation Pipeline (Dedicated to Cross-Language Communication)
+  Future<void> sendTranslation(
+    String text, {
+    String speakerName = 'You',
+    String? speakerId,
+    String? sourceLang,
+    String? targetLang,
+  }) async {
     final trimmed = text.trim();
     if (trimmed.isEmpty) return;
 
@@ -624,64 +690,40 @@ class ConversationController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final isQuestion = trimmed.endsWith('?') ||
-          RegExp(r'^(what|why|how|who|where|when|which|explain|tell|describe|can you|is it|are there)\b',
-                  caseSensitive: false)
-              .hasMatch(trimmed);
+      final sLang = sourceLang ?? (speakerName == 'You' ? _sourceLanguage : _targetLanguage);
+      final tLang = targetLang ?? (speakerName == 'You' ? _targetLanguage : _sourceLanguage);
 
-      // 1. Translation / Answer Generation
       String finalDisplayTranslation = '';
       double confidence = 0.95;
 
-      if (isQuestion) {
-        // Generative Q&A reasoning
-        try {
-          final aiAnswer = await router.complete(trimmed);
-          if (aiAnswer.isNotEmpty && !aiAnswer.toLowerCase().contains('unsupported')) {
-            finalDisplayTranslation = aiAnswer;
-          }
-        } catch (_) {
-          // If offline and no model, attempt linguistic translation
+      if (sLang != tLang) {
+        // High-accuracy neural translation via cloud provider if active and configured
+        if (_executionMode != ExecutionMode.privateOffline &&
+            (_cloudApiKey != null || router.configuredProviders.isNotEmpty)) {
+          try {
+            final transPrompt =
+                'Translate the following sentence directly from $sLang to $tLang. Return only the translated text without extra explanation:\n"$trimmed"';
+            final aiTrans = await router.complete(transPrompt, maxTokens: 256, temperature: 0.2);
+            if (aiTrans.isNotEmpty && !aiTrans.toLowerCase().contains('unsupported')) {
+              finalDisplayTranslation = aiTrans.replaceAll(RegExp(r'^["\s]+|["\s]+$'), '');
+            }
+          } catch (_) {}
+        }
+
+        // On-device / Local Neural Translation Fallback
+        if (finalDisplayTranslation.isEmpty) {
           final transResult = await translator.translate(
             trimmed,
             options: TranslationOptions(
-              sourceLanguage: _sourceLanguage,
-              targetLanguage: _targetLanguage,
+              sourceLanguage: sLang,
+              targetLanguage: tLang,
             ),
           );
           finalDisplayTranslation = transResult.translatedText;
           confidence = transResult.confidence;
         }
       } else {
-        // Authentic translation
-        if (_sourceLanguage != _targetLanguage) {
-          // If a cloud provider is active, request high-accuracy neural translation
-          if (_executionMode != ExecutionMode.privateOffline &&
-              (_cloudApiKey != null || router.configuredProviders.isNotEmpty)) {
-            try {
-              final transPrompt =
-                  'Translate the following sentence directly from $_sourceLanguage to $_targetLanguage. Return only the translated text without extra explanation:\n"$trimmed"';
-              final aiTrans = await router.complete(transPrompt, maxTokens: 256, temperature: 0.2);
-              if (aiTrans.isNotEmpty) {
-                finalDisplayTranslation = aiTrans.replaceAll(RegExp(r'^["\s]+|["\s]+$'), '');
-              }
-            } catch (_) {}
-          }
-
-          if (finalDisplayTranslation.isEmpty) {
-            final transResult = await translator.translate(
-              trimmed,
-              options: TranslationOptions(
-                sourceLanguage: _sourceLanguage,
-                targetLanguage: _targetLanguage,
-              ),
-            );
-            finalDisplayTranslation = transResult.translatedText;
-            confidence = transResult.confidence;
-          }
-        } else {
-          finalDisplayTranslation = trimmed;
-        }
+        finalDisplayTranslation = trimmed;
       }
 
       if (finalDisplayTranslation.isEmpty) {
@@ -690,47 +732,46 @@ class ConversationController extends ChangeNotifier {
 
       _state = ConversationState.ready;
 
-      // 2. Generate Explanations across 7 personas
+      // Generate Explanations
       final expEngine = ExplanationEngine(
         _executionMode != ExecutionMode.privateOffline ? router : null,
       );
       final expResult = await expEngine.generateExplanations(
         trimmed,
         translatedText: finalDisplayTranslation,
-        sourceLanguage: _sourceLanguage,
-        targetLanguage: _targetLanguage,
+        sourceLanguage: sLang,
+        targetLanguage: tLang,
         context: _mode.toJson(),
       );
 
-      // 3. Create conversation segment
       final newSegment = ConversationSegment(
         id: 'seg_${_currentConversation.segments.length + 1}',
-        speakerId: speakerId ?? 'p1',
+        speakerId: speakerId ?? (speakerName == 'You' ? 'p1' : 'p2'),
         speakerName: speakerName,
         startTime: DateTime.now().millisecondsSinceEpoch,
         originalText: trimmed,
-        originalLanguage: _sourceLanguage,
+        originalLanguage: sLang,
         translatedText: finalDisplayTranslation,
-        targetLanguage: _targetLanguage,
+        targetLanguage: tLang,
         confidence: confidence,
         explanation: expResult,
         isFinal: true,
+        intent: InteractionIntent.translation,
+        isAiResponse: false,
       );
 
       final updatedSegments =
           List<ConversationSegment>.from(_currentConversation.segments)
             ..add(newSegment);
 
-      // 4. Extract Questions, Decisions, Topics, Action Items
+      // Structure extraction
       final questions = extractor.extractQuestions(updatedSegments);
       final decisions = extractor.extractDecisions(updatedSegments);
       final topics = extractor.extractTopics(updatedSegments);
       final actionItems = extractor.extractActionItems(updatedSegments);
       final unresolved = extractor.extractUnresolvedQuestions(questions);
 
-      // 5. If Interview Mode, evaluate answer
-      List<InterviewAssessment> assessments =
-          List.from(_currentConversation.assessments);
+      final assessments = List<InterviewAssessment>.from(_currentConversation.assessments);
       if (_mode == ApplicationMode.interviewPractice && updatedSegments.length >= 2) {
         final lastQ = questions.isNotEmpty
             ? questions.last.questionText
@@ -762,21 +803,118 @@ class ConversationController extends ChangeNotifier {
       );
 
       _selectedExplanation = expResult;
-
-      // Persist to durable storage
       await storage.saveConversation(_currentConversation);
+
+      if (_autoTts && finalDisplayTranslation.isNotEmpty) {
+        speakText(finalDisplayTranslation, language: tLang);
+      }
 
       _state = ConversationState.idle;
       notifyListeners();
     } catch (e) {
       _actionableError =
-          'Processing error: ${e is UnicomException ? e.message : e.toString()}';
+          'Translation error: ${e is UnicomException ? e.message : e.toString()}';
       _state = ConversationState.idle;
       notifyListeners();
     }
   }
 
-  Future<void> startVoiceInput() async {
+  /// Authentic Generative Q&A Pipeline (Never Confused with Translation)
+  Future<void> askQuestion(
+    String question, {
+    String speakerName = 'You',
+    String? speakerId,
+  }) async {
+    final cleanQuestion = question
+        .trim()
+        .replaceFirst(RegExp(r'^(/ask|ask:)\s*', caseSensitive: false), '');
+    if (cleanQuestion.isEmpty) return;
+
+    _state = ConversationState.processing;
+    notifyListeners();
+
+    try {
+      // 1. User Question Segment
+      final userSegment = ConversationSegment(
+        id: 'seg_${_currentConversation.segments.length + 1}',
+        speakerId: speakerId ?? 'p1',
+        speakerName: speakerName,
+        startTime: DateTime.now().millisecondsSinceEpoch,
+        originalText: cleanQuestion,
+        originalLanguage: _sourceLanguage,
+        translatedText: '',
+        targetLanguage: _targetLanguage,
+        confidence: 1.0,
+        isFinal: true,
+        intent: InteractionIntent.qa,
+        isAiResponse: false,
+      );
+
+      // 2. Query Real Generative AI
+      final aiAnswer = await router.complete(cleanQuestion);
+
+      // 3. AI Answer Segment (Explicitly marked as AI response)
+      final aiSegment = ConversationSegment(
+        id: 'seg_${_currentConversation.segments.length + 2}',
+        speakerId: 'ai_assistant',
+        speakerName: 'UniCom AI',
+        startTime: DateTime.now().millisecondsSinceEpoch,
+        originalText: aiAnswer,
+        originalLanguage: _sourceLanguage,
+        translatedText: '',
+        targetLanguage: _targetLanguage,
+        confidence: 1.0,
+        isFinal: true,
+        intent: InteractionIntent.qa,
+        isAiResponse: true,
+        aiModelName: activeProviderName,
+      );
+
+      final updatedSegments =
+          List<ConversationSegment>.from(_currentConversation.segments)
+            ..add(userSegment)
+            ..add(aiSegment);
+
+      final questions = extractor.extractQuestions(updatedSegments);
+      final decisions = extractor.extractDecisions(updatedSegments);
+      final topics = extractor.extractTopics(updatedSegments);
+      final actionItems = extractor.extractActionItems(updatedSegments);
+      final unresolved = extractor.extractUnresolvedQuestions(questions);
+
+      _currentConversation = Conversation(
+        id: _currentConversation.id,
+        title: _currentConversation.title,
+        mode: _mode,
+        executionMode: _executionMode,
+        startedAt: _currentConversation.startedAt,
+        participants: _currentConversation.participants,
+        segments: updatedSegments,
+        questions: questions,
+        topics: topics,
+        decisions: decisions,
+        actionItems: actionItems,
+        unresolvedQuestions: unresolved,
+        assessments: _currentConversation.assessments,
+      );
+
+      await storage.saveConversation(_currentConversation);
+      _state = ConversationState.idle;
+      notifyListeners();
+    } catch (e) {
+      _actionableError =
+          'AI query error: ${e is UnicomException ? e.message : e.toString()}';
+      _state = ConversationState.idle;
+      notifyListeners();
+    }
+  }
+
+  Future<void> startVoiceInput({
+    String speakerName = 'You',
+    String? language,
+  }) async {
+    _activeListeningSpeaker = speakerName;
+    final lang = language ?? (speakerName == 'You' ? _sourceLanguage : _targetLanguage);
+
     if (stt is LocalSTTProvider && !(stt as LocalSTTProvider).isModelInstalled) {
       _actionableError =
           'Offline Whisper STT model is not installed. Download it via Model Manager.';
@@ -796,12 +934,24 @@ class ConversationController extends ChangeNotifier {
           final dummyAudio = Uint8List(16000 * 2);
           final result = await stt.transcribe(
             dummyAudio,
-            options: TranscriptionOptions(language: _sourceLanguage),
+            options: TranscriptionOptions(language: lang),
           );
           final text = result.text.trim();
-          await sendTextInput(text.isNotEmpty ? text : 'Hello', speakerName: 'Voice');
+          if (_isQaMode) {
+            await askQuestion(text.isNotEmpty ? text : 'Hello', speakerName: speakerName);
+          } else {
+            await sendTranslation(
+              text.isNotEmpty ? text : 'Hello',
+              speakerName: speakerName,
+              sourceLang: lang,
+            );
+          }
         } catch (_) {
-          await sendTextInput('Hello', speakerName: 'Voice');
+          if (_isQaMode) {
+            await askQuestion('Hello', speakerName: speakerName);
+          } else {
+            await sendTranslation('Hello', speakerName: speakerName);
+          }
         }
         _state = ConversationState.idle;
         notifyListeners();
@@ -821,7 +971,7 @@ class ConversationController extends ChangeNotifier {
         }
 
         await _speechChannel.invokeMethod('startListening', {
-          'language': _sourceLanguage == 'en' ? 'en-US' : _sourceLanguage,
+          'language': lang == 'en' ? 'en-US' : lang,
           'continuous': false,
         });
         return;
@@ -838,10 +988,11 @@ class ConversationController extends ChangeNotifier {
     }
   }
 
-  Future<void> speakText(String text) async {
+  Future<void> speakText(String text, {String? language}) async {
     final trimmed = text.trim();
     if (trimmed.isEmpty) return;
 
+    final lang = language ?? _targetLanguage;
     _state = ConversationState.speaking;
     notifyListeners();
 
@@ -851,11 +1002,11 @@ class ConversationController extends ChangeNotifier {
           !Platform.environment.containsKey('FLUTTER_TEST')) {
         await _speechChannel.invokeMethod('speakText', {
           'text': trimmed,
-          'language': _targetLanguage,
+          'language': lang,
           'rate': 1.0,
         });
       } else {
-        await tts.synthesize(trimmed, options: SynthesisOptions(language: _targetLanguage));
+        await tts.synthesize(trimmed, options: SynthesisOptions(language: lang));
       }
     } catch (e) {
       _actionableError = 'TTS playback error: ${e.toString()}';

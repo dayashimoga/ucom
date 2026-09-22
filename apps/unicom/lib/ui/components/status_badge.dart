@@ -43,8 +43,13 @@ class StatusBadge extends StatelessWidget {
         break;
       case ConversationState.translating:
         stateColor = UnicomTheme.accentCyan;
-        stateLabel = 'Thinking';
-        stateIcon = Icons.psychology;
+        stateLabel = 'Translating';
+        stateIcon = Icons.translate;
+        break;
+      case ConversationState.processing:
+        stateColor = const Color(0xFFB388FF);
+        stateLabel = 'Processing';
+        stateIcon = Icons.auto_awesome;
         break;
       case ConversationState.ready:
         stateColor = UnicomTheme.successGreen;

@@ -132,6 +132,7 @@ enum ConversationState {
   listening,
   transcribing,
   translating,
+  processing,
   ready,
   speaking;
 
@@ -203,5 +204,23 @@ enum ReportType {
       default:
         return ReportType.quickSummary;
     }
+  }
+}
+
+/// Intent classification for conversation segments.
+enum InteractionIntent {
+  translation,
+  qa,
+  explanation,
+  meeting,
+  interview;
+
+  String toJson() => name;
+
+  static InteractionIntent fromJson(String value) {
+    return InteractionIntent.values.firstWhere(
+      (e) => e.name.toLowerCase() == value.toLowerCase(),
+      orElse: () => InteractionIntent.translation,
+    );
   }
 }

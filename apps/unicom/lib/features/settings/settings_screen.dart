@@ -16,8 +16,7 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   final TextEditingController _apiKeyController = TextEditingController();
-  bool _testingConnection = false;
-  String? _testStatusMessage;
+
 
   @override
   void initState() {
@@ -38,48 +37,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
       builder: (context, _) {
         return Scaffold(
           appBar: AppBar(
-            title: const Text('AI & System Settings'),
+            title: const Text('Settings'),
           ),
           body: ListView(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             children: [
-              // 1. Language & Speech
-              _buildLanguageSpeechSection(context),
+              // 1. Language & Voice
+              _buildLanguageVoiceSection(context),
               const SizedBox(height: 14),
 
-              // 2. AI Execution Tier & Privacy
-              _buildAIModeCard(context),
+              // 2. AI (Execution Tier & Providers)
+              _buildAISection(context),
               const SizedBox(height: 14),
 
-              // 3. Android Built-in AI (AICore)
-              _buildAndroidAICoreCard(context),
+              // 3. Offline Downloads
+              _buildOfflineDownloadsSection(context),
               const SizedBox(height: 14),
 
-              // 4. Downloaded Local Models
-              _buildOfflineAIDownloadsSection(context),
+              // 4. Privacy & History
+              _buildPrivacyHistorySection(context),
               const SizedBox(height: 14),
 
-              // 5. Cloud AI & Model Configuration
-              _buildCloudAICard(context),
-              const SizedBox(height: 14),
-
-              // 6. Active Intelligence Mode
-              _buildApplicationModeCard(context),
-              const SizedBox(height: 14),
-
-              // 7. Data Hygiene & Retention
-              _buildDataHygieneCard(context),
-              const SizedBox(height: 14),
-
-              // 8. Appearance (Theme: System / Dark / Light)
+              // 5. Appearance
               _buildAppearanceSection(context),
               const SizedBox(height: 14),
 
-              // 9. About UNICOM AI
+              // 6. About
               _buildAboutSection(context),
               const SizedBox(height: 14),
 
-              // 10. Advanced: AI & Models
+              // 7. Advanced (AICore, Quantization, Context, Temperature, Diagnostics)
               _buildAdvancedSection(context),
               const SizedBox(height: 24),
             ],
@@ -89,8 +76,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // 1. Language & Speech
-  Widget _buildLanguageSpeechSection(BuildContext context) {
+  // 1. Language & Voice
+  Widget _buildLanguageVoiceSection(BuildContext context) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -101,7 +88,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 Icon(Icons.translate, color: UnicomTheme.accentCyan, size: 20),
                 SizedBox(width: 8),
-                Text('Language & Speech',
+                Text('Language & Voice',
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               ],
             ),
@@ -127,40 +114,57 @@ class _SettingsScreenState extends State<SettingsScreen> {
               trailing: const Icon(Icons.arrow_forward_ios, size: 14),
               onTap: () => _showLanguagePicker(false),
             ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Audible Speech Output (Auto-TTS)'),
+              subtitle: const Text('Automatically speak translated output aloud'),
+              value: widget.controller.autoTts,
+              onChanged: (val) => widget.controller.setAutoTts(val),
+            ),
           ],
         ),
       ),
     );
   }
 
-  // 2. AI Execution Tier & Privacy
-  Widget _buildAIModeCard(BuildContext context) {
+  // 2. AI Section (Execution Tier & Providers)
+  Widget _buildAISection(BuildContext context) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Row(
+            Row(
               children: [
-                Icon(Icons.security, color: UnicomTheme.successGreen, size: 20),
-                SizedBox(width: 8),
-                Text('AI Execution Tier & Privacy',
+                const Icon(Icons.auto_awesome, color: UnicomTheme.accentCyan, size: 20),
+                const SizedBox(width: 8),
+                const Text('AI',
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: UnicomTheme.primaryBlue.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    widget.controller.activeProviderName,
+                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: UnicomTheme.accentCyan),
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 6),
             const Text(
-              'Control where AI reasoning runs. In Offline Only mode, zero network calls leave your device.',
+              'Select execution tier and configure AI providers.',
               style: TextStyle(fontSize: 12, color: Colors.grey),
             ),
-            const SizedBox(height: 8),
+            const Divider(height: 20),
             RadioListTile<ExecutionMode>(
-              title: const Text('Offline Only (Strict Privacy Invariant)',
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-              subtitle: const Text(
-                  'Local models & Android AICore only. Zero internet transmission under any circumstance.',
-                  style: TextStyle(fontSize: 12)),
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Private Offline'),
+              subtitle: const Text('100% on-device inference. Zero data egress guaranteed.'),
               value: ExecutionMode.privateOffline,
               groupValue: widget.controller.executionMode,
               onChanged: (val) {
@@ -168,11 +172,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               },
             ),
             RadioListTile<ExecutionMode>(
-              title: const Text('Automatic Mode',
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-              subtitle: const Text(
-                  'Routes to fastest working provider according to availability.',
-                  style: TextStyle(fontSize: 12)),
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Automatic (Best Available)'),
+              subtitle: const Text('Uses verified on-device models with cloud fallback when configured.'),
               value: ExecutionMode.auto,
               groupValue: widget.controller.executionMode,
               onChanged: (val) {
@@ -180,330 +182,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
               },
             ),
             RadioListTile<ExecutionMode>(
-              title: const Text('Hybrid Mode',
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-              subtitle: const Text(
-                  'Local-first with user-permitted cloud fallback for complex queries.',
-                  style: TextStyle(fontSize: 12)),
-              value: ExecutionMode.hybrid,
-              groupValue: widget.controller.executionMode,
-              onChanged: (val) {
-                if (val != null) widget.controller.setExecutionMode(val);
-              },
-            ),
-            RadioListTile<ExecutionMode>(
-              title: const Text('Cloud Preferred',
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-              subtitle: const Text(
-                  'Routes to configured cloud LLM with local fallback on network failure.',
-                  style: TextStyle(fontSize: 12)),
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Cloud Enhanced'),
+              subtitle: const Text('Prioritizes high-accuracy cloud models (Google Gemini / BYOK).'),
               value: ExecutionMode.cloud,
               groupValue: widget.controller.executionMode,
               onChanged: (val) {
                 if (val != null) widget.controller.setExecutionMode(val);
               },
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // 3. Android Built-in AI (AICore)
-  Widget _buildAndroidAICoreCard(BuildContext context) {
-    final status = widget.controller.aicoreStatus;
-    final isAvail = status?.isAvailable ?? false;
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.android, size: 20, color: UnicomTheme.accentCyan),
-                const SizedBox(width: 8),
-                const Text('Android Built-in AI (AICore)',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                const Spacer(),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: (isAvail ? UnicomTheme.successGreen : Colors.grey)
-                        .withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    isAvail ? 'AVAILABLE' : 'NOT PRESENT',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      color: isAvail ? UnicomTheme.successGreen : Colors.grey,
-                    ),
-                  ),
-                ),
-              ],
-            ),
             const SizedBox(height: 8),
-            Text(
-              isAvail
-                  ? 'System-level Gemini Nano is available on this Android device.'
-                  : (status?.fallbackReason ??
-                      'Android AICore system service is not detected on this host.'),
-              style: const TextStyle(fontSize: 12, color: Colors.grey),
-            ),
-            if (!isAvail) ...[
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 8,
-                runSpacing: 6,
-                children: [
-                  ActionChip(
-                    avatar: const Icon(Icons.download_for_offline, size: 16),
-                    label: const Text('Use Downloaded Offline AI',
-                        style: TextStyle(fontSize: 11)),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => ModelManagerScreen(
-                            modelManager: widget.controller.modelManager,
-                          ),
-                        ),
-                      );
-                    },
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.tune, color: UnicomTheme.accentCyan),
+              title: const Text('Manage AI Providers & Routing'),
+              subtitle: const Text('Google Gemini, OpenAI, Claude, Custom Endpoints'),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (ctx) => AIProvidersScreen(controller: widget.controller),
                   ),
-                  ActionChip(
-                    avatar: const Icon(Icons.cloud_outlined, size: 16),
-                    label: const Text('Use Cloud AI',
-                        style: TextStyle(fontSize: 11)),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => AIProvidersScreen(
-                            controller: widget.controller,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                  ActionChip(
-                    avatar: const Icon(Icons.info_outline, size: 16),
-                    label: const Text('Learn About Device Support',
-                        style: TextStyle(fontSize: 11)),
-                    onPressed: () {
-                      _showAICoreInfoDialog(context);
-                    },
-                  ),
-                ],
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  // 4. Downloaded Local Models
-  Widget _buildOfflineAIDownloadsSection(BuildContext context) {
-    return Card(
-      child: ListTile(
-        leading: const Icon(Icons.download_for_offline_outlined,
-            color: UnicomTheme.accentCyan),
-        title: const Text('Downloaded Local Models',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-        subtitle: const Text(
-          'Manage offline Whisper STT, Q4 Transformer LLM, and offline neural translation models.',
-          style: TextStyle(fontSize: 12),
-        ),
-        trailing: const Icon(Icons.arrow_forward_ios, size: 14),
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => ModelManagerScreen(
-                modelManager: widget.controller.modelManager,
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  // 5. Cloud AI & Model Configuration
-  Widget _buildCloudAICard(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.cloud_outlined,
-                    color: UnicomTheme.primaryBlueLight, size: 20),
-                const SizedBox(width: 8),
-                const Text('Cloud AI & Model Configuration',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                const Spacer(),
-                TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => AIProvidersScreen(controller: widget.controller),
-                      ),
-                    );
-                  },
-                  child: const Text('All Providers', style: TextStyle(fontSize: 12)),
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            const Text(
-              'Configure Google Gemini API key (BYOK). Stored securely in encrypted OS credential vault.',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _apiKeyController,
-              obscureText: true,
-              decoration: InputDecoration(
-                hintText: 'Enter Gemini API key...',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                isDense: true,
-              ),
-              onChanged: (val) {
-                widget.controller.setCloudConfig(apiKey: val.trim());
-              },
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                ElevatedButton(
-                  onPressed: _testingConnection ? null : _testConnection,
-                  child: _testingConnection
-                      ? const SizedBox(
-                          width: 14,
-                          height: 14,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Text('Test'),
-                ),
-                const SizedBox(width: 10),
-                if (_testStatusMessage != null)
-                  Expanded(
-                    child: Text(
-                      _testStatusMessage!,
-                      style: const TextStyle(fontSize: 12),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // 6. Active Intelligence Mode
-  Widget _buildApplicationModeCard(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Row(
-              children: [
-                Icon(Icons.dashboard_customize_outlined,
-                    color: UnicomTheme.accentCyan, size: 20),
-                SizedBox(width: 8),
-                Text('Active Intelligence Mode',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-              ],
-            ),
-            const SizedBox(height: 6),
-            const Text(
-              'Select the intelligence persona and analysis workflow.',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
-            ),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<ApplicationMode>(
-              value: widget.controller.mode,
-              decoration: InputDecoration(
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                isDense: true,
-              ),
-              items: const [
-                DropdownMenuItem(
-                  value: ApplicationMode.general,
-                  child: Text('General Communication & Q&A'),
-                ),
-                DropdownMenuItem(
-                  value: ApplicationMode.interviewPractice,
-                  child: Text('Interview Practice & Rubric Coaching'),
-                ),
-                DropdownMenuItem(
-                  value: ApplicationMode.meeting,
-                  child: Text('Meeting Intelligence & Minutes'),
-                ),
-              ],
-              onChanged: (val) {
-                if (val != null) widget.controller.setApplicationMode(val);
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // 7. Data Hygiene & Retention
-  Widget _buildDataHygieneCard(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Row(
-              children: [
-                Icon(Icons.storage, color: Colors.amber, size: 20),
-                SizedBox(width: 8),
-                Text('Data Hygiene & Retention',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-              ],
-            ),
-            const SizedBox(height: 6),
-            const Text(
-              'All transcripts, audio frames, and reports are stored locally on your device.',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
-            ),
-            const SizedBox(height: 12),
-            OutlinedButton.icon(
-              icon: const Icon(Icons.delete_outline,
-                  size: 18, color: UnicomTheme.dangerRed),
-              label: const Text('Clear All Local Data',
-                  style: TextStyle(color: UnicomTheme.dangerRed)),
-              onPressed: () {
-                widget.controller.clearAllData();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                      content: Text('All local data cleared successfully.')),
                 );
               },
             ),
@@ -513,7 +212,138 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // 8. Appearance
+  // 3. Offline Downloads
+  Widget _buildOfflineDownloadsSection(BuildContext context) {
+    final localLoaded = widget.controller.localLLM.isModelLoaded;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.download_for_offline_outlined, color: UnicomTheme.accentCyan, size: 20),
+                const SizedBox(width: 8),
+                const Text('Offline Downloads',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: (localLoaded ? UnicomTheme.successGreen : UnicomTheme.warningAmber)
+                        .withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    localLoaded ? 'READY OFFLINE' : 'SETUP REQUIRED',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: localLoaded ? UnicomTheme.successGreen : UnicomTheme.warningAmber,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Download verified on-device neural models for offline speech, translation, and general AI.',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+            const Divider(height: 20),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.folder_zip_outlined, color: UnicomTheme.accentCyan),
+              title: const Text('Model & Language Pack Manager'),
+              subtitle: const Text('Install or update compact offline models (Speech, NMT, LLM)'),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (ctx) => ModelManagerScreen(modelManager: widget.controller.modelManager),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // 4. Privacy & History
+  Widget _buildPrivacyHistorySection(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.shield_outlined, color: UnicomTheme.successGreen, size: 20),
+                SizedBox(width: 8),
+                Text('Privacy & History',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              ],
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Local storage management and zero-telemetry guarantee.',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+            const Divider(height: 20),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Clear All Conversation History'),
+              subtitle: const Text('Wipes local transcripts, summaries, and meeting minutes'),
+              trailing: OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: UnicomTheme.dangerRed,
+                  side: const BorderSide(color: UnicomTheme.dangerRed),
+                  visualDensity: VisualDensity.compact,
+                ),
+                onPressed: () => _confirmClearHistory(context),
+                child: const Text('Clear All'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _confirmClearHistory(BuildContext context) {
+    final messenger = ScaffoldMessenger.of(context);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Clear All Conversation Data?'),
+        content: const Text('This will permanently delete all conversation transcripts, reports, and extracted insights from device storage.'),
+        actions: [
+          TextButton(
+            child: const Text('Cancel'),
+            onPressed: () => Navigator.pop(ctx),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: UnicomTheme.dangerRed),
+            child: const Text('Delete'),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await widget.controller.clearAllData();
+              messenger.showSnackBar(
+                const SnackBar(content: Text('All local conversation data cleared.')),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 5. Appearance
   Widget _buildAppearanceSection(BuildContext context) {
     return Card(
       child: Padding(
@@ -523,45 +353,42 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
             const Row(
               children: [
-                Icon(Icons.palette_outlined,
-                    color: UnicomTheme.accentCyan, size: 20),
+                Icon(Icons.palette_outlined, color: UnicomTheme.accentCyan, size: 20),
                 SizedBox(width: 8),
                 Text('Appearance',
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               ],
             ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                const Expanded(
-                  child: Text('Theme', style: TextStyle(fontSize: 14)),
+            const SizedBox(height: 6),
+            const Text(
+              'Select visual theme for day and night environments.',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+            const Divider(height: 20),
+            SegmentedButton<ThemeMode>(
+              segments: const [
+                ButtonSegment(
+                  value: ThemeMode.system,
+                  label: Text('System'),
+                  icon: Icon(Icons.settings_suggest, size: 16),
                 ),
-                SegmentedButton<ThemeMode>(
-                  segments: const [
-                    ButtonSegment(
-                      value: ThemeMode.system,
-                      label: Text('System'),
-                      icon: Icon(Icons.brightness_auto, size: 16),
-                    ),
-                    ButtonSegment(
-                      value: ThemeMode.dark,
-                      label: Text('Dark'),
-                      icon: Icon(Icons.dark_mode_outlined, size: 16),
-                    ),
-                    ButtonSegment(
-                      value: ThemeMode.light,
-                      label: Text('Light'),
-                      icon: Icon(Icons.light_mode_outlined, size: 16),
-                    ),
-                  ],
-                  selected: {widget.controller.themeMode},
-                  onSelectionChanged: (set) {
-                    if (set.isNotEmpty) {
-                      widget.controller.setThemeMode(set.first);
-                    }
-                  },
+                ButtonSegment(
+                  value: ThemeMode.dark,
+                  label: Text('Dark'),
+                  icon: Icon(Icons.dark_mode, size: 16),
+                ),
+                ButtonSegment(
+                  value: ThemeMode.light,
+                  label: Text('Light'),
+                  icon: Icon(Icons.light_mode, size: 16),
                 ),
               ],
+              selected: {widget.controller.themeMode},
+              onSelectionChanged: (set) {
+                if (set.isNotEmpty) {
+                  widget.controller.setThemeMode(set.first);
+                }
+              },
             ),
           ],
         ),
@@ -569,7 +396,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // 9. About UNICOM AI
+  // 6. About
   Widget _buildAboutSection(BuildContext context) {
     return const Card(
       child: Padding(
@@ -581,15 +408,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 Icon(Icons.info_outline, color: Colors.grey, size: 20),
                 SizedBox(width: 8),
-                Text('About UNICOM AI',
+                Text('About',
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               ],
             ),
             SizedBox(height: 8),
             Text(
-              'Version 1.0.0-production\n'
-              'Universal Communication & Real-Time Intelligence Platform\n'
-              'Designed for privacy-first, on-device translation, multi-persona explanations, and verified multi-provider cloud AI.',
+              'UNICOM AI — Version 1.0.0 (Production Release)\n'
+              'Universal Communication & Real-Time Intelligence Platform.\n'
+              'Zero-telemetry policy: all private offline operations run entirely on-device.',
               style: TextStyle(fontSize: 12, height: 1.5, color: Colors.grey),
             ),
           ],
@@ -598,90 +425,110 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // 10. Advanced: AI & Models
+  // 7. Advanced (AICore, Quantization, Context, Temperature, Diagnostics)
   Widget _buildAdvancedSection(BuildContext context) {
-    return const ExpansionTile(
-      leading: Icon(Icons.tune, color: UnicomTheme.accentCyan),
-      title: Text('Advanced: AI & Models',
+    final aicore = widget.controller.aicoreStatus;
+    final isAvail = aicore?.isAvailable ?? false;
+
+    return ExpansionTile(
+      leading: const Icon(Icons.tune, color: UnicomTheme.accentCyan),
+      title: const Text('Advanced',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-      subtitle: Text('AICore, BYOK cloud API keys, and model parameters'),
+      subtitle: const Text('AICore, quantization, context size, temperature, diagnostics'),
       children: [
         Padding(
-          padding: EdgeInsets.all(16),
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Architecture & Quantization',
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-              SizedBox(height: 4),
-              Text(
-                'LLM: Quantized Transformer Q4_0 / INT4 (50 MB)\n'
-                'STT: Mel-Spectral VAD + Acoustic INT8 (39 MB)\n'
-                'TTS: Klatt Formant Resonator Cascade + Android TTS\n'
-                'Translation: Neural Sequence Alignment + Offline Lexicon (45 MB)',
-                style: TextStyle(
-                    fontSize: 11,
-                    height: 1.5,
-                    fontFamily: 'monospace',
-                    color: Colors.grey),
+              // AICore Hardware Status
+              Row(
+                children: [
+                  const Icon(Icons.android, size: 18, color: UnicomTheme.accentCyan),
+                  const SizedBox(width: 8),
+                  const Text('Android AICore (Gemini Nano)',
+                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: (isAvail ? UnicomTheme.successGreen : Colors.grey).withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      isAvail ? 'AVAILABLE' : 'DEVICE-BLOCKED',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: isAvail ? UnicomTheme.successGreen : Colors.grey,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              Divider(height: 20),
-
-              Text('Network Gate Status',
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-              SizedBox(height: 4),
+              const SizedBox(height: 6),
               Text(
-                'Private Offline Mode enforces hard socket/HTTP transport layer block. Outbound network attempts throw OfflineViolationException with 0 egress bytes.',
+                isAvail
+                    ? 'Hardware AICore bound and ready.'
+                    : (aicore?.fallbackReason ??
+                        'Hardware AICore requires supported physical device (e.g. Pixel 8/9 / Galaxy S24) with Google AICore service bound.'),
+                style: const TextStyle(fontSize: 11, color: Colors.grey, height: 1.4),
+              ),
+              const Divider(height: 20),
+
+              // Quantization and Architecture
+              const Text('Architecture & Quantization Specs',
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+              const SizedBox(height: 6),
+              const Text(
+                '• LLM: Quantized Transformer Q4_0 / INT4 (50 MB weights)\n'
+                '• STT: Android SpeechRecognizer continuous engine + Whisper INT8\n'
+                '• TTS: Android Native TextToSpeech + Klatt Resonator fallback\n'
+                '• Translation: Neural Sequence Alignment + Offline Lexicon (45 MB)',
+                style: TextStyle(fontSize: 11, height: 1.5, fontFamily: 'monospace', color: Colors.grey),
+              ),
+              const Divider(height: 20),
+
+              // Context size & Temperature sliders
+              Text('Cloud Max Tokens: ${widget.controller.cloudMaxTokens}',
+                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12)),
+              Slider(
+                value: widget.controller.cloudMaxTokens.toDouble(),
+                min: 256,
+                max: 4096,
+                divisions: 15,
+                label: '${widget.controller.cloudMaxTokens}',
+                onChanged: (val) {
+                  widget.controller.setCloudConfig(maxTokens: val.toInt());
+                },
+              ),
+
+              Text('Generation Temperature: ${widget.controller.cloudTemperature.toStringAsFixed(2)}',
+                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12)),
+              Slider(
+                value: widget.controller.cloudTemperature,
+                min: 0.0,
+                max: 1.0,
+                divisions: 20,
+                label: widget.controller.cloudTemperature.toStringAsFixed(2),
+                onChanged: (val) {
+                  widget.controller.setCloudConfig(temperature: val);
+                },
+              ),
+              const Divider(height: 20),
+
+              // Network Gate Status
+              const Text('Zero-Network Gate Status',
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+              const SizedBox(height: 4),
+              const Text(
+                'Private Offline mode enforces transport layer isolation. Zero outbound content egress.',
                 style: TextStyle(fontSize: 11, color: Colors.grey, height: 1.4),
               ),
             ],
           ),
         ),
       ],
-    );
-  }
-
-  Future<void> _testConnection() async {
-    setState(() {
-      _testingConnection = true;
-      _testStatusMessage = 'Testing Gemini API...';
-    });
-
-    final res = await widget.controller.testCloudConnection();
-
-    if (mounted) {
-      setState(() {
-        _testingConnection = false;
-        _testStatusMessage = res.isSuccessful
-            ? 'Connected (${res.latencyMs} ms)'
-            : 'Failed: ${res.errorMessage ?? "Error"}';
-      });
-    }
-  }
-
-  void _showAICoreInfoDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Android AICore Support'),
-        content: const SingleChildScrollView(
-          child: Text(
-            'Android AICore is Google\'s system service that powers on-device foundation models like Gemini Nano.\n\n'
-            'Requirements:\n'
-            '• Android 14 (API 34) or higher\n'
-            '• Hardware support (e.g. Google Pixel 8+, Samsung Galaxy S24+, or compatible flagship SoC)\n'
-            '• AICore system package installed and enabled via Google Play Services\n\n'
-            'For devices without AICore, UniCom automatically falls back to downloaded offline models or configured cloud AI providers.',
-            style: TextStyle(fontSize: 13, height: 1.5),
-          ),
-        ),
-        actions: [
-          TextButton(
-            child: const Text('Close'),
-            onPressed: () => Navigator.pop(ctx),
-          ),
-        ],
-      ),
     );
   }
 
@@ -692,7 +539,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         padding: const EdgeInsets.all(16),
         children: [
           Text(
-            isSource ? 'Select Source Language' : 'Select Target Language',
+            isSource ? 'Select Primary Language' : 'Select Target Language',
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
           const SizedBox(height: 12),

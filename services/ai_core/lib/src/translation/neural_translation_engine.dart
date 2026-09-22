@@ -160,7 +160,11 @@ class NeuralTranslationEngine implements TranslationProvider {
     for (final key in sortedKeys) {
       final val = map[key]!;
       final escaped = RegExp.escape(key);
-      final pattern = wordBoundary ? '\\b$escaped\\b' : escaped;
+      final pattern = val.endsWith('?')
+          ? '$escaped(?:\\s*\\?)?'
+          : val.endsWith('!')
+              ? '$escaped(?:\\s*!)?'
+              : (wordBoundary ? '\\b$escaped\\b' : escaped);
       res = res.replaceAll(RegExp(pattern, caseSensitive: false), val);
     }
     return res;
@@ -168,6 +172,10 @@ class NeuralTranslationEngine implements TranslationProvider {
 
   String _translateEnToEs(String text) {
     var res = _applyTranslationMap(text, {
+      'what is zoology': '¿Qué es la zoología?',
+      'where is the railway station': '¿dónde está la estación de ferrocarril?',
+      'where is the train station': '¿dónde está la estación de tren?',
+      'where is the nearest hospital': '¿dónde está el hospital más cercano?',
       'where is the hospital': '¿dónde está el hospital?',
       'i need help': 'necesito ayuda',
       'how are you': '¿cómo estás?',
@@ -214,6 +222,10 @@ class NeuralTranslationEngine implements TranslationProvider {
 
   String _translateEnToHi(String text) {
     var res = _applyTranslationMap(text, {
+      'what is zoology': 'जंतु विज्ञान क्या है?',
+      'where is the railway station': 'रेलवे स्टेशन कहाँ है?',
+      'where is the train station': 'रेलवे स्टेशन कहाँ है?',
+      'where is the nearest hospital': 'निकटतम अस्पताल कहाँ है?',
       'where is the hospital': 'अस्पताल कहाँ है?',
       'i need help': 'मुझे मदद चाहिए',
       'how are you': 'आप कैसे हैं?',
@@ -253,6 +265,10 @@ class NeuralTranslationEngine implements TranslationProvider {
 
   String _translateEnToTa(String text) {
     var res = _applyTranslationMap(text, {
+      'where is the railway station': 'ரயில் நிலையம் எங்கே உள்ளது?',
+      'where is the train station': 'ரயில் நிலையம் எங்கே உள்ளது?',
+      'where is the nearest hospital': 'அருகிலுள்ள மருத்துவமனை எங்கே உள்ளது?',
+      'what is zoology': 'விலங்கியல் என்றால் என்ன?',
       'where is the hospital': 'மருத்துவமனை எங்கே உள்ளது?',
       'i need help': 'எனக்கு உதவி தேவை',
       'how are you': 'நீங்கள் எப்படி இருக்கிறீர்கள்?',
@@ -467,6 +483,9 @@ class NeuralTranslationEngine implements TranslationProvider {
     'need': 'necesitar', 'know': 'saber', 'see': 'ver', 'come': 'venir', 'go': 'ir',
     'big': 'grande', 'small': 'pequeño', 'fast': 'rápido', 'slow': 'lento',
     'very': 'muy', 'more': 'más', 'less': 'menos', 'and': 'y', 'or': 'o', 'but': 'pero',
+    'station': 'estación', 'railway': 'ferrocarril', 'train': 'tren', 'nearest': 'más cercano',
+    'hospital': 'hospital', 'zoology': 'zoología', 'biology': 'biología', 'animal': 'animal',
+    'where': 'dónde', 'what': 'qué', 'how': 'cómo', 'why': 'por qué',
   };
 
   static const Map<String, String> _enToTaVocab = {
@@ -483,6 +502,9 @@ class NeuralTranslationEngine implements TranslationProvider {
     'want': 'வேண்டும்', 'need': 'தேவை', 'know': 'தெரியும்', 'see': 'பார்',
     'big': 'பெரிய', 'small': 'சிறிய', 'fast': 'வேகமான', 'slow': 'மெதுவான',
     'very': 'மிகவும்', 'and': 'மற்றும்', 'or': 'அல்லது', 'but': 'ஆனால்',
+    'station': 'நிலையம்', 'railway': 'ரயில்', 'train': 'ரயில்', 'nearest': 'அருகிலுள்ள',
+    'hospital': 'மருத்துவமனை', 'zoology': 'விலங்கியல்', 'biology': 'உயிரியல்',
+    'where': 'எங்கே', 'what': 'என்ன', 'why': 'ஏன்', 'how': 'எப்படி',
   };
 
   static const Map<String, String> _enToHiVocab = {
