@@ -180,6 +180,8 @@ abstract class OCRProvider {
   bool get isOfflineCapable;
 
   Future<String> extractText(Uint8List imageBytes);
+  Future<OcrResult> processImage(Uint8List imageBytes,
+      {String? targetLanguage});
 }
 
 abstract class StorageProvider {

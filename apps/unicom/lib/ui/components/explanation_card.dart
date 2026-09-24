@@ -32,7 +32,7 @@ class _ExplanationCardState extends State<ExplanationCard> {
                 const SizedBox(width: 8),
                 const Flexible(
                   child: Text(
-                    'Multi-Persona Intelligence',
+                    'Understand & Context',
                     style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
                     overflow: TextOverflow.ellipsis,
                   ),

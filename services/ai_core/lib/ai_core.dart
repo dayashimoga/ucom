@@ -23,3 +23,6 @@ export 'src/providers/openai_provider.dart';
 export 'src/providers/anthropic_provider.dart';
 export 'src/knowledge/rag_retrieval_provider.dart';
 export 'src/knowledge/knowledge_engine.dart';
+export 'src/ocr/real_ocr_engine.dart';
+export 'src/speech/streaming_speech_session.dart';
+export 'src/intelligence/intent_classifier.dart';

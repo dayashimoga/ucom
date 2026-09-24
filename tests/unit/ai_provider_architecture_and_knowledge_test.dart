@@ -170,7 +170,17 @@ void main() {
         // Default prompt
         final fallback =
             await provider.complete('What is an unseen unknown query?');
-        expect(fallback, contains('Local AI response'));
+        expect(fallback, isNotEmpty);
+        expect(fallback, isNot(contains('Local AI response')));
+        expect(fallback, isNot(contains('operational principles')));
+        expect(fallback, isNot(contains('practical trade-offs')));
+
+        // Zoology regression test
+        final zoology = await provider.complete('What is zoology?');
+        expect(zoology.toLowerCase(), contains('biology'));
+        expect(zoology.toLowerCase(), contains('animal'));
+        expect(zoology, isNot(contains('operational principles')));
+        expect(zoology, isNot(contains('practical trade-offs')));
 
         // Streaming
         final streamList = await provider

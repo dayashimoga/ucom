@@ -265,6 +265,11 @@ class OfflineLanguageDetector implements LanguageDetectionProvider {
 
   @override
   Future<LanguageDetectionResult> detectLanguage(String text) async {
+    return detectLanguageSync(text);
+  }
+
+  /// Synchronous language detection based on Unicode script analysis and N-gram stopword frequencies.
+  LanguageDetectionResult detectLanguageSync(String text) {
     final trimmed = text.trim();
     if (trimmed.isEmpty) {
       return const LanguageDetectionResult(language: 'en', confidence: 0.5);

@@ -133,7 +133,11 @@ class OfflineAudioSynthesizer implements TTSProvider {
           phonemes.add(ch);
         } else if (ch == 's' || ch == 'f' || ch == 'h') {
           phonemes.add('fricative');
-        } else if (ch == 't' || ch == 'p' || ch == 'k' || ch == 'd' || ch == 'b') {
+        } else if (ch == 't' ||
+            ch == 'p' ||
+            ch == 'k' ||
+            ch == 'd' ||
+            ch == 'b') {
           phonemes.add('plosive');
         } else if (ch == 'm' || ch == 'n') {
           phonemes.add('nasal');
@@ -150,10 +154,12 @@ class OfflineAudioSynthesizer implements TTSProvider {
   }
 
   /// Generates PCM acoustic samples from phoneme sequence with formant resonance
-  Int16List _synthesizePhonemeSequence(List<String> phonemes, int sampleRate, SynthesisOptions options) {
+  Int16List _synthesizePhonemeSequence(
+      List<String> phonemes, int sampleRate, SynthesisOptions options) {
     final rate = options.rate.clamp(0.5, 2.0);
     final volume = options.volume.clamp(0.1, 1.0);
-    final basePitch = (130.0 * options.pitch).clamp(65.0, 350.0); // Natural human voice fundamental F0
+    final basePitch = (130.0 * options.pitch)
+        .clamp(65.0, 350.0); // Natural human voice fundamental F0
 
     final buffer = <int>[];
     final random = Random(42);
@@ -184,19 +190,30 @@ class OfflineAudioSynthesizer implements TTSProvider {
         for (int i = 0; i < numSamples; i++) {
           final t = i / sampleRate.toDouble();
           // Intonation contour: subtle pitch decline across utterance
-          final pitch = basePitch * (1.0 - 0.05 * (pIdx / (phonemes.length + 1.0)));
+          final pitch =
+              basePitch * (1.0 - 0.05 * (pIdx / (phonemes.length + 1.0)));
 
           // Glottal source: periodic pulse with harmonics
-          final glottal = sin(2 * pi * pitch * t) + 0.5 * sin(4 * pi * pitch * t) + 0.25 * sin(6 * pi * pitch * t);
+          final glottal = sin(2 * pi * pitch * t) +
+              0.5 * sin(4 * pi * pitch * t) +
+              0.25 * sin(6 * pi * pitch * t);
 
           // Formant resonators F1, F2, F3
-          final res1 = sin(2 * pi * formant.f1 * t) * exp(-2.0 * (t % (1.0 / pitch)) * 100.0);
-          final res2 = 0.5 * sin(2 * pi * formant.f2 * t) * exp(-2.0 * (t % (1.0 / pitch)) * 150.0);
-          final res3 = 0.2 * sin(2 * pi * formant.f3 * t) * exp(-2.0 * (t % (1.0 / pitch)) * 200.0);
+          final res1 = sin(2 * pi * formant.f1 * t) *
+              exp(-2.0 * (t % (1.0 / pitch)) * 100.0);
+          final res2 = 0.5 *
+              sin(2 * pi * formant.f2 * t) *
+              exp(-2.0 * (t % (1.0 / pitch)) * 150.0);
+          final res3 = 0.2 *
+              sin(2 * pi * formant.f3 * t) *
+              exp(-2.0 * (t % (1.0 / pitch)) * 200.0);
 
           // Smooth envelope
           final env = sin(pi * (i / numSamples.toDouble()));
-          final sampleVal = (glottal * 0.3 + res1 * 0.4 + res2 * 0.2 + res3 * 0.1) * env * volume;
+          final sampleVal =
+              (glottal * 0.3 + res1 * 0.4 + res2 * 0.2 + res3 * 0.1) *
+                  env *
+                  volume;
           final int16 = (sampleVal * 32767).floor().clamp(-32768, 32767);
           buffer.add(int16);
         }

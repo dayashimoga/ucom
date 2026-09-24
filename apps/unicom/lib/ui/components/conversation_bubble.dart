@@ -66,7 +66,8 @@ class ConversationBubble extends StatelessWidget {
                           ? UnicomTheme.primaryBlue
                           : UnicomTheme.accentCyan,
                   child: isAi
-                      ? const Icon(Icons.auto_awesome, size: 14, color: Colors.white)
+                      ? const Icon(Icons.auto_awesome,
+                          size: 14, color: Colors.white)
                       : Text(
                           segment.speakerName.isNotEmpty
                               ? segment.speakerName[0].toUpperCase()
@@ -94,11 +95,14 @@ class ConversationBubble extends StatelessWidget {
                       ),
                       if (isAi && segment.aiModelName != null)
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 7, vertical: 2),
                           decoration: BoxDecoration(
                             color: const Color(0xFF7C4DFF).withOpacity(0.15),
                             borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: const Color(0xFF7C4DFF).withOpacity(0.3)),
+                            border: Border.all(
+                                color:
+                                    const Color(0xFF7C4DFF).withOpacity(0.3)),
                           ),
                           child: Text(
                             segment.aiModelName!,
@@ -109,7 +113,8 @@ class ConversationBubble extends StatelessWidget {
                             ),
                           ),
                         ),
-                      if (!isAi && segment.intent == InteractionIntent.translation)
+                      if (!isAi &&
+                          segment.intent == InteractionIntent.translation)
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -118,7 +123,8 @@ class ConversationBubble extends StatelessWidget {
                               style: Theme.of(context).textTheme.bodySmall,
                             ),
                             const SizedBox(width: 3),
-                            const Icon(Icons.arrow_forward, size: 11, color: Colors.grey),
+                            const Icon(Icons.arrow_forward,
+                                size: 11, color: Colors.grey),
                             const SizedBox(width: 3),
                             Text(
                               segment.targetLanguage.toUpperCase(),
@@ -159,7 +165,8 @@ class ConversationBubble extends StatelessWidget {
                     icon: Icon(
                       Icons.lightbulb_outline,
                       size: 18,
-                      color: isExplanationActive ? UnicomTheme.accentCyan : null,
+                      color:
+                          isExplanationActive ? UnicomTheme.accentCyan : null,
                     ),
                     tooltip: 'Explain nuances',
                     onPressed: onExplain,
@@ -186,13 +193,17 @@ class ConversationBubble extends StatelessWidget {
                   child: OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
                       visualDensity: VisualDensity.compact,
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      side: BorderSide(color: UnicomTheme.accentCyan.withOpacity(0.4)),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      side: BorderSide(
+                          color: UnicomTheme.accentCyan.withOpacity(0.4)),
                     ),
-                    icon: const Icon(Icons.translate, size: 14, color: UnicomTheme.accentCyan),
+                    icon: const Icon(Icons.translate,
+                        size: 14, color: UnicomTheme.accentCyan),
                     label: Text(
                       'Translate to ${segment.targetLanguage.toUpperCase()}',
-                      style: const TextStyle(fontSize: 11, color: UnicomTheme.accentCyan),
+                      style: const TextStyle(
+                          fontSize: 11, color: UnicomTheme.accentCyan),
                     ),
                     onPressed: onTranslate,
                   ),
@@ -216,7 +227,8 @@ class ConversationBubble extends StatelessWidget {
                 const SizedBox(height: 10),
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   decoration: BoxDecoration(
                     color: isDark
                         ? Colors.black.withOpacity(0.3)
@@ -231,7 +243,8 @@ class ConversationBubble extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.translate, size: 12, color: UnicomTheme.accentCyan),
+                          const Icon(Icons.translate,
+                              size: 12, color: UnicomTheme.accentCyan),
                           const SizedBox(width: 4),
                           Text(
                             '${segment.targetLanguage.toUpperCase()} TRANSLATION',

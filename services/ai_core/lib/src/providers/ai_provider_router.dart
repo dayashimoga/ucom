@@ -34,7 +34,8 @@ class AIProviderRouter implements LLMProvider {
     required this.cloudProvider,
     this.executionMode = ExecutionMode.privateOffline,
   }) {
-    NetworkGate().setOfflineEnforcement(executionMode == ExecutionMode.privateOffline);
+    NetworkGate()
+        .setOfflineEnforcement(executionMode == ExecutionMode.privateOffline);
     _initRegistry();
   }
 
@@ -57,7 +58,8 @@ class AIProviderRouter implements LLMProvider {
         final p = CloudLLMProvider(
           executionMode: executionMode,
           apiKey: config.apiKey,
-          modelName: config.modelId.isNotEmpty ? config.modelId : 'gemini-1.5-flash',
+          modelName:
+              config.modelId.isNotEmpty ? config.modelId : 'gemini-1.5-flash',
           endpoint: config.baseUrl.isNotEmpty
               ? config.baseUrl
               : 'https://generativelanguage.googleapis.com/v1beta',
@@ -72,7 +74,9 @@ class AIProviderRouter implements LLMProvider {
           executionMode: executionMode,
           apiKey: config.apiKey,
           modelName: config.modelId.isNotEmpty ? config.modelId : 'gpt-4o-mini',
-          baseUrl: config.baseUrl.isNotEmpty ? config.baseUrl : 'https://api.openai.com',
+          baseUrl: config.baseUrl.isNotEmpty
+              ? config.baseUrl
+              : 'https://api.openai.com',
         );
         _registeredProviders[config.id] = p;
         break;
@@ -81,7 +85,9 @@ class AIProviderRouter implements LLMProvider {
         final p = AnthropicProvider(
           executionMode: executionMode,
           apiKey: config.apiKey,
-          modelName: config.modelId.isNotEmpty ? config.modelId : 'claude-3-5-sonnet-20241022',
+          modelName: config.modelId.isNotEmpty
+              ? config.modelId
+              : 'claude-3-5-sonnet-20241022',
           endpoint: config.baseUrl.isNotEmpty
               ? config.baseUrl
               : 'https://api.anthropic.com/v1/messages',
@@ -130,9 +136,11 @@ class AIProviderRouter implements LLMProvider {
     }
   }
 
-  List<AIProviderConfig> get configuredProviders => _providerConfigs.values.toList();
+  List<AIProviderConfig> get configuredProviders =>
+      _providerConfigs.values.toList();
 
-  AIProviderConfig? get activeProviderConfig => _providerConfigs[_defaultProviderId];
+  AIProviderConfig? get activeProviderConfig =>
+      _providerConfigs[_defaultProviderId];
 
   String? get defaultProviderId => _defaultProviderId;
 
@@ -164,7 +172,8 @@ class AIProviderRouter implements LLMProvider {
         'id': cloudProvider.id,
         'name': cloudProvider.name,
         'model': cloudProvider.modelName,
-        'hasKey': cloudProvider.apiKey != null && cloudProvider.apiKey!.isNotEmpty,
+        'hasKey':
+            cloudProvider.apiKey != null && cloudProvider.apiKey!.isNotEmpty,
       },
       'registeredProviders': _registeredProviders.keys.toList(),
     };
@@ -213,7 +222,8 @@ class AIProviderRouter implements LLMProvider {
         if (localProvider.isModelLoaded) return localProvider;
         final cloudP = _selectConfiguredCloudProvider(capability);
         if (cloudP != null) return cloudP;
-        throw const OfflineInferenceUnavailableException('No AI provider available in auto mode.');
+        throw const OfflineInferenceUnavailableException(
+            'No AI provider available in auto mode.');
     }
   }
 
@@ -276,8 +286,11 @@ class AIProviderRouter implements LLMProvider {
       );
     } catch (e) {
       // Automatic fallback if allowed
-      if (executionMode != ExecutionMode.privateOffline && provider != cloudProvider && cloudProvider.apiKey != null) {
-        _logger.warn('Primary provider failed, attempting fallback to Cloud Gemini: ${e.toString()}');
+      if (executionMode != ExecutionMode.privateOffline &&
+          provider != cloudProvider &&
+          cloudProvider.apiKey != null) {
+        _logger.warn(
+            'Primary provider failed, attempting fallback to Cloud Gemini: ${e.toString()}');
         return cloudProvider.complete(
           prompt,
           systemPrompt: systemPrompt,

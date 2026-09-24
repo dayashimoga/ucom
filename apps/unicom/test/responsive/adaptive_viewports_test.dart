@@ -100,7 +100,8 @@ void main() {
       }
     });
 
-    testWidgets('UnicomApp navigates between tabs on phone, desktop, and short desktop',
+    testWidgets(
+        'UnicomApp navigates between tabs on phone, desktop, and short desktop',
         (tester) async {
       // 1. Phone navigation
       tester.view.physicalSize = const Size(390, 844);

@@ -153,7 +153,8 @@ class DefaultAICoreHardwareProbe implements AICoreHardwareProbe {
 /// Android GenAI Provider implementing the supported Google on-device GenAI interface.
 class AndroidGenAIProvider implements LLMProvider {
   final AICoreHardwareProbe probe;
-  final PrivacyLogger _logger = const PrivacyLogger(context: 'ANDROID_GENAI_PROVIDER');
+  final PrivacyLogger _logger =
+      const PrivacyLogger(context: 'ANDROID_GENAI_PROVIDER');
 
   AndroidGenAIProvider({
     AICoreHardwareProbe? probe,

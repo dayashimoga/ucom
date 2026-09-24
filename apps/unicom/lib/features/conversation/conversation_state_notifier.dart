@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -26,6 +27,38 @@ class ConversationController extends ChangeNotifier {
   late AIProviderRouter router;
   late RagRetrievalProvider ragRetrieval;
   late KnowledgeEngine knowledgeEngine;
+  late RealOcrEngine ocrEngine;
+  late StreamingSpeechSession ambientListeningSession;
+
+  String _activeHeroMode = 'talk'; // 'talk', 'listen', 'camera', 'ask'
+  String get activeHeroMode => _activeHeroMode;
+  void setActiveHeroMode(String mode) {
+    _activeHeroMode = mode;
+    notifyListeners();
+  }
+
+  // Camera & Visual Interpreter State
+  OcrResult? _currentOcrResult;
+  OcrResult? get currentOcrResult => _currentOcrResult;
+  bool _isOcrProcessing = false;
+  bool get isOcrProcessing => _isOcrProcessing;
+  bool _isOverlayOriginal = false;
+  bool get isOverlayOriginal => _isOverlayOriginal;
+  String _ocrRoute = 'Local Neural OCR / Android Vision';
+  String get ocrRoute => _ocrRoute;
+
+  // Ambient Listen & Understand State
+  bool _isAmbientListening = false;
+  bool get isAmbientListening => _isAmbientListening;
+  double _ambientAudioLevel = 0.0;
+  double get ambientAudioLevel => _ambientAudioLevel;
+  String _ambientDetectedLang = 'auto';
+  String get ambientDetectedLang => _ambientDetectedLang;
+  String _ambientTranslation = '';
+  String get ambientTranslation => _ambientTranslation;
+  final List<ConversationSegment> _ambientSegments = [];
+  List<ConversationSegment> get ambientSegments =>
+      List.unmodifiable(_ambientSegments);
 
   ConversationState _state = ConversationState.idle;
   ConversationState get state => _state;
@@ -44,6 +77,13 @@ class ConversationController extends ChangeNotifier {
 
   String _targetLanguage = 'es';
   String get targetLanguage => _targetLanguage;
+
+  void swapLanguages() {
+    final tmp = _sourceLanguage;
+    _sourceLanguage = _targetLanguage;
+    _targetLanguage = tmp;
+    notifyListeners();
+  }
 
   late Conversation _currentConversation;
   Conversation get currentConversation => _currentConversation;
@@ -108,6 +148,7 @@ class ConversationController extends ChangeNotifier {
     _isQaMode = val;
     notifyListeners();
   }
+
   void toggleQaMode() {
     _isQaMode = !_isQaMode;
     notifyListeners();
@@ -159,11 +200,15 @@ class ConversationController extends ChangeNotifier {
       case 'summarization':
         _summarizationRoute = target;
         break;
+      case 'ocr':
+        _ocrRoute = target;
+        break;
     }
     notifyListeners();
   }
 
-  static const MethodChannel _speechChannel = MethodChannel('com.unicom.ai/speech');
+  static const MethodChannel _speechChannel =
+      MethodChannel('com.unicom.ai/speech');
 
   void setActionableError(String? error) {
     _actionableError = error;
@@ -196,6 +241,8 @@ class ConversationController extends ChangeNotifier {
     LocalLLMProvider? localLLMInstance,
     CloudLLMProvider? cloudLLMInstance,
     RagRetrievalProvider? ragRetrievalInstance,
+    RealOcrEngine? ocrEngineInstance,
+    StreamingSpeechSession? ambientSessionInstance,
   })  : stt = sttProvider ?? LocalSTTProvider(isModelInstalled: true),
         tts = ttsProvider ?? OfflineAudioSynthesizer(),
         translator = translationProvider ?? OfflineTranslationEngine(),
@@ -229,10 +276,46 @@ class ConversationController extends ChangeNotifier {
       translationProvider: translator,
     );
 
+    ocrEngine =
+        ocrEngineInstance ?? RealOcrEngine(translationProvider: translator);
+    ambientListeningSession = ambientSessionInstance ??
+        StreamingSpeechSession(
+            sttProvider: stt, translationProvider: translator);
+
     _initPlatformChannels();
+    _initAmbientListeners();
     _startNewSession();
     refreshAICoreStatus();
     _loadSavedSettings();
+  }
+
+  void _initAmbientListeners() {
+    ambientListeningSession.audioLevelStream.listen((lvl) {
+      _ambientAudioLevel = lvl;
+      notifyListeners();
+    });
+    ambientListeningSession.detectedLanguageStream.listen((lang) {
+      _ambientDetectedLang = lang;
+      notifyListeners();
+    });
+    ambientListeningSession.translationStream.listen((trans) {
+      _ambientTranslation = trans;
+      notifyListeners();
+    });
+    ambientListeningSession.partialTranscriptStream.listen((partial) {
+      _livePartialTranscript = partial;
+      notifyListeners();
+    });
+    ambientListeningSession.finalSegmentStream.listen((segment) {
+      _ambientSegments.add(segment);
+      final updatedSegments =
+          List<ConversationSegment>.from(_currentConversation.segments)
+            ..add(segment);
+      _currentConversation =
+          _currentConversation.copyWith(segments: updatedSegments);
+      storage.saveConversation(_currentConversation);
+      notifyListeners();
+    });
   }
 
   void _initPlatformChannels() {
@@ -272,7 +355,8 @@ class ConversationController extends ChangeNotifier {
         break;
 
       case 'onError':
-        final msg = call.arguments?['message'] as String? ?? 'Speech recognition error';
+        final msg =
+            call.arguments?['message'] as String? ?? 'Speech recognition error';
         final code = call.arguments?['code'] as int? ?? -1;
         // Don't show actionable error for normal silence in continuous mode
         if (!_isMeetingActive || (code != 7 && code != 6)) {
@@ -316,7 +400,8 @@ class ConversationController extends ChangeNotifier {
     final now = DateTime.now().toUtc().toIso8601String();
     _currentConversation = Conversation(
       id: 'conv_${DateTime.now().millisecondsSinceEpoch}',
-      title: 'Session ${DateTime.now().hour}:${DateTime.now().minute.toString().padLeft(2, '0')}',
+      title:
+          'Session ${DateTime.now().hour}:${DateTime.now().minute.toString().padLeft(2, '0')}',
       mode: _mode,
       executionMode: _executionMode,
       startedAt: now,
@@ -418,14 +503,18 @@ class ConversationController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<ConnectionTestResult> testProviderConfig(AIProviderConfig config) async {
+  Future<ConnectionTestResult> testProviderConfig(
+      AIProviderConfig config) async {
     switch (config.type) {
       case AIProviderType.gemini:
         final p = CloudLLMProvider(
           executionMode: _executionMode,
           apiKey: config.apiKey,
-          modelName: config.modelId.isNotEmpty ? config.modelId : 'gemini-1.5-flash',
-          endpoint: config.baseUrl.isNotEmpty ? config.baseUrl : 'https://generativelanguage.googleapis.com/v1beta',
+          modelName:
+              config.modelId.isNotEmpty ? config.modelId : 'gemini-1.5-flash',
+          endpoint: config.baseUrl.isNotEmpty
+              ? config.baseUrl
+              : 'https://generativelanguage.googleapis.com/v1beta',
         );
         return p.testConnection();
 
@@ -443,8 +532,12 @@ class ConversationController extends ChangeNotifier {
         final p = AnthropicProvider(
           executionMode: _executionMode,
           apiKey: config.apiKey,
-          modelName: config.modelId.isNotEmpty ? config.modelId : 'claude-3-5-sonnet-20241022',
-          endpoint: config.baseUrl.isNotEmpty ? config.baseUrl : 'https://api.anthropic.com/v1/messages',
+          modelName: config.modelId.isNotEmpty
+              ? config.modelId
+              : 'claude-3-5-sonnet-20241022',
+          endpoint: config.baseUrl.isNotEmpty
+              ? config.baseUrl
+              : 'https://api.anthropic.com/v1/messages',
         );
         return p.testConnection();
 
@@ -454,7 +547,9 @@ class ConversationController extends ChangeNotifier {
           providerId: config.id,
           modelName: localLLM.name,
           latencyMs: 1,
-          errorMessage: localLLM.isModelLoaded ? null : 'Local model not loaded in memory.',
+          errorMessage: localLLM.isModelLoaded
+              ? null
+              : 'Local model not loaded in memory.',
         );
 
       case AIProviderType.aicore:
@@ -464,7 +559,9 @@ class ConversationController extends ChangeNotifier {
           providerId: config.id,
           modelName: 'Gemini Nano',
           latencyMs: 1,
-          errorMessage: st.isAvailable ? null : (st.fallbackReason ?? 'AICore unavailable on device.'),
+          errorMessage: st.isAvailable
+              ? null
+              : (st.fallbackReason ?? 'AICore unavailable on device.'),
         );
     }
   }
@@ -526,20 +623,14 @@ class ConversationController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void swapLanguages() {
-    final temp = _sourceLanguage;
-    _sourceLanguage = _targetLanguage;
-    _targetLanguage = temp;
-    notifyListeners();
-  }
-
   Future<void> loadConversation(String id) async {
     final conv = await storage.getConversation(id);
     if (conv != null) {
       _currentConversation = conv;
       _mode = conv.mode;
       _executionMode = conv.executionMode;
-      _selectedExplanation = conv.segments.isNotEmpty ? conv.segments.last.explanation : null;
+      _selectedExplanation =
+          conv.segments.isNotEmpty ? conv.segments.last.explanation : null;
       notifyListeners();
     }
   }
@@ -576,11 +667,16 @@ class ConversationController extends ChangeNotifier {
         defaultTargetPlatform == TargetPlatform.android &&
         !Platform.environment.containsKey('FLUTTER_TEST')) {
       try {
-        final hasPerm = await _speechChannel.invokeMethod<bool>('checkMicPermission') ?? false;
+        final hasPerm =
+            await _speechChannel.invokeMethod<bool>('checkMicPermission') ??
+                false;
         if (!hasPerm) {
-          final granted = await _speechChannel.invokeMethod<bool>('requestMicPermission') ?? false;
+          final granted =
+              await _speechChannel.invokeMethod<bool>('requestMicPermission') ??
+                  false;
           if (!granted) {
-            _actionableError = 'Microphone permission is required for Meeting recording.';
+            _actionableError =
+                'Microphone permission is required for Meeting recording.';
             _isMeetingActive = false;
             _state = ConversationState.idle;
             notifyListeners();
@@ -593,7 +689,8 @@ class ConversationController extends ChangeNotifier {
           'continuous': true,
         });
       } catch (e) {
-        _actionableError = 'Failed to start meeting speech recording: ${e.toString()}';
+        _actionableError =
+            'Failed to start meeting speech recording: ${e.toString()}';
         _isMeetingActive = false;
         _state = ConversationState.idle;
         notifyListeners();
@@ -660,11 +757,16 @@ class ConversationController extends ChangeNotifier {
     final trimmed = text.trim();
     if (trimmed.isEmpty) return;
 
-    if (intent == InteractionIntent.qa ||
+    final classified =
+        intent ?? IntentClassifier.classify(trimmed, isQaMode: _isQaMode);
+
+    if (classified == InteractionIntent.qa ||
         trimmed.startsWith('/ask ') ||
         trimmed.toLowerCase().startsWith('ask: ') ||
         (_isQaMode && intent == null)) {
-      await askQuestion(trimmed, speakerName: speakerName, speakerId: speakerId);
+      final cleanQuestion = IntentClassifier.extractQuestion(trimmed);
+      await askQuestion(cleanQuestion,
+          speakerName: speakerName, speakerId: speakerId);
       return;
     }
 
@@ -690,8 +792,10 @@ class ConversationController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final sLang = sourceLang ?? (speakerName == 'You' ? _sourceLanguage : _targetLanguage);
-      final tLang = targetLang ?? (speakerName == 'You' ? _targetLanguage : _sourceLanguage);
+      final sLang = sourceLang ??
+          (speakerName == 'You' ? _sourceLanguage : _targetLanguage);
+      final tLang = targetLang ??
+          (speakerName == 'You' ? _targetLanguage : _sourceLanguage);
 
       String finalDisplayTranslation = '';
       double confidence = 0.95;
@@ -703,9 +807,12 @@ class ConversationController extends ChangeNotifier {
           try {
             final transPrompt =
                 'Translate the following sentence directly from $sLang to $tLang. Return only the translated text without extra explanation:\n"$trimmed"';
-            final aiTrans = await router.complete(transPrompt, maxTokens: 256, temperature: 0.2);
-            if (aiTrans.isNotEmpty && !aiTrans.toLowerCase().contains('unsupported')) {
-              finalDisplayTranslation = aiTrans.replaceAll(RegExp(r'^["\s]+|["\s]+$'), '');
+            final aiTrans = await router.complete(transPrompt,
+                maxTokens: 256, temperature: 0.2);
+            if (aiTrans.isNotEmpty &&
+                !aiTrans.toLowerCase().contains('unsupported')) {
+              finalDisplayTranslation =
+                  aiTrans.replaceAll(RegExp(r'^["\s]+|["\s]+$'), '');
             }
           } catch (_) {}
         }
@@ -771,8 +878,10 @@ class ConversationController extends ChangeNotifier {
       final actionItems = extractor.extractActionItems(updatedSegments);
       final unresolved = extractor.extractUnresolvedQuestions(questions);
 
-      final assessments = List<InterviewAssessment>.from(_currentConversation.assessments);
-      if (_mode == ApplicationMode.interviewPractice && updatedSegments.length >= 2) {
+      final assessments =
+          List<InterviewAssessment>.from(_currentConversation.assessments);
+      if (_mode == ApplicationMode.interviewPractice &&
+          updatedSegments.length >= 2) {
         final lastQ = questions.isNotEmpty
             ? questions.last.questionText
             : 'Tell me about an architectural decision you made and balanced trade-offs under high concurrency.';
@@ -897,6 +1006,18 @@ class ConversationController extends ChangeNotifier {
         assessments: _currentConversation.assessments,
       );
 
+      final expEngine = ExplanationEngine(
+        _executionMode != ExecutionMode.privateOffline ? router : null,
+      );
+      final expResult = await expEngine.generateExplanations(
+        cleanQuestion,
+        translatedText: aiAnswer,
+        sourceLanguage: _sourceLanguage,
+        targetLanguage: _targetLanguage,
+        context: _mode.toJson(),
+      );
+      _selectedExplanation = expResult;
+
       await storage.saveConversation(_currentConversation);
       _state = ConversationState.idle;
       notifyListeners();
@@ -913,9 +1034,11 @@ class ConversationController extends ChangeNotifier {
     String? language,
   }) async {
     _activeListeningSpeaker = speakerName;
-    final lang = language ?? (speakerName == 'You' ? _sourceLanguage : _targetLanguage);
+    final lang =
+        language ?? (speakerName == 'You' ? _sourceLanguage : _targetLanguage);
 
-    if (stt is LocalSTTProvider && !(stt as LocalSTTProvider).isModelInstalled) {
+    if (stt is LocalSTTProvider &&
+        !(stt as LocalSTTProvider).isModelInstalled) {
       _actionableError =
           'Offline Whisper STT model is not installed. Download it via Model Manager.';
       _state = ConversationState.idle;
@@ -938,7 +1061,8 @@ class ConversationController extends ChangeNotifier {
           );
           final text = result.text.trim();
           if (_isQaMode) {
-            await askQuestion(text.isNotEmpty ? text : 'Hello', speakerName: speakerName);
+            await askQuestion(text.isNotEmpty ? text : 'Hello',
+                speakerName: speakerName);
           } else {
             await sendTranslation(
               text.isNotEmpty ? text : 'Hello',
@@ -959,11 +1083,16 @@ class ConversationController extends ChangeNotifier {
       }
 
       if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-        final hasPerm = await _speechChannel.invokeMethod<bool>('checkMicPermission') ?? false;
+        final hasPerm =
+            await _speechChannel.invokeMethod<bool>('checkMicPermission') ??
+                false;
         if (!hasPerm) {
-          final granted = await _speechChannel.invokeMethod<bool>('requestMicPermission') ?? false;
+          final granted =
+              await _speechChannel.invokeMethod<bool>('requestMicPermission') ??
+                  false;
           if (!granted) {
-            _actionableError = 'Microphone permission was denied. Enable permission in device settings.';
+            _actionableError =
+                'Microphone permission was denied. Enable permission in device settings.';
             _state = ConversationState.idle;
             notifyListeners();
             return;
@@ -978,7 +1107,8 @@ class ConversationController extends ChangeNotifier {
       }
 
       // Web / Desktop fallback
-      _actionableError = 'Voice recognition is optimized for Android devices with SpeechRecognizer.';
+      _actionableError =
+          'Voice recognition is optimized for Android devices with SpeechRecognizer.';
       _state = ConversationState.idle;
       notifyListeners();
     } catch (e) {
@@ -1006,7 +1136,8 @@ class ConversationController extends ChangeNotifier {
           'rate': 1.0,
         });
       } else {
-        await tts.synthesize(trimmed, options: SynthesisOptions(language: lang));
+        await tts.synthesize(trimmed,
+            options: SynthesisOptions(language: lang));
       }
     } catch (e) {
       _actionableError = 'TTS playback error: ${e.toString()}';
@@ -1042,5 +1173,136 @@ class ConversationController extends ChangeNotifier {
     stt.cancel();
     _state = ConversationState.idle;
     notifyListeners();
+  }
+
+  // --- Camera & Visual Interpreter Operations ---
+
+  Future<OcrResult> processCameraFrame(Uint8List frameBytes,
+      {String? targetLang}) async {
+    _isOcrProcessing = true;
+    notifyListeners();
+    try {
+      final res = await ocrEngine.processImage(
+        frameBytes,
+        targetLanguage: targetLang ?? _targetLanguage,
+      );
+      _currentOcrResult = res;
+      return res;
+    } finally {
+      _isOcrProcessing = false;
+      notifyListeners();
+    }
+  }
+
+  Future<OcrResult> processSampleImage(String sampleType) async {
+    _isOcrProcessing = true;
+    notifyListeners();
+    try {
+      final sampleBytes = Uint8List.fromList(utf8.encode('sample_$sampleType'));
+      final res = await ocrEngine.processImage(
+        sampleBytes,
+        targetLanguage: _targetLanguage,
+        forceRefresh: true,
+      );
+      _currentOcrResult = res;
+      return res;
+    } finally {
+      _isOcrProcessing = false;
+      notifyListeners();
+    }
+  }
+
+  void toggleOcrOverlayMode() {
+    _isOverlayOriginal = !_isOverlayOriginal;
+    notifyListeners();
+  }
+
+  void clearOcrResult() {
+    _currentOcrResult = null;
+    notifyListeners();
+  }
+
+  // --- Ambient Listen & Understand Operations ---
+
+  Future<void> startAmbientListening({bool isMusic = false}) async {
+    _isAmbientListening = true;
+    _state = ConversationState.listening;
+    notifyListeners();
+    await ambientListeningSession.start(
+      sourceLanguage: _sourceLanguage,
+      targetLanguage: _targetLanguage,
+      isMusicAudio: isMusic,
+    );
+    if (!kIsWeb &&
+        defaultTargetPlatform == TargetPlatform.android &&
+        !Platform.environment.containsKey('FLUTTER_TEST')) {
+      try {
+        await _speechChannel.invokeMethod('startListening', {
+          'language': _sourceLanguage != 'auto' ? _sourceLanguage : 'en-US',
+          'continuous': true,
+        });
+      } catch (_) {}
+    }
+  }
+
+  Future<void> stopAmbientListening() async {
+    _isAmbientListening = false;
+    _state = ConversationState.idle;
+    await ambientListeningSession.stop();
+    if (!kIsWeb &&
+        defaultTargetPlatform == TargetPlatform.android &&
+        !Platform.environment.containsKey('FLUTTER_TEST')) {
+      try {
+        await _speechChannel.invokeMethod('stopListening');
+      } catch (_) {}
+    }
+    notifyListeners();
+  }
+
+  void pauseAmbientListening() {
+    ambientListeningSession.pause();
+    notifyListeners();
+  }
+
+  void resumeAmbientListening() {
+    ambientListeningSession.resume();
+    notifyListeners();
+  }
+
+  // --- Offline Language & Travel Packs ---
+
+  List<LanguagePack> get languagePacks => modelManager.languagePacks;
+
+  Future<LanguagePack> downloadLanguagePack(
+    String packId, {
+    void Function(double percent)? onProgress,
+  }) async {
+    final pack =
+        await modelManager.downloadLanguagePack(packId, onProgress: onProgress);
+    notifyListeners();
+    return pack;
+  }
+
+  Future<bool> removeLanguagePack(String packId) async {
+    final res = await modelManager.removeLanguagePack(packId);
+    notifyListeners();
+    return res;
+  }
+
+  // --- Android Built-In AICore Preparation ---
+
+  Future<void> prepareAICore() async {
+    try {
+      if (!kIsWeb &&
+          defaultTargetPlatform == TargetPlatform.android &&
+          !Platform.environment.containsKey('FLUTTER_TEST')) {
+        const aicoreChannel = MethodChannel('com.unicom.ai/aicore');
+        await aicoreChannel.invokeMethod('prepareModel');
+      }
+      await refreshAICoreStatus();
+    } catch (e) {
+      _actionableError = 'AICore preparation: ${e.toString()}';
+      notifyListeners();
+    }
   }
 }

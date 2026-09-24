@@ -40,7 +40,8 @@ void main() {
       final evalBtn = find.text('Evaluate Answer & Study Plan');
       await tester.tap(evalBtn);
       await tester.pumpAndSettle();
-      expect(find.text('Please enter or dictate an answer first.'), findsOneWidget);
+      expect(find.text('Please enter or dictate an answer first.'),
+          findsOneWidget);
 
       // Cycle question via skip_next icon
       await tester.tap(find.byIcon(Icons.skip_next));
@@ -116,7 +117,9 @@ void main() {
       expect(find.byType(SnackBar), findsOneWidget);
     });
 
-    testWidgets('MeetingScreen lifecycle: Start Meeting, Pause, Resume, End Meeting, and Speaker selection', (tester) async {
+    testWidgets(
+        'MeetingScreen lifecycle: Start Meeting, Pause, Resume, End Meeting, and Speaker selection',
+        (tester) async {
       tester.view.physicalSize = const Size(1280, 1600);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -129,7 +132,8 @@ void main() {
 
       // Initially inactive
       expect(find.text('Start Meeting'), findsOneWidget);
-      expect(find.textContaining('Tap "Start Meeting" to capture live audio'), findsOneWidget);
+      expect(find.textContaining('Tap "Start Meeting" to capture live audio'),
+          findsOneWidget);
 
       // Start meeting
       await tester.tap(find.text('Start Meeting'));
@@ -179,17 +183,20 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(SnackBar), findsOneWidget);
-      expect(find.textContaining('Meeting ended. Report saved'), findsOneWidget);
+      expect(
+          find.textContaining('Meeting ended. Report saved'), findsOneWidget);
       expect(find.text('Start Meeting'), findsOneWidget);
     });
 
-    testWidgets('MeetingScreen renders phone layout with TabBar and TabBarView', (tester) async {
+    testWidgets('MeetingScreen renders phone layout with TabBar and TabBarView',
+        (tester) async {
       tester.view.physicalSize = const Size(390, 844);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
 
       controller.setApplicationMode(ApplicationMode.meeting);
-      await controller.sendTextInput('Phone meeting point', speakerName: 'Speaker 1');
+      await controller.sendTextInput('Phone meeting point',
+          speakerName: 'Speaker 1');
 
       await tester.pumpWidget(MaterialApp(
         theme: UnicomTheme.darkTheme,
@@ -209,7 +216,8 @@ void main() {
       expect(find.text('Action Items & Deliverables'), findsOneWidget);
     });
 
-    testWidgets('InterviewPracticeScreen exercises role, topic, difficulty dropdowns and displays full assessment cards',
+    testWidgets(
+        'InterviewPracticeScreen exercises role, topic, difficulty dropdowns and displays full assessment cards',
         (tester) async {
       tester.view.physicalSize = const Size(1280, 1600);
       tester.view.devicePixelRatio = 1.0;
@@ -222,7 +230,8 @@ void main() {
       await tester.pumpAndSettle();
 
       // Change Role dropdown
-      final roleDropdown = find.widgetWithText(DropdownButtonFormField<String>, 'Principal Systems Architect');
+      final roleDropdown = find.widgetWithText(
+          DropdownButtonFormField<String>, 'Principal Systems Architect');
       if (roleDropdown.evaluate().isNotEmpty) {
         await tester.tap(roleDropdown);
         await tester.pumpAndSettle();
@@ -232,7 +241,8 @@ void main() {
       }
 
       // Change Topic dropdown
-      final topicDropdown = find.widgetWithText(DropdownButtonFormField<String>, 'System Architecture & Concurrency');
+      final topicDropdown = find.widgetWithText(
+          DropdownButtonFormField<String>, 'System Architecture & Concurrency');
       if (topicDropdown.evaluate().isNotEmpty) {
         await tester.tap(topicDropdown);
         await tester.pumpAndSettle();
@@ -242,7 +252,8 @@ void main() {
       }
 
       // Change Difficulty dropdown
-      final diffDropdown = find.widgetWithText(DropdownButtonFormField<String>, 'Staff / Lead');
+      final diffDropdown =
+          find.widgetWithText(DropdownButtonFormField<String>, 'Staff / Lead');
       if (diffDropdown.evaluate().isNotEmpty) {
         await tester.tap(diffDropdown);
         await tester.pumpAndSettle();
@@ -276,7 +287,8 @@ void main() {
       expect(find.text('Targeted Study Plan'), findsOneWidget);
     });
 
-    testWidgets('MeetingScreen exercises phone controls and status bar with partial transcript',
+    testWidgets(
+        'MeetingScreen exercises phone controls and status bar with partial transcript',
         (tester) async {
       tester.view.physicalSize = const Size(390, 844);
       tester.view.devicePixelRatio = 1.0;
@@ -305,8 +317,8 @@ void main() {
 
         await messenger.handlePlatformMessage(
           'com.unicom.ai/speech',
-          codec.encodeMethodCall(const MethodCall('onPartialTranscript',
-              {'text': 'Phone partial meeting speech'})),
+          codec.encodeMethodCall(const MethodCall(
+              'onPartialTranscript', {'text': 'Phone partial meeting speech'})),
           (data) {},
         );
         await tester.pump();

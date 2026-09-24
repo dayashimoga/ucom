@@ -868,43 +868,308 @@ class AIProviderConfig {
     bool? isEnabled,
     bool? isDefault,
     List<String>? supportedCapabilities,
-  }) => AIProviderConfig(
-    id: id ?? this.id,
-    type: type ?? this.type,
-    displayName: displayName ?? this.displayName,
-    baseUrl: baseUrl ?? this.baseUrl,
-    apiKey: apiKey ?? this.apiKey,
-    modelId: modelId ?? this.modelId,
-    isEnabled: isEnabled ?? this.isEnabled,
-    isDefault: isDefault ?? this.isDefault,
-    supportedCapabilities: supportedCapabilities ?? this.supportedCapabilities,
-  );
+  }) =>
+      AIProviderConfig(
+        id: id ?? this.id,
+        type: type ?? this.type,
+        displayName: displayName ?? this.displayName,
+        baseUrl: baseUrl ?? this.baseUrl,
+        apiKey: apiKey ?? this.apiKey,
+        modelId: modelId ?? this.modelId,
+        isEnabled: isEnabled ?? this.isEnabled,
+        isDefault: isDefault ?? this.isDefault,
+        supportedCapabilities:
+            supportedCapabilities ?? this.supportedCapabilities,
+      );
 
   Map<String, dynamic> toJson() => {
-    'id': id,
-    'type': type.toJson(),
-    'displayName': displayName,
-    'baseUrl': baseUrl,
-    if (apiKey != null) 'apiKey': apiKey,
-    'modelId': modelId,
-    'isEnabled': isEnabled,
-    'isDefault': isDefault,
-    'supportedCapabilities': supportedCapabilities,
-  };
+        'id': id,
+        'type': type.toJson(),
+        'displayName': displayName,
+        'baseUrl': baseUrl,
+        if (apiKey != null) 'apiKey': apiKey,
+        'modelId': modelId,
+        'isEnabled': isEnabled,
+        'isDefault': isDefault,
+        'supportedCapabilities': supportedCapabilities,
+      };
 
-  factory AIProviderConfig.fromJson(Map<String, dynamic> json) => AIProviderConfig(
-    id: json['id'] as String,
-    type: AIProviderType.fromJson(json['type'] as String),
-    displayName: json['displayName'] as String,
-    baseUrl: json['baseUrl'] as String? ?? '',
-    apiKey: json['apiKey'] as String?,
-    modelId: json['modelId'] as String,
-    isEnabled: json['isEnabled'] as bool? ?? true,
-    isDefault: json['isDefault'] as bool? ?? false,
-    supportedCapabilities: (json['supportedCapabilities'] as List<dynamic>?)
-        ?.map((e) => e as String)
-        .toList() ??
-        const ['qa', 'translation'],
-  );
+  factory AIProviderConfig.fromJson(Map<String, dynamic> json) =>
+      AIProviderConfig(
+        id: json['id'] as String,
+        type: AIProviderType.fromJson(json['type'] as String),
+        displayName: json['displayName'] as String,
+        baseUrl: json['baseUrl'] as String? ?? '',
+        apiKey: json['apiKey'] as String?,
+        modelId: json['modelId'] as String,
+        isEnabled: json['isEnabled'] as bool? ?? true,
+        isDefault: json['isDefault'] as bool? ?? false,
+        supportedCapabilities: (json['supportedCapabilities'] as List<dynamic>?)
+                ?.map((e) => e as String)
+                .toList() ??
+            const ['qa', 'translation'],
+      );
 }
 
+/// Normalized or pixel-space bounding box for visual OCR text regions.
+class OcrBoundingBox {
+  final double left;
+  final double top;
+  final double width;
+  final double height;
+
+  const OcrBoundingBox({
+    required this.left,
+    required this.top,
+    required this.width,
+    required this.height,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'left': left,
+        'top': top,
+        'width': width,
+        'height': height,
+      };
+
+  factory OcrBoundingBox.fromJson(Map<String, dynamic> json) => OcrBoundingBox(
+        left: (json['left'] as num).toDouble(),
+        top: (json['top'] as num).toDouble(),
+        width: (json['width'] as num).toDouble(),
+        height: (json['height'] as num).toDouble(),
+      );
+}
+
+/// Individual recognized text block with spatial coordinates and translated overlay text.
+class OcrTextBlock {
+  final String id;
+  final String text;
+  final OcrBoundingBox boundingBox;
+  final double confidence;
+  final String detectedScript;
+  final String detectedLanguage;
+  final String? translatedText;
+  final List<String> lines;
+
+  const OcrTextBlock({
+    required this.id,
+    required this.text,
+    required this.boundingBox,
+    this.confidence = 1.0,
+    this.detectedScript = 'latin',
+    this.detectedLanguage = 'en',
+    this.translatedText,
+    this.lines = const [],
+  });
+
+  OcrTextBlock copyWith({
+    String? id,
+    String? text,
+    OcrBoundingBox? boundingBox,
+    double? confidence,
+    String? detectedScript,
+    String? detectedLanguage,
+    String? translatedText,
+    List<String>? lines,
+  }) =>
+      OcrTextBlock(
+        id: id ?? this.id,
+        text: text ?? this.text,
+        boundingBox: boundingBox ?? this.boundingBox,
+        confidence: confidence ?? this.confidence,
+        detectedScript: detectedScript ?? this.detectedScript,
+        detectedLanguage: detectedLanguage ?? this.detectedLanguage,
+        translatedText: translatedText ?? this.translatedText,
+        lines: lines ?? this.lines,
+      );
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'text': text,
+        'boundingBox': boundingBox.toJson(),
+        'confidence': confidence,
+        'detectedScript': detectedScript,
+        'detectedLanguage': detectedLanguage,
+        if (translatedText != null) 'translatedText': translatedText,
+        'lines': lines,
+      };
+
+  factory OcrTextBlock.fromJson(Map<String, dynamic> json) => OcrTextBlock(
+        id: json['id'] as String,
+        text: json['text'] as String,
+        boundingBox: OcrBoundingBox.fromJson(
+            json['boundingBox'] as Map<String, dynamic>),
+        confidence: (json['confidence'] as num?)?.toDouble() ?? 1.0,
+        detectedScript: json['detectedScript'] as String? ?? 'latin',
+        detectedLanguage: json['detectedLanguage'] as String? ?? 'en',
+        translatedText: json['translatedText'] as String?,
+        lines: (json['lines'] as List<dynamic>?)
+                ?.map((e) => e as String)
+                .toList() ??
+            const [],
+      );
+}
+
+/// Structured OCR extraction result containing detected text, layout, script, and confidence metrics.
+class OcrResult {
+  final String rawText;
+  final String? translatedText;
+  final List<OcrTextBlock> blocks;
+  final String detectedLanguage;
+  final String detectedScript;
+  final double confidence;
+  final int processingTimeMs;
+  final int imageWidth;
+  final int imageHeight;
+  final bool isLowConfidence;
+
+  const OcrResult({
+    required this.rawText,
+    this.translatedText,
+    required this.blocks,
+    this.detectedLanguage = 'auto',
+    this.detectedScript = 'latin',
+    this.confidence = 1.0,
+    this.processingTimeMs = 0,
+    this.imageWidth = 0,
+    this.imageHeight = 0,
+    this.isLowConfidence = false,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'rawText': rawText,
+        if (translatedText != null) 'translatedText': translatedText,
+        'blocks': blocks.map((b) => b.toJson()).toList(),
+        'detectedLanguage': detectedLanguage,
+        'detectedScript': detectedScript,
+        'confidence': confidence,
+        'processingTimeMs': processingTimeMs,
+        'imageWidth': imageWidth,
+        'imageHeight': imageHeight,
+        'isLowConfidence': isLowConfidence,
+      };
+
+  factory OcrResult.fromJson(Map<String, dynamic> json) => OcrResult(
+        rawText: json['rawText'] as String? ?? '',
+        translatedText: json['translatedText'] as String?,
+        blocks: (json['blocks'] as List<dynamic>?)
+                ?.map((e) => OcrTextBlock.fromJson(e as Map<String, dynamic>))
+                .toList() ??
+            const [],
+        detectedLanguage: json['detectedLanguage'] as String? ?? 'auto',
+        detectedScript: json['detectedScript'] as String? ?? 'latin',
+        confidence: (json['confidence'] as num?)?.toDouble() ?? 1.0,
+        processingTimeMs: (json['processingTimeMs'] as num?)?.toInt() ?? 0,
+        imageWidth: (json['imageWidth'] as num?)?.toInt() ?? 0,
+        imageHeight: (json['imageHeight'] as num?)?.toInt() ?? 0,
+        isLowConfidence: json['isLowConfidence'] as bool? ?? false,
+      );
+}
+
+/// Offline Language & Travel Pack grouping OCR, STT, Translation, and TTS capabilities.
+class LanguagePack {
+  final String id;
+  final String name;
+  final String languageCode;
+  final String languageName;
+  final String version;
+  final int sizeBytes;
+  final String sha256;
+  final bool isInstalled;
+  final bool isDownloading;
+  final double downloadProgress;
+  final bool hasOcr;
+  final bool hasStt;
+  final bool hasTranslation;
+  final bool hasTts;
+  final String license;
+
+  const LanguagePack({
+    required this.id,
+    required this.name,
+    required this.languageCode,
+    required this.languageName,
+    required this.version,
+    required this.sizeBytes,
+    required this.sha256,
+    this.isInstalled = false,
+    this.isDownloading = false,
+    this.downloadProgress = 0.0,
+    this.hasOcr = true,
+    this.hasStt = true,
+    this.hasTranslation = true,
+    this.hasTts = true,
+    this.license = 'Apache-2.0',
+  });
+
+  LanguagePack copyWith({
+    String? id,
+    String? name,
+    String? languageCode,
+    String? languageName,
+    String? version,
+    int? sizeBytes,
+    String? sha256,
+    bool? isInstalled,
+    bool? isDownloading,
+    double? downloadProgress,
+    bool? hasOcr,
+    bool? hasStt,
+    bool? hasTranslation,
+    bool? hasTts,
+    String? license,
+  }) =>
+      LanguagePack(
+        id: id ?? this.id,
+        name: name ?? this.name,
+        languageCode: languageCode ?? this.languageCode,
+        languageName: languageName ?? this.languageName,
+        version: version ?? this.version,
+        sizeBytes: sizeBytes ?? this.sizeBytes,
+        sha256: sha256 ?? this.sha256,
+        isInstalled: isInstalled ?? this.isInstalled,
+        isDownloading: isDownloading ?? this.isDownloading,
+        downloadProgress: downloadProgress ?? this.downloadProgress,
+        hasOcr: hasOcr ?? this.hasOcr,
+        hasStt: hasStt ?? this.hasStt,
+        hasTranslation: hasTranslation ?? this.hasTranslation,
+        hasTts: hasTts ?? this.hasTts,
+        license: license ?? this.license,
+      );
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'languageCode': languageCode,
+        'languageName': languageName,
+        'version': version,
+        'sizeBytes': sizeBytes,
+        'sha256': sha256,
+        'isInstalled': isInstalled,
+        'isDownloading': isDownloading,
+        'downloadProgress': downloadProgress,
+        'hasOcr': hasOcr,
+        'hasStt': hasStt,
+        'hasTranslation': hasTranslation,
+        'hasTts': hasTts,
+        'license': license,
+      };
+
+  factory LanguagePack.fromJson(Map<String, dynamic> json) => LanguagePack(
+        id: json['id'] as String,
+        name: json['name'] as String,
+        languageCode: json['languageCode'] as String,
+        languageName: json['languageName'] as String,
+        version: json['version'] as String? ?? '1.0.0',
+        sizeBytes: (json['sizeBytes'] as num?)?.toInt() ?? 0,
+        sha256: json['sha256'] as String? ?? '',
+        isInstalled: json['isInstalled'] as bool? ?? false,
+        isDownloading: json['isDownloading'] as bool? ?? false,
+        downloadProgress: (json['downloadProgress'] as num?)?.toDouble() ?? 0.0,
+        hasOcr: json['hasOcr'] as bool? ?? true,
+        hasStt: json['hasStt'] as bool? ?? true,
+        hasTranslation: json['hasTranslation'] as bool? ?? true,
+        hasTts: json['hasTts'] as bool? ?? true,
+        license: json['license'] as String? ?? 'Apache-2.0',
+      );
+}

@@ -25,7 +25,8 @@ class _AIProvidersScreenState extends State<AIProvidersScreen> {
 
         return Scaffold(
           appBar: AppBar(
-            title: const Text('AI Providers', style: TextStyle(fontWeight: FontWeight.bold)),
+            title: const Text('AI Providers',
+                style: TextStyle(fontWeight: FontWeight.bold)),
             actions: [
               IconButton(
                 icon: const Icon(Icons.add),
@@ -44,11 +45,13 @@ class _AIProvidersScreenState extends State<AIProvidersScreen> {
                 decoration: BoxDecoration(
                   color: UnicomTheme.primaryBlue.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: UnicomTheme.primaryBlue.withOpacity(0.3)),
+                  border: Border.all(
+                      color: UnicomTheme.primaryBlue.withOpacity(0.3)),
                 ),
                 child: const Row(
                   children: [
-                    Icon(Icons.shield_outlined, color: UnicomTheme.accentCyan, size: 20),
+                    Icon(Icons.shield_outlined,
+                        color: UnicomTheme.accentCyan, size: 20),
                     SizedBox(width: 10),
                     Expanded(
                       child: Text(
@@ -68,11 +71,14 @@ class _AIProvidersScreenState extends State<AIProvidersScreen> {
               // Configured Providers List
               Row(
                 children: [
-                  const Text('Configured Providers', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  const Text('Configured Providers',
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   const Spacer(),
                   FilledButton.tonalIcon(
                     icon: const Icon(Icons.add, size: 16),
-                    label: const Text('Add Provider', style: TextStyle(fontSize: 12)),
+                    label: const Text('Add Provider',
+                        style: TextStyle(fontSize: 12)),
                     onPressed: _showAddProviderDialog,
                   ),
                 ],
@@ -106,7 +112,9 @@ class _AIProvidersScreenState extends State<AIProvidersScreen> {
               children: [
                 Icon(Icons.alt_route, color: UnicomTheme.accentCyan, size: 20),
                 SizedBox(width: 8),
-                Text('Capability Routing', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                Text('Capability Routing',
+                    style:
+                        TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
               ],
             ),
             const SizedBox(height: 8),
@@ -194,7 +202,8 @@ class _AIProvidersScreenState extends State<AIProvidersScreen> {
     );
   }
 
-  Widget _buildRouteTile(String title, String currentRoute, IconData icon, VoidCallback onTap) {
+  Widget _buildRouteTile(
+      String title, String currentRoute, IconData icon, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
@@ -208,8 +217,11 @@ class _AIProvidersScreenState extends State<AIProvidersScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-                  Text(currentRoute, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                  Text(title,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w600, fontSize: 13)),
+                  Text(currentRoute,
+                      style: const TextStyle(fontSize: 11, color: Colors.grey)),
                 ],
               ),
             ),
@@ -220,7 +232,8 @@ class _AIProvidersScreenState extends State<AIProvidersScreen> {
     );
   }
 
-  void _showRouteSelectionSheet(String title, String capabilityKey, List<String> options) {
+  void _showRouteSelectionSheet(
+      String title, String capabilityKey, List<String> options) {
     showModalBottomSheet(
       context: context,
       builder: (ctx) => Padding(
@@ -229,7 +242,9 @@ class _AIProvidersScreenState extends State<AIProvidersScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Select Route for $title', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            Text('Select Route for $title',
+                style:
+                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             const SizedBox(height: 12),
             ...options.map((opt) => ListTile(
                   title: Text(opt, style: const TextStyle(fontSize: 13)),
@@ -246,7 +261,8 @@ class _AIProvidersScreenState extends State<AIProvidersScreen> {
   }
 
   Widget _buildDefaultGeminiCard(BuildContext context) {
-    final hasKey = widget.controller.cloudApiKey != null && widget.controller.cloudApiKey!.isNotEmpty;
+    final hasKey = widget.controller.cloudApiKey != null &&
+        widget.controller.cloudApiKey!.isNotEmpty;
 
     return Card(
       child: Padding(
@@ -256,14 +272,19 @@ class _AIProvidersScreenState extends State<AIProvidersScreen> {
           children: [
             Row(
               children: [
-                const Icon(Icons.auto_awesome, color: UnicomTheme.accentCyan, size: 20),
+                const Icon(Icons.auto_awesome,
+                    color: UnicomTheme.accentCyan, size: 20),
                 const SizedBox(width: 8),
-                const Text('Google Gemini (Default)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                const Text('Google Gemini (Default)',
+                    style:
+                        TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                 const Spacer(),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: (hasKey ? UnicomTheme.successGreen : Colors.grey).withOpacity(0.15),
+                    color: (hasKey ? UnicomTheme.successGreen : Colors.grey)
+                        .withOpacity(0.15),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
@@ -286,11 +307,16 @@ class _AIProvidersScreenState extends State<AIProvidersScreen> {
             Row(
               children: [
                 FilledButton.tonal(
-                  style: FilledButton.styleFrom(visualDensity: VisualDensity.compact),
+                  style: FilledButton.styleFrom(
+                      visualDensity: VisualDensity.compact),
                   onPressed: () => _testDefaultGemini(),
                   child: _testing['gemini_default'] == true
-                      ? const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2))
-                      : const Text('Test Connection', style: TextStyle(fontSize: 12)),
+                      ? const SizedBox(
+                          width: 12,
+                          height: 12,
+                          child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Text('Test Connection',
+                          style: TextStyle(fontSize: 12)),
                 ),
                 const SizedBox(width: 10),
                 if (_testStatuses['gemini_default'] != null)
@@ -317,15 +343,19 @@ class _AIProvidersScreenState extends State<AIProvidersScreen> {
     return Card(
       child: ListTile(
         leading: const Icon(Icons.android, color: UnicomTheme.accentCyan),
-        title: const Text('Android System AICore', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+        title: const Text('Android System AICore',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
         subtitle: Text(
-          isAvail ? 'Gemini Nano system service ready' : (status?.fallbackReason ?? 'Not present on device'),
+          isAvail
+              ? 'Gemini Nano system service ready'
+              : (status?.fallbackReason ?? 'Not present on device'),
           style: const TextStyle(fontSize: 12),
         ),
         trailing: Container(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
           decoration: BoxDecoration(
-            color: (isAvail ? UnicomTheme.successGreen : Colors.grey).withOpacity(0.15),
+            color: (isAvail ? UnicomTheme.successGreen : Colors.grey)
+                .withOpacity(0.15),
             borderRadius: BorderRadius.circular(4),
           ),
           child: Text(
@@ -347,15 +377,19 @@ class _AIProvidersScreenState extends State<AIProvidersScreen> {
     return Card(
       child: ListTile(
         leading: const Icon(Icons.memory, color: UnicomTheme.primaryBlueLight),
-        title: const Text('Downloaded Local Model', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+        title: const Text('Downloaded Local Model',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
         subtitle: Text(
-          isLoaded ? 'On-device quantized model active' : 'No local model installed',
+          isLoaded
+              ? 'On-device quantized model active'
+              : 'No local model installed',
           style: const TextStyle(fontSize: 12),
         ),
         trailing: Container(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
           decoration: BoxDecoration(
-            color: (isLoaded ? UnicomTheme.successGreen : Colors.grey).withOpacity(0.15),
+            color: (isLoaded ? UnicomTheme.successGreen : Colors.grey)
+                .withOpacity(0.15),
             borderRadius: BorderRadius.circular(4),
           ),
           child: Text(
@@ -384,16 +418,20 @@ class _AIProvidersScreenState extends State<AIProvidersScreen> {
           children: [
             Row(
               children: [
-                Icon(_getIconForType(config.type), color: UnicomTheme.accentCyan, size: 20),
+                Icon(_getIconForType(config.type),
+                    color: UnicomTheme.accentCyan, size: 20),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(config.displayName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                      Text(config.displayName,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 15)),
                       Text(
                         '${config.type.name.toUpperCase()} • ${config.modelId}',
-                        style: const TextStyle(fontSize: 11, color: Colors.grey),
+                        style:
+                            const TextStyle(fontSize: 11, color: Colors.grey),
                       ),
                     ],
                   ),
@@ -401,14 +439,18 @@ class _AIProvidersScreenState extends State<AIProvidersScreen> {
                 if (config.isDefault)
                   Container(
                     margin: const EdgeInsets.only(right: 8),
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
                       color: UnicomTheme.primaryBlue.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: const Text(
                       'DEFAULT',
-                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: UnicomTheme.primaryBlueLight),
+                      style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: UnicomTheme.primaryBlueLight),
                     ),
                   ),
                 PopupMenuButton<String>(
@@ -421,25 +463,35 @@ class _AIProvidersScreenState extends State<AIProvidersScreen> {
                     }
                   },
                   itemBuilder: (ctx) => [
-                    const PopupMenuItem(value: 'default', child: Text('Set as Default')),
-                    const PopupMenuItem(value: 'delete', child: Text('Delete Provider', style: TextStyle(color: UnicomTheme.dangerRed))),
+                    const PopupMenuItem(
+                        value: 'default', child: Text('Set as Default')),
+                    const PopupMenuItem(
+                        value: 'delete',
+                        child: Text('Delete Provider',
+                            style: TextStyle(color: UnicomTheme.dangerRed))),
                   ],
                 ),
               ],
             ),
             if (config.baseUrl.isNotEmpty) ...[
               const SizedBox(height: 4),
-              Text(config.baseUrl, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+              Text(config.baseUrl,
+                  style: const TextStyle(fontSize: 11, color: Colors.grey)),
             ],
             const SizedBox(height: 10),
             Row(
               children: [
                 FilledButton.tonal(
-                  style: FilledButton.styleFrom(visualDensity: VisualDensity.compact),
+                  style: FilledButton.styleFrom(
+                      visualDensity: VisualDensity.compact),
                   onPressed: isTesting ? null : () => _testProvider(config),
                   child: isTesting
-                      ? const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2))
-                      : const Text('Test Connection', style: TextStyle(fontSize: 12)),
+                      ? const SizedBox(
+                          width: 12,
+                          height: 12,
+                          child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Text('Test Connection',
+                          style: TextStyle(fontSize: 12)),
                 ),
                 const SizedBox(width: 10),
                 if (statusText != null)
@@ -481,8 +533,9 @@ class _AIProvidersScreenState extends State<AIProvidersScreen> {
     final res = await widget.controller.testCloudConnection();
     setState(() {
       _testing['gemini_default'] = false;
-      _testStatuses['gemini_default'] =
-          res.isSuccessful ? 'Success (${res.latencyMs} ms)' : (res.errorMessage ?? 'Failed');
+      _testStatuses['gemini_default'] = res.isSuccessful
+          ? 'Success (${res.latencyMs} ms)'
+          : (res.errorMessage ?? 'Failed');
     });
   }
 
@@ -491,8 +544,9 @@ class _AIProvidersScreenState extends State<AIProvidersScreen> {
     final res = await widget.controller.testProviderConfig(config);
     setState(() {
       _testing[config.id] = false;
-      _testStatuses[config.id] =
-          res.isSuccessful ? 'Success (${res.latencyMs} ms)' : (res.errorMessage ?? 'Failed');
+      _testStatuses[config.id] = res.isSuccessful
+          ? 'Success (${res.latencyMs} ms)'
+          : (res.errorMessage ?? 'Failed');
     });
   }
 
@@ -508,7 +562,8 @@ class _AIProvidersScreenState extends State<AIProvidersScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Add AI Provider', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          title: const Text('Add AI Provider',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -518,10 +573,17 @@ class _AIProvidersScreenState extends State<AIProvidersScreen> {
                   value: selectedType,
                   decoration: const InputDecoration(labelText: 'Provider Type'),
                   items: const [
-                    DropdownMenuItem(value: AIProviderType.gemini, child: Text('Google Gemini')),
-                    DropdownMenuItem(value: AIProviderType.openai, child: Text('OpenAI')),
-                    DropdownMenuItem(value: AIProviderType.anthropic, child: Text('Anthropic Claude')),
-                    DropdownMenuItem(value: AIProviderType.custom, child: Text('Custom OpenAI-Compatible')),
+                    DropdownMenuItem(
+                        value: AIProviderType.gemini,
+                        child: Text('Google Gemini')),
+                    DropdownMenuItem(
+                        value: AIProviderType.openai, child: Text('OpenAI')),
+                    DropdownMenuItem(
+                        value: AIProviderType.anthropic,
+                        child: Text('Anthropic Claude')),
+                    DropdownMenuItem(
+                        value: AIProviderType.custom,
+                        child: Text('Custom OpenAI-Compatible')),
                   ],
                   onChanged: (val) {
                     if (val != null) {
@@ -553,11 +615,14 @@ class _AIProvidersScreenState extends State<AIProvidersScreen> {
                   controller: nameController,
                   decoration: const InputDecoration(labelText: 'Display Name'),
                 ),
-                if (selectedType == AIProviderType.openai || selectedType == AIProviderType.custom) ...[
+                if (selectedType == AIProviderType.openai ||
+                    selectedType == AIProviderType.custom) ...[
                   const SizedBox(height: 10),
                   TextField(
                     controller: baseUrlController,
-                    decoration: const InputDecoration(labelText: 'Base URL', hintText: 'https://api.openai.com'),
+                    decoration: const InputDecoration(
+                        labelText: 'Base URL',
+                        hintText: 'https://api.openai.com'),
                   ),
                 ],
                 const SizedBox(height: 10),
@@ -572,8 +637,11 @@ class _AIProvidersScreenState extends State<AIProvidersScreen> {
                   decoration: InputDecoration(
                     labelText: 'API Key',
                     suffixIcon: IconButton(
-                      icon: Icon(obscureKey ? Icons.visibility : Icons.visibility_off, size: 18),
-                      onPressed: () => setDialogState(() => obscureKey = !obscureKey),
+                      icon: Icon(
+                          obscureKey ? Icons.visibility : Icons.visibility_off,
+                          size: 18),
+                      onPressed: () =>
+                          setDialogState(() => obscureKey = !obscureKey),
                     ),
                   ),
                 ),
@@ -592,10 +660,14 @@ class _AIProvidersScreenState extends State<AIProvidersScreen> {
                 final config = AIProviderConfig(
                   id: id,
                   type: selectedType,
-                  displayName: nameController.text.trim().isNotEmpty ? nameController.text.trim() : 'AI Provider',
+                  displayName: nameController.text.trim().isNotEmpty
+                      ? nameController.text.trim()
+                      : 'AI Provider',
                   baseUrl: baseUrlController.text.trim(),
                   apiKey: apiKeyController.text.trim(),
-                  modelId: modelController.text.trim().isNotEmpty ? modelController.text.trim() : 'default',
+                  modelId: modelController.text.trim().isNotEmpty
+                      ? modelController.text.trim()
+                      : 'default',
                   isDefault: widget.controller.configuredProviders.isEmpty,
                 );
                 widget.controller.addProviderConfig(config);

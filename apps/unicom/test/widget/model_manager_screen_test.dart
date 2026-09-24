@@ -147,7 +147,8 @@ void main() {
       await tester.pumpWidget(createTestApp(mgr: failingMgr));
       await tester.pumpAndSettle();
 
-      final downloadBtn = find.widgetWithText(FilledButton, 'Download Pack').first;
+      final downloadBtn =
+          find.widgetWithText(FilledButton, 'Download Pack').first;
       await tester.tap(downloadBtn);
       await tester.pumpAndSettle();
 
@@ -163,7 +164,8 @@ void main() {
       await tester.pumpWidget(createTestApp(mgr: cancellingMgr));
       await tester.pumpAndSettle();
 
-      final downloadBtn = find.widgetWithText(FilledButton, 'Download Pack').first;
+      final downloadBtn =
+          find.widgetWithText(FilledButton, 'Download Pack').first;
       await tester.tap(downloadBtn);
       await tester.pump();
 

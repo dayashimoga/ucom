@@ -47,7 +47,8 @@ class AnthropicProvider implements LLMProvider {
         providerId: id,
         modelName: modelName,
         latencyMs: 0,
-        errorMessage: 'Cannot test cloud connection while in private_offline mode.',
+        errorMessage:
+            'Cannot test cloud connection while in private_offline mode.',
       );
     }
 
@@ -57,7 +58,8 @@ class AnthropicProvider implements LLMProvider {
         providerId: id,
         modelName: modelName,
         latencyMs: 0,
-        errorMessage: 'Missing Anthropic API key. Please configure in settings.',
+        errorMessage:
+            'Missing Anthropic API key. Please configure in settings.',
       );
     }
 
@@ -68,7 +70,9 @@ class AnthropicProvider implements LLMProvider {
       final client = _createClient();
       try {
         final uri = Uri.parse(endpoint);
-        final request = await client.postUrl(uri).timeout(Duration(milliseconds: timeoutMs));
+        final request = await client
+            .postUrl(uri)
+            .timeout(Duration(milliseconds: timeoutMs));
         request.headers.set(HttpHeaders.contentTypeHeader, 'application/json');
         request.headers.set('x-api-key', apiKey!.trim());
         request.headers.set('anthropic-version', '2023-06-01');
@@ -82,7 +86,8 @@ class AnthropicProvider implements LLMProvider {
         });
         request.write(payload);
 
-        final response = await request.close().timeout(Duration(milliseconds: timeoutMs));
+        final response =
+            await request.close().timeout(Duration(milliseconds: timeoutMs));
         final responseBody = await response.transform(utf8.decoder).join();
         sw.stop();
 
@@ -104,7 +109,8 @@ class AnthropicProvider implements LLMProvider {
             providerId: id,
             modelName: modelName,
             latencyMs: sw.elapsedMilliseconds,
-            errorMessage: 'Anthropic API HTTP ${response.statusCode}: $errorData',
+            errorMessage:
+                'Anthropic API HTTP ${response.statusCode}: $errorData',
           );
         }
       } finally {
@@ -183,13 +189,16 @@ class AnthropicProvider implements LLMProvider {
       final client = _createClient();
       try {
         final uri = Uri.parse(endpoint);
-        final request = await client.postUrl(uri).timeout(Duration(milliseconds: timeoutMs));
+        final request = await client
+            .postUrl(uri)
+            .timeout(Duration(milliseconds: timeoutMs));
         request.headers.set(HttpHeaders.contentTypeHeader, 'application/json');
         request.headers.set('x-api-key', apiKey!.trim());
         request.headers.set('anthropic-version', '2023-06-01');
         request.write(payload);
 
-        final response = await request.close().timeout(Duration(milliseconds: timeoutMs));
+        final response =
+            await request.close().timeout(Duration(milliseconds: timeoutMs));
         final responseBody = await response.transform(utf8.decoder).join();
 
         if (response.statusCode == HttpStatus.ok) {
@@ -203,21 +212,25 @@ class AnthropicProvider implements LLMProvider {
           return 'No response generated.';
         }
 
-        if ((response.statusCode == 429 || response.statusCode == HttpStatus.serviceUnavailable) &&
+        if ((response.statusCode == 429 ||
+                response.statusCode == HttpStatus.serviceUnavailable) &&
             attempts <= maxRetries) {
-          _logger.warn('Anthropic API rate limited/unavailable, retrying attempt $attempts');
+          _logger.warn(
+              'Anthropic API rate limited/unavailable, retrying attempt $attempts');
           await Future.delayed(Duration(milliseconds: 300 * attempts));
           continue;
         }
 
         final errorMsg = _parseError(responseBody);
-        throw ProviderException(id, 'Anthropic API error (HTTP ${response.statusCode}): $errorMsg');
+        throw ProviderException(
+            id, 'Anthropic API error (HTTP ${response.statusCode}): $errorMsg');
       } on SocketException catch (e) {
         if (attempts <= maxRetries) {
           await Future.delayed(Duration(milliseconds: 300 * attempts));
           continue;
         }
-        throw ProviderException(id, 'Network error reaching Anthropic service: ${e.message}');
+        throw ProviderException(
+            id, 'Network error reaching Anthropic service: ${e.message}');
       } finally {
         client.close();
       }

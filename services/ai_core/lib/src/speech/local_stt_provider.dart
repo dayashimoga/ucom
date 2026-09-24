@@ -42,7 +42,8 @@ class LocalSTTProvider implements STTProvider {
     }
 
     if (!isModelInstalled) {
-      _logger.warn('Transcription requested but on-device STT model is not installed.');
+      _logger.warn(
+          'Transcription requested but on-device STT model is not installed.');
       throw const ValidationException(
         'Offline speech recognition requires the Whisper on-device model. Please download Whisper Tiny INT8 via the Model Manager or enter text directly.',
       );
@@ -88,7 +89,8 @@ class LocalSTTProvider implements STTProvider {
     // 3. Acoustic sequence token decoding
     final lang = options.language ?? 'en';
     final transcript = _decodeAcousticSequence(features, lang);
-    final confidence = min(0.98, max(0.70, 0.70 + (vadFrame.rmsEnergy / 32767.0) * 0.28));
+    final confidence =
+        min(0.98, max(0.70, 0.70 + (vadFrame.rmsEnergy / 32767.0) * 0.28));
 
     return TranscriptionResult(
       text: transcript,
@@ -105,7 +107,8 @@ class LocalSTTProvider implements STTProvider {
   }
 
   /// Extracts spectral acoustic features from PCM audio
-  _AcousticFeatures _extractAcousticFeatures(Uint8List bytes, VadFrame vadFrame) {
+  _AcousticFeatures _extractAcousticFeatures(
+      Uint8List bytes, VadFrame vadFrame) {
     int pcmOffset = 0;
     if (bytes.length > 44 &&
         bytes[0] == 0x52 &&
@@ -148,25 +151,41 @@ class LocalSTTProvider implements STTProvider {
   String _decodeAcousticSequence(_AcousticFeatures features, String language) {
     if (features.durationMs < 800) {
       switch (language.toLowerCase()) {
-        case 'es': return 'Hola';
-        case 'fr': return 'Bonjour';
-        case 'de': return 'Hallo';
-        case 'zh': return '你好';
-        case 'ja': return 'こんにちは';
-        case 'hi': return 'नमस्ते';
-        case 'ta': return 'வணக்கம்';
-        default: return 'Hello';
+        case 'es':
+          return 'Hola';
+        case 'fr':
+          return 'Bonjour';
+        case 'de':
+          return 'Hallo';
+        case 'zh':
+          return '你好';
+        case 'ja':
+          return 'こんにちは';
+        case 'hi':
+          return 'नमस्ते';
+        case 'ta':
+          return 'வணக்கம்';
+        default:
+          return 'Hello';
       }
     } else {
       switch (language.toLowerCase()) {
-        case 'es': return '¿Cómo estás?';
-        case 'fr': return 'Comment allez-vous?';
-        case 'de': return 'Wie geht es Ihnen?';
-        case 'zh': return '你好吗？';
-        case 'ja': return 'お元気ですか？';
-        case 'hi': return 'आप कैसे हैं?';
-        case 'ta': return 'நீங்கள் எப்படி இருக்கிறீர்கள்?';
-        default: return 'How are you?';
+        case 'es':
+          return '¿Cómo estás?';
+        case 'fr':
+          return 'Comment allez-vous?';
+        case 'de':
+          return 'Wie geht es Ihnen?';
+        case 'zh':
+          return '你好吗？';
+        case 'ja':
+          return 'お元気ですか？';
+        case 'hi':
+          return 'आप कैसे हैं?';
+        case 'ta':
+          return 'நீங்கள் எப்படி இருக்கிறீர்கள்?';
+        default:
+          return 'How are you?';
       }
     }
   }

@@ -10,7 +10,8 @@ class InterviewPracticeScreen extends StatefulWidget {
   const InterviewPracticeScreen({super.key, required this.controller});
 
   @override
-  State<InterviewPracticeScreen> createState() => _InterviewPracticeScreenState();
+  State<InterviewPracticeScreen> createState() =>
+      _InterviewPracticeScreenState();
 }
 
 class _InterviewPracticeScreenState extends State<InterviewPracticeScreen> {
@@ -66,8 +67,10 @@ class _InterviewPracticeScreenState extends State<InterviewPracticeScreen> {
           widget.controller.router.configuredProviders.isNotEmpty) {
         final prompt =
             'Generate one challenging, realistic technical interview question for a $_selectedDifficulty candidate applying for a $_selectedRole position, focusing on $_selectedTopic. Return only the question text.';
-        final aiQ = await widget.controller.router.complete(prompt, maxTokens: 120, temperature: 0.7);
-        if (aiQ.trim().isNotEmpty && !aiQ.toLowerCase().contains('unsupported')) {
+        final aiQ = await widget.controller.router
+            .complete(prompt, maxTokens: 120, temperature: 0.7);
+        if (aiQ.trim().isNotEmpty &&
+            !aiQ.toLowerCase().contains('unsupported')) {
           setState(() {
             _currentQuestion = aiQ.replaceAll(RegExp(r'^["\s]+|["\s]+$'), '');
             _isGeneratingQuestion = false;
@@ -77,11 +80,13 @@ class _InterviewPracticeScreenState extends State<InterviewPracticeScreen> {
       }
 
       // Offline / curated fallback matching role and topic
-      final pool = _curatedPool[_selectedTopic] ?? [
-        'Describe an architectural decision you made and how you balanced trade-offs under high concurrency.',
-        'Tell me about a time when a production incident occurred. How did you diagnose, mitigate, and remediate it?',
-      ];
-      final nextQ = pool[(DateTime.now().millisecondsSinceEpoch ~/ 1000) % pool.length];
+      final pool = _curatedPool[_selectedTopic] ??
+          [
+            'Describe an architectural decision you made and how you balanced trade-offs under high concurrency.',
+            'Tell me about a time when a production incident occurred. How did you diagnose, mitigate, and remediate it?',
+          ];
+      final nextQ =
+          pool[(DateTime.now().millisecondsSinceEpoch ~/ 1000) % pool.length];
       setState(() {
         _currentQuestion = nextQ;
         _isGeneratingQuestion = false;
@@ -119,7 +124,8 @@ class _InterviewPracticeScreenState extends State<InterviewPracticeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Interview Practice & Coaching', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('Interview Practice & Coaching',
+            style: TextStyle(fontWeight: FontWeight.bold)),
         actions: [
           PopupMenuButton<String>(
             icon: const Icon(Icons.swap_horiz),
@@ -135,7 +141,8 @@ class _InterviewPracticeScreenState extends State<InterviewPracticeScreen> {
                 .expand((i) => i)
                 .map((q) => PopupMenuItem(
                     value: q,
-                    child: Text(q, maxLines: 1, overflow: TextOverflow.ellipsis)))
+                    child:
+                        Text(q, maxLines: 1, overflow: TextOverflow.ellipsis)))
                 .toList(),
           ),
           IconButton(
@@ -155,7 +162,8 @@ class _InterviewPracticeScreenState extends State<InterviewPracticeScreen> {
             decoration: BoxDecoration(
               color: UnicomTheme.warningAmber.withOpacity(0.12),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: UnicomTheme.warningAmber.withOpacity(0.4)),
+              border:
+                  Border.all(color: UnicomTheme.warningAmber.withOpacity(0.4)),
             ),
             child: const Row(
               children: [
@@ -184,7 +192,8 @@ class _InterviewPracticeScreenState extends State<InterviewPracticeScreen> {
                       SizedBox(width: 8),
                       Expanded(
                         child: Text('Practice Drill Setup',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 15)),
                       ),
                     ],
                   ),
@@ -196,10 +205,14 @@ class _InterviewPracticeScreenState extends State<InterviewPracticeScreen> {
                     decoration: const InputDecoration(
                       labelText: 'Role',
                       border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      contentPadding:
+                          EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     ),
                     items: _roles
-                        .map((r) => DropdownMenuItem(value: r, child: Text(r, style: const TextStyle(fontSize: 13))))
+                        .map((r) => DropdownMenuItem(
+                            value: r,
+                            child:
+                                Text(r, style: const TextStyle(fontSize: 13))))
                         .toList(),
                     onChanged: (val) {
                       if (val != null) setState(() => _selectedRole = val);
@@ -213,7 +226,8 @@ class _InterviewPracticeScreenState extends State<InterviewPracticeScreen> {
                     decoration: const InputDecoration(
                       labelText: 'Topic',
                       border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      contentPadding:
+                          EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     ),
                     items: _topics
                         .map((t) => DropdownMenuItem(
@@ -234,13 +248,19 @@ class _InterviewPracticeScreenState extends State<InterviewPracticeScreen> {
                     decoration: const InputDecoration(
                       labelText: 'Seniority Level',
                       border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      contentPadding:
+                          EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     ),
                     items: _difficulties
-                        .map((d) => DropdownMenuItem(value: d, child: Text(d, style: const TextStyle(fontSize: 13))))
+                        .map((d) => DropdownMenuItem(
+                            value: d,
+                            child:
+                                Text(d, style: const TextStyle(fontSize: 13))))
                         .toList(),
                     onChanged: (val) {
-                      if (val != null) setState(() => _selectedDifficulty = val);
+                      if (val != null) {
+                        setState(() => _selectedDifficulty = val);
+                      }
                     },
                   ),
                   const SizedBox(height: 12),
@@ -254,8 +274,10 @@ class _InterviewPracticeScreenState extends State<InterviewPracticeScreen> {
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : const Icon(Icons.refresh, size: 16),
-                      label: const Text('New Question', style: TextStyle(fontSize: 12)),
-                      onPressed: _isGeneratingQuestion ? null : _generateNewQuestion,
+                      label: const Text('New Question',
+                          style: TextStyle(fontSize: 12)),
+                      onPressed:
+                          _isGeneratingQuestion ? null : _generateNewQuestion,
                     ),
                   ),
                 ],
@@ -274,12 +296,16 @@ class _InterviewPracticeScreenState extends State<InterviewPracticeScreen> {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.quiz, color: UnicomTheme.accentCyan, size: 18),
+                      const Icon(Icons.quiz,
+                          color: UnicomTheme.accentCyan, size: 18),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           '$_selectedRole • $_selectedDifficulty',
-                          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: Colors.grey),
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 12,
+                              color: Colors.grey),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
@@ -288,7 +314,10 @@ class _InterviewPracticeScreenState extends State<InterviewPracticeScreen> {
                   const SizedBox(height: 8),
                   Text(
                     _currentQuestion,
-                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, height: 1.45),
+                    style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        height: 1.45),
                   ),
                 ],
               ),
@@ -301,9 +330,11 @@ class _InterviewPracticeScreenState extends State<InterviewPracticeScreen> {
             controller: _answerController,
             maxLines: 5,
             decoration: InputDecoration(
-              hintText: 'Type or speak your answer (use STAR: Situation, Task, Action, Result)...',
+              hintText:
+                  'Type or speak your answer (use STAR: Situation, Task, Action, Result)...',
               hintStyle: const TextStyle(fontSize: 13),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
               filled: true,
               fillColor: Theme.of(context).cardColor,
             ),
@@ -319,7 +350,8 @@ class _InterviewPracticeScreenState extends State<InterviewPracticeScreen> {
                       ? const SizedBox(
                           width: 16,
                           height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.white),
                         )
                       : const Icon(Icons.analytics, size: 18),
                   label: const Text('Evaluate Answer & Study Plan'),
@@ -357,7 +389,8 @@ class _InterviewPracticeScreenState extends State<InterviewPracticeScreen> {
     final ans = _answerController.text.trim();
     if (ans.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter or dictate an answer first.')),
+        const SnackBar(
+            content: Text('Please enter or dictate an answer first.')),
       );
       return;
     }
@@ -398,7 +431,9 @@ class _InterviewPracticeScreenState extends State<InterviewPracticeScreen> {
               children: [
                 const Icon(Icons.verified, color: UnicomTheme.successGreen),
                 const SizedBox(width: 8),
-                const Text('Overall Score', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                const Text('Overall Score',
+                    style:
+                        TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                 const Spacer(),
                 Text(
                   '${a.overallScore} / 10',
@@ -411,7 +446,8 @@ class _InterviewPracticeScreenState extends State<InterviewPracticeScreen> {
               ],
             ),
             const Divider(height: 24),
-            const Text('Rubric Breakdown', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+            const Text('Rubric Breakdown',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
             const SizedBox(height: 8),
             ...a.rubrics.map((r) => Padding(
                   padding: const EdgeInsets.symmetric(vertical: 4),
@@ -423,10 +459,13 @@ class _InterviewPracticeScreenState extends State<InterviewPracticeScreen> {
                           Expanded(
                             child: Text(
                               r.criterion.replaceAll('_', ' ').toUpperCase(),
-                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                              style: const TextStyle(
+                                  fontSize: 11, fontWeight: FontWeight.w700),
                             ),
                           ),
-                          Text('${r.score}/10', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                          Text('${r.score}/10',
+                              style: const TextStyle(
+                                  fontSize: 12, fontWeight: FontWeight.bold)),
                         ],
                       ),
                       const SizedBox(height: 4),
@@ -435,28 +474,47 @@ class _InterviewPracticeScreenState extends State<InterviewPracticeScreen> {
                         child: LinearProgressIndicator(
                           value: r.score / 10.0,
                           minHeight: 6,
-                          color: r.score >= 7 ? UnicomTheme.accentCyan : UnicomTheme.warningAmber,
+                          color: r.score >= 7
+                              ? UnicomTheme.accentCyan
+                              : UnicomTheme.warningAmber,
                         ),
                       ),
                       if (r.feedback.isNotEmpty) ...[
                         const SizedBox(height: 2),
-                        Text(r.feedback, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                        Text(r.feedback,
+                            style: const TextStyle(
+                                fontSize: 11, color: Colors.grey)),
                       ],
                     ],
                   ),
                 )),
             const SizedBox(height: 16),
-            const Text('Identified Strengths', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: UnicomTheme.successGreen)),
+            const Text('Identified Strengths',
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: UnicomTheme.successGreen)),
             const SizedBox(height: 4),
-            ...a.strengths.map((s) => Text('• $s', style: const TextStyle(fontSize: 13, height: 1.4))),
+            ...a.strengths.map((s) => Text('• $s',
+                style: const TextStyle(fontSize: 13, height: 1.4))),
             const SizedBox(height: 12),
-            const Text('Missing Concepts & Improvements', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: UnicomTheme.warningAmber)),
+            const Text('Missing Concepts & Improvements',
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: UnicomTheme.warningAmber)),
             const SizedBox(height: 4),
-            ...a.areasForImprovement.map((imp) => Text('• $imp', style: const TextStyle(fontSize: 13, height: 1.4))),
+            ...a.areasForImprovement.map((imp) => Text('• $imp',
+                style: const TextStyle(fontSize: 13, height: 1.4))),
             const SizedBox(height: 12),
-            const Text('Targeted Study Plan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: UnicomTheme.primaryBlueLight)),
+            const Text('Targeted Study Plan',
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: UnicomTheme.primaryBlueLight)),
             const SizedBox(height: 4),
-            ...a.studyPlan.map((p) => Text('• $p', style: const TextStyle(fontSize: 13, height: 1.4))),
+            ...a.studyPlan.map((p) => Text('• $p',
+                style: const TextStyle(fontSize: 13, height: 1.4))),
           ],
         ),
       ),

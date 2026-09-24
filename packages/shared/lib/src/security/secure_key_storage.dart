@@ -32,7 +32,8 @@ class SecureKeyStorage {
         if (d.existsSync()) return d;
       }
       if (Platform.isWindows) {
-        final appData = Platform.environment['APPDATA'] ?? Platform.environment['LOCALAPPDATA'];
+        final appData = Platform.environment['APPDATA'] ??
+            Platform.environment['LOCALAPPDATA'];
         if (appData != null && appData.isNotEmpty) {
           return Directory('$appData/UniComAI');
         }

@@ -126,7 +126,8 @@ void main() {
 
       expect(find.text('UniCom AI'), findsOneWidget);
       expect(find.text('Local LLM INT4'), findsOneWidget);
-      expect(find.text('Zoology is the scientific study of animals.'), findsOneWidget);
+      expect(find.text('Zoology is the scientific study of animals.'),
+          findsOneWidget);
       expect(find.text('Translate to ES'), findsOneWidget);
 
       // Tap AI Translate button
@@ -140,7 +141,8 @@ void main() {
       expect(find.text('Copied to clipboard'), findsOneWidget);
     });
 
-    testWidgets('ExplanationCard renders all personas, keypoints, and empty states',
+    testWidgets(
+        'ExplanationCard renders all personas, keypoints, and empty states',
         (tester) async {
       final expResult = ExplanationResult(
         id: 'exp_full',
@@ -196,7 +198,14 @@ void main() {
       expect(find.text('12:30'), findsOneWidget);
 
       // Test switching through each persona chip
-      final personaChips = ['Detailed', 'Terms', 'Grammar', 'Culture', 'Examples', 'Child-Friendly'];
+      final personaChips = [
+        'Detailed',
+        'Terms',
+        'Grammar',
+        'Culture',
+        'Examples',
+        'Child-Friendly'
+      ];
       for (final label in personaChips) {
         final chip = find.text(label);
         expect(chip, findsOneWidget);
@@ -205,7 +214,8 @@ void main() {
       }
 
       // Child-friendly was omitted, so it should render fallback message
-      expect(find.text('Explanation unavailable for this persona.'), findsOneWidget);
+      expect(find.text('Explanation unavailable for this persona.'),
+          findsOneWidget);
     });
 
     testWidgets(

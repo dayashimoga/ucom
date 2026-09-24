@@ -14,7 +14,8 @@ void main() {
       controller = ConversationController();
     });
 
-    testWidgets('renders default built-in cards and capability routing when empty',
+    testWidgets(
+        'renders default built-in cards and capability routing when empty',
         (tester) async {
       await tester.binding.setSurfaceSize(const Size(800, 1200));
       await tester.pumpWidget(
@@ -39,7 +40,8 @@ void main() {
       expect(find.text('Downloaded Local Model'), findsOneWidget);
 
       // Test connection on default Gemini card
-      final testConnBtn = find.widgetWithText(FilledButton, 'Test Connection').first;
+      final testConnBtn =
+          find.widgetWithText(FilledButton, 'Test Connection').first;
       await tester.tap(testConnBtn);
       await tester.pumpAndSettle();
       // Should show error or status since offline mode
@@ -95,7 +97,8 @@ void main() {
       expect(find.text('Custom LLM'), findsOneWidget);
     });
 
-    testWidgets('manages configured provider: test connection, set default, and delete',
+    testWidgets(
+        'manages configured provider: test connection, set default, and delete',
         (tester) async {
       controller.addProviderConfig(const AIProviderConfig(
         id: 'cfg_1',
@@ -127,7 +130,8 @@ void main() {
       expect(find.text('DEFAULT'), findsOneWidget);
 
       // Test connection on configured provider
-      final testBtn = find.widgetWithText(FilledButton, 'Test Connection').first;
+      final testBtn =
+          find.widgetWithText(FilledButton, 'Test Connection').first;
       await tester.tap(testBtn);
       await tester.pumpAndSettle();
 
@@ -150,7 +154,8 @@ void main() {
       expect(controller.configuredProviders.length, equals(1));
     });
 
-    testWidgets('taps capability route and selects new target via modal bottom sheet',
+    testWidgets(
+        'taps capability route and selects new target via modal bottom sheet',
         (tester) async {
       await tester.binding.setSurfaceSize(const Size(800, 1200));
       await tester.pumpWidget(
@@ -178,7 +183,8 @@ void main() {
       await tester.tap(find.text('IndicTrans2 On-Device (Tamil & Hindi)'));
       await tester.pumpAndSettle();
 
-      expect(controller.translationRoute, equals('IndicTrans2 On-Device (Tamil & Hindi)'));
+      expect(controller.translationRoute,
+          equals('IndicTrans2 On-Device (Tamil & Hindi)'));
     });
   });
 }

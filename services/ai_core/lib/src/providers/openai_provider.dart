@@ -52,7 +52,8 @@ class OpenAIProvider implements LLMProvider {
         providerId: id,
         modelName: modelName,
         latencyMs: 0,
-        errorMessage: 'Cannot test cloud connection while in private_offline mode.',
+        errorMessage:
+            'Cannot test cloud connection while in private_offline mode.',
       );
     }
 
@@ -63,10 +64,13 @@ class OpenAIProvider implements LLMProvider {
       final client = _createClient();
       try {
         final uri = Uri.parse(_endpoint);
-        final request = await client.postUrl(uri).timeout(Duration(milliseconds: timeoutMs));
+        final request = await client
+            .postUrl(uri)
+            .timeout(Duration(milliseconds: timeoutMs));
         request.headers.set(HttpHeaders.contentTypeHeader, 'application/json');
         if (apiKey != null && apiKey!.trim().isNotEmpty) {
-          request.headers.set(HttpHeaders.authorizationHeader, 'Bearer ${apiKey!.trim()}');
+          request.headers
+              .set(HttpHeaders.authorizationHeader, 'Bearer ${apiKey!.trim()}');
         }
 
         final payload = jsonEncode({
@@ -78,7 +82,8 @@ class OpenAIProvider implements LLMProvider {
         });
         request.write(payload);
 
-        final response = await request.close().timeout(Duration(milliseconds: timeoutMs));
+        final response =
+            await request.close().timeout(Duration(milliseconds: timeoutMs));
         final responseBody = await response.transform(utf8.decoder).join();
         sw.stop();
 
@@ -176,14 +181,18 @@ class OpenAIProvider implements LLMProvider {
       final client = _createClient();
       try {
         final uri = Uri.parse(_endpoint);
-        final request = await client.postUrl(uri).timeout(Duration(milliseconds: timeoutMs));
+        final request = await client
+            .postUrl(uri)
+            .timeout(Duration(milliseconds: timeoutMs));
         request.headers.set(HttpHeaders.contentTypeHeader, 'application/json');
         if (apiKey != null && apiKey!.trim().isNotEmpty) {
-          request.headers.set(HttpHeaders.authorizationHeader, 'Bearer ${apiKey!.trim()}');
+          request.headers
+              .set(HttpHeaders.authorizationHeader, 'Bearer ${apiKey!.trim()}');
         }
         request.write(payload);
 
-        final response = await request.close().timeout(Duration(milliseconds: timeoutMs));
+        final response =
+            await request.close().timeout(Duration(milliseconds: timeoutMs));
         final responseBody = await response.transform(utf8.decoder).join();
 
         if (response.statusCode == HttpStatus.ok) {
@@ -198,21 +207,25 @@ class OpenAIProvider implements LLMProvider {
           return 'No response generated.';
         }
 
-        if ((response.statusCode == 429 || response.statusCode == HttpStatus.serviceUnavailable) &&
+        if ((response.statusCode == 429 ||
+                response.statusCode == HttpStatus.serviceUnavailable) &&
             attempts <= maxRetries) {
-          _logger.warn('OpenAI API rate limited/unavailable, retrying attempt $attempts');
+          _logger.warn(
+              'OpenAI API rate limited/unavailable, retrying attempt $attempts');
           await Future.delayed(Duration(milliseconds: 300 * attempts));
           continue;
         }
 
         final errorMsg = _parseError(responseBody);
-        throw ProviderException(id, 'OpenAI API error (HTTP ${response.statusCode}): $errorMsg');
+        throw ProviderException(
+            id, 'OpenAI API error (HTTP ${response.statusCode}): $errorMsg');
       } on SocketException catch (e) {
         if (attempts <= maxRetries) {
           await Future.delayed(Duration(milliseconds: 300 * attempts));
           continue;
         }
-        throw ProviderException(id, 'Network error reaching OpenAI service: ${e.message}');
+        throw ProviderException(
+            id, 'Network error reaching OpenAI service: ${e.message}');
       } finally {
         client.close();
       }

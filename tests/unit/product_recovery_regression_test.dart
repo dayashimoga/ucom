@@ -12,7 +12,9 @@ void main() {
       localLLM = LocalLLMProvider(isModelLoaded: true);
     });
 
-    test('BUG-001 REGRESSION: "What is zoology?" EN->ES outputs authentic Spanish translation', () async {
+    test(
+        'BUG-001 REGRESSION: "What is zoology?" EN->ES outputs authentic Spanish translation',
+        () async {
       final res = await translationEngine.translate(
         'What is zoology?',
         options: const TranslationOptions(
@@ -24,11 +26,15 @@ void main() {
       // Must be actual Spanish translation
       expect(res.translatedText, equals('¿Qué es la zoología?'));
       // Must NOT contain generic English answer text
-      expect(res.translatedText.toLowerCase(), isNot(contains('branch of biology')));
-      expect(res.translatedText.toLowerCase(), isNot(contains('study of animals')));
+      expect(res.translatedText.toLowerCase(),
+          isNot(contains('branch of biology')));
+      expect(res.translatedText.toLowerCase(),
+          isNot(contains('study of animals')));
     });
 
-    test('BUG-001 REGRESSION: "What is zoology?" EN->TA outputs authentic Tamil translation', () async {
+    test(
+        'BUG-001 REGRESSION: "What is zoology?" EN->TA outputs authentic Tamil translation',
+        () async {
       final res = await translationEngine.translate(
         'What is zoology?',
         options: const TranslationOptions(
@@ -40,7 +46,9 @@ void main() {
       expect(res.translatedText, equals('விலங்கியல் என்றால் என்ன?'));
     });
 
-    test('BUG-001 REGRESSION: "What is zoology?" EN->HI outputs authentic Hindi translation', () async {
+    test(
+        'BUG-001 REGRESSION: "What is zoology?" EN->HI outputs authentic Hindi translation',
+        () async {
       final res = await translationEngine.translate(
         'What is zoology?',
         options: const TranslationOptions(
@@ -52,7 +60,9 @@ void main() {
       expect(res.translatedText, equals('जंतु विज्ञान क्या है?'));
     });
 
-    test('Bilateral hero translations: "Where is the railway station?" and "Where is the nearest hospital?" in Tamil', () async {
+    test(
+        'Bilateral hero translations: "Where is the railway station?" and "Where is the nearest hospital?" in Tamil',
+        () async {
       final stationRes = await translationEngine.translate(
         'Where is the railway station?',
         options: const TranslationOptions(
@@ -69,10 +79,13 @@ void main() {
           targetLanguage: 'ta',
         ),
       );
-      expect(hospitalRes.translatedText, equals('அருகிலுள்ள மருத்துவமனை எங்கே உள்ளது?'));
+      expect(hospitalRes.translatedText,
+          equals('அருகிலுள்ள மருத்துவமனை எங்கே உள்ளது?'));
     });
 
-    test('Q&A intent produces real scientific explanation, never confused with translation', () async {
+    test(
+        'Q&A intent produces real scientific explanation, never confused with translation',
+        () async {
       final answer = await localLLM.complete('What is zoology?');
 
       // AI Answer must be authentic zoology definition
@@ -102,7 +115,8 @@ void main() {
 
     test('ConversationState enum includes required lifecycle states', () {
       expect(ConversationState.values, contains(ConversationState.listening));
-      expect(ConversationState.values, contains(ConversationState.transcribing));
+      expect(
+          ConversationState.values, contains(ConversationState.transcribing));
       expect(ConversationState.values, contains(ConversationState.processing));
       expect(ConversationState.values, contains(ConversationState.translating));
       expect(ConversationState.values, contains(ConversationState.speaking));

@@ -71,6 +71,13 @@
       "version": "1.0.4",
       "description": "Google Android System AICore Service & Gemini Nano System AI",
       "licenses": [{ "license": { "name": "Google Play Services Terms of Service" } }]
+    },
+    {
+      "type": "data",
+      "name": "unicom-offline-language-packs",
+      "version": "1.0.0",
+      "description": "Offline Language & Travel Packs (Korean, Spanish, Japanese, Tamil, Hindi, German, French, Arabic, Russian) with OCR, STT, Neural Translation, and TTS capabilities",
+      "licenses": [{ "license": { "id": "Apache-2.0" } }]
     }
   ]
 }

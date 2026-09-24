@@ -32,7 +32,8 @@ Return ONLY a valid JSON object where keys are the persona names ("simple", "det
 - "content": string explanation
 - "keyPoints": list of strings (2-4 key takeaways)
 ''';
-        final response = await provider!.complete(prompt, maxTokens: 800, temperature: 0.3);
+        final response =
+            await provider!.complete(prompt, maxTokens: 800, temperature: 0.3);
         final cleanJson = _extractJson(response);
         if (cleanJson != null) {
           final parsed = jsonDecode(cleanJson) as Map<String, dynamic>;

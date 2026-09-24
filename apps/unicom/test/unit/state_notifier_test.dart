@@ -190,7 +190,9 @@ void main() {
       expect(controller.themeMode, equals(ThemeMode.system));
     });
 
-    test('activeProviderName reflects offline, cloud key, and custom router providers', () {
+    test(
+        'activeProviderName reflects offline, cloud key, and custom router providers',
+        () {
       // Offline mode
       controller.setExecutionMode(ExecutionMode.privateOffline);
       expect(controller.activeProviderName, contains('Offline'));
@@ -219,18 +221,21 @@ void main() {
       );
 
       controller.addProviderConfig(config);
-      expect(controller.configuredProviders.any((c) => c.id == 'cfg_test'), isTrue);
+      expect(controller.configuredProviders.any((c) => c.id == 'cfg_test'),
+          isTrue);
 
       controller.setDefaultProvider('cfg_test');
       expect(controller.router.defaultProviderId, equals('cfg_test'));
 
       controller.removeProviderConfig('cfg_test');
-      expect(controller.configuredProviders.any((c) => c.id == 'cfg_test'), isFalse);
+      expect(controller.configuredProviders.any((c) => c.id == 'cfg_test'),
+          isFalse);
     });
 
     test('testProviderConfig exercises all provider types', () async {
       // Gemini
-      final geminiRes = await controller.testProviderConfig(const AIProviderConfig(
+      final geminiRes =
+          await controller.testProviderConfig(const AIProviderConfig(
         id: 't-gemini',
         type: AIProviderType.gemini,
         displayName: 'Gemini',
@@ -239,7 +244,8 @@ void main() {
       expect(geminiRes, isNotNull);
 
       // OpenAI
-      final openaiRes = await controller.testProviderConfig(const AIProviderConfig(
+      final openaiRes =
+          await controller.testProviderConfig(const AIProviderConfig(
         id: 't-openai',
         type: AIProviderType.openai,
         displayName: 'OpenAI',
@@ -248,7 +254,8 @@ void main() {
       expect(openaiRes, isNotNull);
 
       // Anthropic
-      final anthropicRes = await controller.testProviderConfig(const AIProviderConfig(
+      final anthropicRes =
+          await controller.testProviderConfig(const AIProviderConfig(
         id: 't-anthropic',
         type: AIProviderType.anthropic,
         displayName: 'Anthropic',
@@ -257,7 +264,8 @@ void main() {
       expect(anthropicRes, isNotNull);
 
       // Local
-      final localRes = await controller.testProviderConfig(const AIProviderConfig(
+      final localRes =
+          await controller.testProviderConfig(const AIProviderConfig(
         id: 't-local',
         type: AIProviderType.local,
         displayName: 'Local LLM',
@@ -265,7 +273,8 @@ void main() {
       expect(localRes, isNotNull);
 
       // AICore
-      final aicoreRes = await controller.testProviderConfig(const AIProviderConfig(
+      final aicoreRes =
+          await controller.testProviderConfig(const AIProviderConfig(
         id: 't-aicore',
         type: AIProviderType.aicore,
         displayName: 'AICore',
@@ -273,7 +282,9 @@ void main() {
       expect(aicoreRes, isNotNull);
     });
 
-    test('meeting lifecycle: startMeeting, pauseMeeting, resumeMeeting, and stopMeeting', () async {
+    test(
+        'meeting lifecycle: startMeeting, pauseMeeting, resumeMeeting, and stopMeeting',
+        () async {
       await controller.startMeeting();
       expect(controller.isMeetingActive, isTrue);
       expect(controller.isMeetingPaused, isFalse);
@@ -295,11 +306,13 @@ void main() {
       expect(report.reportType, equals(ReportType.meetingMinutes));
     });
 
-    test('interview practice mode evaluates answer when segments >= 2', () async {
+    test('interview practice mode evaluates answer when segments >= 2',
+        () async {
       controller.setApplicationMode(ApplicationMode.interviewPractice);
 
       // Segment 1: Question
-      await controller.sendTextInput('What is your greatest technical achievement?');
+      await controller
+          .sendTextInput('What is your greatest technical achievement?');
 
       // Segment 2: Answer
       await controller.sendTextInput(
@@ -360,7 +373,9 @@ void main() {
       expect(controller.actionableError, isNull);
     });
 
-    test('Q&A pipeline routes /ask, ask:, explicit intent, and isQaMode to askQuestion', () async {
+    test(
+        'Q&A pipeline routes /ask, ask:, explicit intent, and isQaMode to askQuestion',
+        () async {
       // 1. /ask prefix
       await controller.sendTextInput('/ask What is quantum computing?');
       expect(controller.currentConversation.segments.length, equals(2));
@@ -389,7 +404,8 @@ void main() {
       controller.setQaMode(false);
     });
 
-    test('sendTranslation handles same source and target language and autoTts', () async {
+    test('sendTranslation handles same source and target language and autoTts',
+        () async {
       controller.setAutoTts(true);
       // Source == Target: skips translation and uses original text
       await controller.sendTranslation(
@@ -402,10 +418,12 @@ void main() {
       controller.setAutoTts(false);
     });
 
-    test('sendTranslation executes cloud neural translation prompt path', () async {
+    test('sendTranslation executes cloud neural translation prompt path',
+        () async {
       controller.setExecutionMode(ExecutionMode.cloud);
       controller.setCloudConfig(apiKey: 'dummy_cloud_key');
-      await controller.sendTranslation('Good morning', sourceLang: 'en', targetLang: 'es');
+      await controller.sendTranslation('Good morning',
+          sourceLang: 'en', targetLang: 'es');
       expect(controller.currentConversation.segments, isNotEmpty);
       controller.setExecutionMode(ExecutionMode.privateOffline);
     });
@@ -426,7 +444,8 @@ void main() {
       expect(controller.state, equals(ConversationState.idle));
     });
 
-    test('Android platform speech recognition callbacks via MethodChannel', () async {
+    test('Android platform speech recognition callbacks via MethodChannel',
+        () async {
       debugDefaultTargetPlatformOverride = TargetPlatform.android;
       addTearDown(() {
         debugDefaultTargetPlatformOverride = null;
@@ -435,20 +454,24 @@ void main() {
       final androidController = ConversationController();
 
       // Send onPartialTranscript
-      final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+      final messenger =
+          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
       const codec = StandardMethodCodec();
 
       await messenger.handlePlatformMessage(
         'com.unicom.ai/speech',
-        codec.encodeMethodCall(const MethodCall('onPartialTranscript', {'text': 'Partial speech...'})),
+        codec.encodeMethodCall(const MethodCall(
+            'onPartialTranscript', {'text': 'Partial speech...'})),
         (data) {},
       );
-      expect(androidController.livePartialTranscript, equals('Partial speech...'));
+      expect(
+          androidController.livePartialTranscript, equals('Partial speech...'));
 
       // Send onFinalTranscript in normal translation mode (You)
       await messenger.handlePlatformMessage(
         'com.unicom.ai/speech',
-        codec.encodeMethodCall(const MethodCall('onFinalTranscript', {'text': 'Final speech You'})),
+        codec.encodeMethodCall(const MethodCall(
+            'onFinalTranscript', {'text': 'Final speech You'})),
         (data) {},
       );
       expect(androidController.livePartialTranscript, isNull);
@@ -457,7 +480,8 @@ void main() {
       androidController.setActiveListeningSpeaker('Partner');
       await messenger.handlePlatformMessage(
         'com.unicom.ai/speech',
-        codec.encodeMethodCall(const MethodCall('onFinalTranscript', {'text': 'Final speech Partner'})),
+        codec.encodeMethodCall(const MethodCall(
+            'onFinalTranscript', {'text': 'Final speech Partner'})),
         (data) {},
       );
 
@@ -465,7 +489,8 @@ void main() {
       androidController.setQaMode(true);
       await messenger.handlePlatformMessage(
         'com.unicom.ai/speech',
-        codec.encodeMethodCall(const MethodCall('onFinalTranscript', {'text': 'What is deep learning? final'})),
+        codec.encodeMethodCall(const MethodCall(
+            'onFinalTranscript', {'text': 'What is deep learning? final'})),
         (data) {},
       );
       androidController.setQaMode(false);
@@ -474,7 +499,8 @@ void main() {
       await androidController.startMeeting();
       await messenger.handlePlatformMessage(
         'com.unicom.ai/speech',
-        codec.encodeMethodCall(const MethodCall('onFinalTranscript', {'text': 'Meeting contribution speech'})),
+        codec.encodeMethodCall(const MethodCall(
+            'onFinalTranscript', {'text': 'Meeting contribution speech'})),
         (data) {},
       );
       await androidController.stopMeeting();
@@ -483,7 +509,8 @@ void main() {
       await androidController.startMeeting();
       await messenger.handlePlatformMessage(
         'com.unicom.ai/speech',
-        codec.encodeMethodCall(const MethodCall('onError', {'message': 'No speech', 'code': 7})),
+        codec.encodeMethodCall(
+            const MethodCall('onError', {'message': 'No speech', 'code': 7})),
         (data) {},
       );
       expect(androidController.actionableError, isNull);
@@ -492,7 +519,8 @@ void main() {
       // Send onError non-silence error
       await messenger.handlePlatformMessage(
         'com.unicom.ai/speech',
-        codec.encodeMethodCall(const MethodCall('onError', {'message': 'Mic hardware error', 'code': 9})),
+        codec.encodeMethodCall(const MethodCall(
+            'onError', {'message': 'Mic hardware error', 'code': 9})),
         (data) {},
       );
       expect(androidController.actionableError, equals('Mic hardware error'));

@@ -31,8 +31,18 @@ class SttEvaluationMetrics {
 /// Computes standard Word Error Rate (WER) using Levenshtein alignment on tokenized words.
 /// WER = (Substitutions + Deletions + Insertions) / N_reference
 double computeWER(String reference, String hypothesis) {
-  final refWords = reference.trim().toLowerCase().split(RegExp(r'\s+')).where((s) => s.isNotEmpty).toList();
-  final hypWords = hypothesis.trim().toLowerCase().split(RegExp(r'\s+')).where((s) => s.isNotEmpty).toList();
+  final refWords = reference
+      .trim()
+      .toLowerCase()
+      .split(RegExp(r'\s+'))
+      .where((s) => s.isNotEmpty)
+      .toList();
+  final hypWords = hypothesis
+      .trim()
+      .toLowerCase()
+      .split(RegExp(r'\s+'))
+      .where((s) => s.isNotEmpty)
+      .toList();
 
   if (refWords.isEmpty) {
     return hypWords.isEmpty ? 0.0 : 1.0;

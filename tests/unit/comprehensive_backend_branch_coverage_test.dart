@@ -71,7 +71,8 @@ class _FakeHttpHeaders implements HttpHeaders {
 
 class _FakeHttpClientRequest implements HttpClientRequest {
   final _FakeHttpHeaders _headers = _FakeHttpHeaders();
-  final Completer<HttpClientResponse> _completer = Completer<HttpClientResponse>();
+  final Completer<HttpClientResponse> _completer =
+      Completer<HttpClientResponse>();
   final List<String> writtenData = [];
 
   void completeWith(HttpClientResponse response) {
@@ -101,7 +102,8 @@ class _FakeHttpClientRequest implements HttpClientRequest {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
-class _FakeHttpClientResponse extends Stream<List<int>> implements HttpClientResponse {
+class _FakeHttpClientResponse extends Stream<List<int>>
+    implements HttpClientResponse {
   @override
   final int statusCode;
   final String body;
@@ -116,7 +118,8 @@ class _FakeHttpClientResponse extends Stream<List<int>> implements HttpClientRes
     bool? cancelOnError,
   }) {
     final stream = Stream.value(utf8.encode(body));
-    return stream.listen(onData, onError: onError, onDone: onDone, cancelOnError: cancelOnError);
+    return stream.listen(onData,
+        onError: onError, onDone: onDone, cancelOnError: cancelOnError);
   }
 
   @override
@@ -150,14 +153,24 @@ class _MockHttpClient implements HttpClient {
 
 void main() {
   group('Comprehensive Backend Branch Coverage Tests', () {
-    test('InterviewEvaluator LLM provider success, missing fields, and error fallback', () async {
+    test(
+        'InterviewEvaluator LLM provider success, missing fields, and error fallback',
+        () async {
       // 1. LLM provider returning full valid JSON
       final fullJsonProvider = _FakeLLMProvider(
         onComplete: (prompt) async => jsonEncode({
           'overallScore': 9,
           'rubrics': [
-            {'criterion': 'clarity', 'score': 9, 'feedback': 'Excellent clarity'},
-            {'criterion': 'technical_depth', 'score': 9, 'feedback': 'Deep insights'},
+            {
+              'criterion': 'clarity',
+              'score': 9,
+              'feedback': 'Excellent clarity'
+            },
+            {
+              'criterion': 'technical_depth',
+              'score': 9,
+              'feedback': 'Deep insights'
+            },
           ],
           'strengths': ['Strong architecture knowledge', 'Clear communication'],
           'areasForImprovement': ['Elaborate on cost implications'],
@@ -169,7 +182,8 @@ void main() {
       final evaluatorWithLLM = InterviewEvaluator(fullJsonProvider);
       final assessment1 = await evaluatorWithLLM.evaluateAnswer(
         question: 'Design a distributed rate limiter',
-        candidateAnswer: 'I would use a token bucket algorithm with Redis and Lua scripts for atomic updates.',
+        candidateAnswer:
+            'I would use a token bucket algorithm with Redis and Lua scripts for atomic updates.',
         roleOrTopic: 'Staff Systems Architect',
       );
 
@@ -177,18 +191,21 @@ void main() {
       expect(assessment1.rubrics.length, equals(2));
       expect(assessment1.rubrics.first.criterion, equals('clarity'));
       expect(assessment1.strengths.first, contains('Strong architecture'));
-      expect(assessment1.areasForImprovement.first, contains('cost implications'));
+      expect(
+          assessment1.areasForImprovement.first, contains('cost implications'));
       expect(assessment1.recommendedFollowUps.first, contains('1M QPS'));
       expect(assessment1.studyPlan.first, contains('multi-region'));
 
       // 2. LLM provider returning JSON with null / missing lists
       final partialJsonProvider = _FakeLLMProvider(
-        onComplete: (prompt) async => 'Some preamble {"overallScore": null} postamble',
+        onComplete: (prompt) async =>
+            'Some preamble {"overallScore": null} postamble',
       );
       final evaluatorWithPartial = InterviewEvaluator(partialJsonProvider);
       final assessment2 = await evaluatorWithPartial.evaluateAnswer(
         question: 'What is ACID?',
-        candidateAnswer: 'Atomicity, Consistency, Isolation, Durability in databases.',
+        candidateAnswer:
+            'Atomicity, Consistency, Isolation, Durability in databases.',
       );
       expect(assessment2.overallScore, equals(8));
       expect(assessment2.rubrics, isEmpty);
@@ -201,13 +218,15 @@ void main() {
       final evaluatorWithError = InterviewEvaluator(errorProvider);
       final assessment3 = await evaluatorWithError.evaluateAnswer(
         question: 'Explain cache invalidation',
-        candidateAnswer: 'First, we invalidate on write because stale data degrades user experience. Result is consistent cache.',
+        candidateAnswer:
+            'First, we invalidate on write because stale data degrades user experience. Result is consistent cache.',
       );
       expect(assessment3.overallScore, greaterThan(0));
       expect(assessment3.rubrics.length, equals(5));
     });
 
-    test('InterviewEvaluator heuristic scoring edge cases and branches', () async {
+    test('InterviewEvaluator heuristic scoring edge cases and branches',
+        () async {
       final evaluator = InterviewEvaluator();
 
       // Short answer: wordCount < 10 (clarity=4), wordCount < 25 (depth=5), no transitions (structure=6)
@@ -216,13 +235,29 @@ void main() {
         question: 'What is DNS?',
         candidateAnswer: 'Domain Name System.',
       );
-      expect(shortAnswer.rubrics.firstWhere((r) => r.criterion == 'clarity').score, equals(4));
-      expect(shortAnswer.rubrics.firstWhere((r) => r.criterion == 'technical_depth').score, equals(5));
-      expect(shortAnswer.rubrics.firstWhere((r) => r.criterion == 'structure').score, equals(6));
-      expect(shortAnswer.strengths, contains('Addressed the question promptly.'));
-      expect(shortAnswer.areasForImprovement, contains('Expand upon real-world examples and measurable outcomes.'));
-      expect(shortAnswer.areasForImprovement, contains('Mention potential failure modes and trade-offs.'));
-      expect(shortAnswer.areasForImprovement, contains('Explicitly outline the Situation, Action taken, and Business Result.'));
+      expect(
+          shortAnswer.rubrics.firstWhere((r) => r.criterion == 'clarity').score,
+          equals(4));
+      expect(
+          shortAnswer.rubrics
+              .firstWhere((r) => r.criterion == 'technical_depth')
+              .score,
+          equals(5));
+      expect(
+          shortAnswer.rubrics
+              .firstWhere((r) => r.criterion == 'structure')
+              .score,
+          equals(6));
+      expect(
+          shortAnswer.strengths, contains('Addressed the question promptly.'));
+      expect(shortAnswer.areasForImprovement,
+          contains('Expand upon real-world examples and measurable outcomes.'));
+      expect(shortAnswer.areasForImprovement,
+          contains('Mention potential failure modes and trade-offs.'));
+      expect(
+          shortAnswer.areasForImprovement,
+          contains(
+              'Explicitly outline the Situation, Action taken, and Business Result.'));
 
       // Very long answer: wordCount > 400 (clarity=6)
       final longText = List.generate(450, (i) => 'word$i').join(' ');
@@ -230,32 +265,57 @@ void main() {
         question: 'Explain everything',
         candidateAnswer: longText,
       );
-      expect(longAnswer.rubrics.firstWhere((r) => r.criterion == 'clarity').score, equals(6));
+      expect(
+          longAnswer.rubrics.firstWhere((r) => r.criterion == 'clarity').score,
+          equals(6));
 
       // Comprehensive answer: wordCount >= 40, depth >= 8 (with terms: architecture, scale, database, latency, tradeoff, security, cache, test, api), structure=9 (with first, then, because, result)
       final fullAnswer = await evaluator.evaluateAnswer(
         question: 'Describe your microservice migration',
-        candidateAnswer: 'First, our team redesigned the architecture to scale across multiple regions. '
+        candidateAnswer:
+            'First, our team redesigned the architecture to scale across multiple regions. '
             'Then, we migrated the database to reduce latency and evaluated the tradeoff between consistency and availability. '
             'Because security was paramount, we introduced mutual TLS and a distributed cache to optimize api throughput. '
             'Finally, comprehensive test suites ensured that the result was highly resilient under production load. '
             'Overall, this strategy delivered a 40% improvement in response times across all services.',
       );
-      expect(fullAnswer.rubrics.firstWhere((r) => r.criterion == 'clarity').score, equals(9));
-      expect(fullAnswer.rubrics.firstWhere((r) => r.criterion == 'technical_depth').score, equals(10));
-      expect(fullAnswer.rubrics.firstWhere((r) => r.criterion == 'structure').score, equals(9));
-      expect(fullAnswer.strengths, contains('Articulated core message directly.'));
-      expect(fullAnswer.strengths, contains('Incorporated specific technical concepts and terminology.'));
-      expect(fullAnswer.strengths, contains('Maintained logical progression and flow.'));
+      expect(
+          fullAnswer.rubrics.firstWhere((r) => r.criterion == 'clarity').score,
+          equals(9));
+      expect(
+          fullAnswer.rubrics
+              .firstWhere((r) => r.criterion == 'technical_depth')
+              .score,
+          equals(10));
+      expect(
+          fullAnswer.rubrics
+              .firstWhere((r) => r.criterion == 'structure')
+              .score,
+          equals(9));
+      expect(
+          fullAnswer.strengths, contains('Articulated core message directly.'));
+      expect(
+          fullAnswer.strengths,
+          contains(
+              'Incorporated specific technical concepts and terminology.'));
+      expect(fullAnswer.strengths,
+          contains('Maintained logical progression and flow.'));
       expect(fullAnswer.areasForImprovement, isEmpty);
     });
 
-    test('ExplanationEngine LLM provider and all persona fallback branches', () async {
+    test('ExplanationEngine LLM provider and all persona fallback branches',
+        () async {
       // 1. LLM provider returning full JSON for personas
       final llmProvider = _FakeLLMProvider(
         onComplete: (prompt) async => jsonEncode({
-          'simple': {'content': 'LLM simple explanation', 'keyPoints': ['point1']},
-          'detailed': {'content': 'LLM detailed explanation', 'keyPoints': null},
+          'simple': {
+            'content': 'LLM simple explanation',
+            'keyPoints': ['point1']
+          },
+          'detailed': {
+            'content': 'LLM detailed explanation',
+            'keyPoints': null
+          },
         }),
       );
 
@@ -265,18 +325,24 @@ void main() {
         targetLanguage: 'es',
         personas: [ExplanationPersona.simple, ExplanationPersona.detailed],
       );
-      expect(result1.explanations[ExplanationPersona.simple]?.content, equals('LLM simple explanation'));
-      expect(result1.explanations[ExplanationPersona.simple]?.keyPoints, equals(['point1']));
-      expect(result1.explanations[ExplanationPersona.detailed]?.content, equals('LLM detailed explanation'));
-      expect(result1.explanations[ExplanationPersona.detailed]?.keyPoints, isEmpty);
+      expect(result1.explanations[ExplanationPersona.simple]?.content,
+          equals('LLM simple explanation'));
+      expect(result1.explanations[ExplanationPersona.simple]?.keyPoints,
+          equals(['point1']));
+      expect(result1.explanations[ExplanationPersona.detailed]?.content,
+          equals('LLM detailed explanation'));
+      expect(result1.explanations[ExplanationPersona.detailed]?.keyPoints,
+          isEmpty);
 
       // 2. LLM provider throwing exception -> falls back to template
-      final errorEngine = ExplanationEngine(_FakeLLMProvider(onComplete: (_) async => throw Exception('error')));
+      final errorEngine = ExplanationEngine(
+          _FakeLLMProvider(onComplete: (_) async => throw Exception('error')));
       final resultError = await errorEngine.generateExplanations(
         'System architecture is robust.',
         personas: [ExplanationPersona.simple],
       );
-      expect(resultError.explanations[ExplanationPersona.simple]?.content, contains('System architecture is robust.'));
+      expect(resultError.explanations[ExplanationPersona.simple]?.content,
+          contains('System architecture is robust.'));
 
       // 3. Template fallback for ALL 7 personas (both question and declarative)
       final templateEngine = ExplanationEngine();
@@ -288,30 +354,47 @@ void main() {
         targetLanguage: 'es',
         personas: ExplanationPersona.values,
       );
-      expect(qResult.explanations[ExplanationPersona.simple]?.content, contains('direct question'));
-      expect(qResult.explanations[ExplanationPersona.detailed]?.content, contains('structured inquiry'));
-      expect(qResult.explanations[ExplanationPersona.detailed]?.content, contains('System Design'));
-      expect(qResult.explanations[ExplanationPersona.detailed]?.keyPoints, contains('Target language: es'));
-      expect(qResult.explanations[ExplanationPersona.terminology]?.content, contains('Key terminology analyzed'));
-      expect(qResult.explanations[ExplanationPersona.grammar]?.content, contains('Interrogative clause'));
-      expect(qResult.explanations[ExplanationPersona.culturalContext]?.content, contains('respectful and open'));
-      expect(qResult.explanations[ExplanationPersona.examples]?.content, contains('Real-world usage examples'));
-      expect(qResult.explanations[ExplanationPersona.childFriendly]?.content, contains('Can you tell me more'));
+      expect(qResult.explanations[ExplanationPersona.simple]?.content,
+          contains('direct question'));
+      expect(qResult.explanations[ExplanationPersona.detailed]?.content,
+          contains('structured inquiry'));
+      expect(qResult.explanations[ExplanationPersona.detailed]?.content,
+          contains('System Design'));
+      expect(qResult.explanations[ExplanationPersona.detailed]?.keyPoints,
+          contains('Target language: es'));
+      expect(qResult.explanations[ExplanationPersona.terminology]?.content,
+          contains('Key terminology analyzed'));
+      expect(qResult.explanations[ExplanationPersona.grammar]?.content,
+          contains('Interrogative clause'));
+      expect(qResult.explanations[ExplanationPersona.culturalContext]?.content,
+          contains('respectful and open'));
+      expect(qResult.explanations[ExplanationPersona.examples]?.content,
+          contains('Real-world usage examples'));
+      expect(qResult.explanations[ExplanationPersona.childFriendly]?.content,
+          contains('Can you tell me more'));
 
       // Declarative variant without context or target language, short words
       final dResult = await templateEngine.generateExplanations(
         'It is ok.',
         personas: ExplanationPersona.values,
       );
-      expect(dResult.explanations[ExplanationPersona.simple]?.content, contains('clear statement'));
-      expect(dResult.explanations[ExplanationPersona.detailed]?.content, contains('declarative statement'));
-      expect(dResult.explanations[ExplanationPersona.terminology]?.content, contains('Standard conversational vocabulary'));
-      expect(dResult.explanations[ExplanationPersona.grammar]?.content, contains('Declarative clause'));
-      expect(dResult.explanations[ExplanationPersona.culturalContext]?.content, contains('professional and neutral'));
-      expect(dResult.explanations[ExplanationPersona.childFriendly]?.content, contains('Here is something fun'));
+      expect(dResult.explanations[ExplanationPersona.simple]?.content,
+          contains('clear statement'));
+      expect(dResult.explanations[ExplanationPersona.detailed]?.content,
+          contains('declarative statement'));
+      expect(dResult.explanations[ExplanationPersona.terminology]?.content,
+          contains('Standard conversational vocabulary'));
+      expect(dResult.explanations[ExplanationPersona.grammar]?.content,
+          contains('Declarative clause'));
+      expect(dResult.explanations[ExplanationPersona.culturalContext]?.content,
+          contains('professional and neutral'));
+      expect(dResult.explanations[ExplanationPersona.childFriendly]?.content,
+          contains('Here is something fun'));
     });
 
-    test('SecureKeyStorage all branches: resolution, empty keys, tampering, corruption', () async {
+    test(
+        'SecureKeyStorage all branches: resolution, empty keys, tampering, corruption',
+        () async {
       final tempDir = Directory.systemTemp.createTempSync('secure_key_test_');
       try {
         final storage = SecureKeyStorage(storageDir: tempDir);
@@ -338,7 +421,8 @@ void main() {
         final vaultFile = File('${tempDir.path}/.secure_vault.dat');
         expect(await vaultFile.exists(), isTrue);
 
-        final vaultContent = jsonDecode(await vaultFile.readAsString()) as Map<String, dynamic>;
+        final vaultContent =
+            jsonDecode(await vaultFile.readAsString()) as Map<String, dynamic>;
         // Tamper with HMAC
         vaultContent['api_key_2']['hmac'] = 'invalid_tampered_hmac';
         await vaultFile.writeAsString(jsonEncode(vaultContent));
@@ -355,7 +439,10 @@ void main() {
         expect(await storage.getKey('api_key_2'), isNull);
 
         // Corrupted base64 payload
-        vaultContent['api_key_2'] = {'payload': '!!!not-base-64!!!', 'hmac': 'some_hmac'};
+        vaultContent['api_key_2'] = {
+          'payload': '!!!not-base-64!!!',
+          'hmac': 'some_hmac'
+        };
         await vaultFile.writeAsString(jsonEncode(vaultContent));
         expect(await storage.getKey('api_key_2'), isNull);
 
@@ -382,63 +469,74 @@ void main() {
       }
     });
 
-    test('OfflineTranslationEngine formality, reverse checks, and phrasebook fallback', () async {
+    test(
+        'OfflineTranslationEngine formality, reverse checks, and phrasebook fallback',
+        () async {
       final engine = OfflineTranslationEngine(null, _IdentityNeuralEngine());
 
       // 1. Empty string
-      final emptyResult = await engine.translate('', options: const TranslationOptions(targetLanguage: 'es'));
+      final emptyResult = await engine.translate('',
+          options: const TranslationOptions(targetLanguage: 'es'));
       expect(emptyResult.translatedText, isEmpty);
 
       // 2. Same language with formality 'more' (Spanish: tú -> usted)
       final sameEsResult = await engine.translate(
         'tú eres mi amigo',
-        options: const TranslationOptions(sourceLanguage: 'es', targetLanguage: 'es', formality: 'more'),
+        options: const TranslationOptions(
+            sourceLanguage: 'es', targetLanguage: 'es', formality: 'more'),
       );
       expect(sameEsResult.translatedText, contains('usted'));
 
       // 3. Same language with formality 'more' (German: du -> Sie)
       final sameDeResult = await engine.translate(
         'du bist hier',
-        options: const TranslationOptions(sourceLanguage: 'de', targetLanguage: 'de', formality: 'more'),
+        options: const TranslationOptions(
+            sourceLanguage: 'de', targetLanguage: 'de', formality: 'more'),
       );
       expect(sameDeResult.translatedText, contains('Sie'));
 
       // 4. Same language standard formality
       final sameStandardResult = await engine.translate(
         'hello world',
-        options: const TranslationOptions(sourceLanguage: 'en', targetLanguage: 'en'),
+        options: const TranslationOptions(
+            sourceLanguage: 'en', targetLanguage: 'en'),
       );
       expect(sameStandardResult.translatedText, equals('hello world'));
 
       // 5. Reverse check from non-English to English
       final reverseResult = await engine.translate(
         'gracias',
-        options: const TranslationOptions(sourceLanguage: 'es', targetLanguage: 'en'),
+        options: const TranslationOptions(
+            sourceLanguage: 'es', targetLanguage: 'en'),
       );
       expect(reverseResult.translatedText.toLowerCase(), contains('thank you'));
 
       // 6. Reverse check from non-English to third language (es -> fr)
       final crossResult = await engine.translate(
         'gracias',
-        options: const TranslationOptions(sourceLanguage: 'es', targetLanguage: 'fr'),
+        options: const TranslationOptions(
+            sourceLanguage: 'es', targetLanguage: 'fr'),
       );
       expect(crossResult.translatedText.isNotEmpty, isTrue);
 
       // 7. Lexical alignment with formality 'more' (es with tú -> usted, de with du -> Sie)
       final formEsResult = await engine.translate(
         'tú',
-        options: const TranslationOptions(sourceLanguage: 'fr', targetLanguage: 'es', formality: 'more'),
+        options: const TranslationOptions(
+            sourceLanguage: 'fr', targetLanguage: 'es', formality: 'more'),
       );
       expect(formEsResult.translatedText, contains('usted'));
 
       final formDeResult = await engine.translate(
         'du',
-        options: const TranslationOptions(sourceLanguage: 'fr', targetLanguage: 'de', formality: 'more'),
+        options: const TranslationOptions(
+            sourceLanguage: 'fr', targetLanguage: 'de', formality: 'more'),
       );
       expect(formDeResult.translatedText, contains('Sie'));
     });
 
-    test('Domain Models full property coverage and serialization roundtrips', () {
+    test('Domain Models full property coverage and serialization roundtrips',
+        () {
       // ModelMetadata full properties
       final meta = ModelMetadata(
         id: 'model_1',
@@ -470,16 +568,19 @@ void main() {
       expect(metaRestored.minRamMb, equals(512));
       expect(metaRestored.supportedAccelerators, contains('GPU'));
       expect(metaRestored.isLoadedInMemory, isTrue);
-      expect(metaRestored.installPath, equals('/data/models/whisper-large.bin'));
+      expect(
+          metaRestored.installPath, equals('/data/models/whisper-large.bin'));
 
       // AIProviderType fromJson fallback
       expect(AIProviderType.fromJson('gemini'), equals(AIProviderType.gemini));
       expect(AIProviderType.fromJson('openai'), equals(AIProviderType.openai));
-      expect(AIProviderType.fromJson('anthropic'), equals(AIProviderType.anthropic));
+      expect(AIProviderType.fromJson('anthropic'),
+          equals(AIProviderType.anthropic));
       expect(AIProviderType.fromJson('custom'), equals(AIProviderType.custom));
       expect(AIProviderType.fromJson('local'), equals(AIProviderType.local));
       expect(AIProviderType.fromJson('aicore'), equals(AIProviderType.aicore));
-      expect(AIProviderType.fromJson('unknown_provider'), equals(AIProviderType.custom));
+      expect(AIProviderType.fromJson('unknown_provider'),
+          equals(AIProviderType.custom));
 
       // GeneratedReport without metadata
       final report = GeneratedReport(
@@ -550,7 +651,8 @@ void main() {
       expect(tRestored.relevanceScore, equals(1.0));
 
       // InterviewRubricScore
-      final rub = InterviewRubricScore(criterion: 'delivery', score: 10, feedback: 'Great delivery');
+      final rub = InterviewRubricScore(
+          criterion: 'delivery', score: 10, feedback: 'Great delivery');
       final rubRestored = InterviewRubricScore.fromJson(rub.toJson());
       expect(rubRestored.score, equals(10));
 
@@ -592,7 +694,9 @@ void main() {
       expect(fullCopy.metadata?['tag'], equals('production'));
     });
 
-    test('OpenAIProvider complete, completeStream, testConnection, retry and error handling', () async {
+    test(
+        'OpenAIProvider complete, completeStream, testConnection, retry and error handling',
+        () async {
       // 1. Private offline mode restrictions
       final offlineProvider = OpenAIProvider(
         executionMode: ExecutionMode.privateOffline,
@@ -642,7 +746,9 @@ void main() {
           request.response
             ..statusCode = 429
             ..headers.contentType = ContentType.json
-            ..write(jsonEncode({'error': {'message': 'Rate limit exceeded'}}));
+            ..write(jsonEncode({
+              'error': {'message': 'Rate limit exceeded'}
+            }));
           await request.response.close();
         } else if (requestCount == 3) {
           // Success after retry
@@ -662,7 +768,9 @@ void main() {
           request.response
             ..statusCode = HttpStatus.badRequest
             ..headers.contentType = ContentType.json
-            ..write(jsonEncode({'error': {'message': 'Model parameter error'}}));
+            ..write(jsonEncode({
+              'error': {'message': 'Model parameter error'}
+            }));
           await request.response.close();
         } else {
           // Empty choices fallback
@@ -705,7 +813,8 @@ void main() {
 
         // Test 5: completeStream yields chunks
         // Server will now return 'Empty choices' so completeStream yields 'No response generated.'
-        final streamChunks = await cloudProvider.completeStream('Streaming prompt').toList();
+        final streamChunks =
+            await cloudProvider.completeStream('Streaming prompt').toList();
         expect(streamChunks, isNotEmpty);
       } finally {
         await server.close(force: true);
@@ -713,7 +822,9 @@ void main() {
       }
     });
 
-    test('AnthropicProvider complete, completeStream, testConnection, retry and error handling', () async {
+    test(
+        'AnthropicProvider complete, completeStream, testConnection, retry and error handling',
+        () async {
       // 1. Private offline mode restrictions
       final offlineProvider = AnthropicProvider(
         executionMode: ExecutionMode.privateOffline,
@@ -774,7 +885,9 @@ void main() {
           request.response
             ..statusCode = 429
             ..headers.contentType = ContentType.json
-            ..write(jsonEncode({'error': {'message': 'Too many requests'}}));
+            ..write(jsonEncode({
+              'error': {'message': 'Too many requests'}
+            }));
           await request.response.close();
         } else if (requestCount == 3) {
           // Success after retry
@@ -792,7 +905,9 @@ void main() {
           request.response
             ..statusCode = HttpStatus.badRequest
             ..headers.contentType = ContentType.json
-            ..write(jsonEncode({'error': {'message': 'Invalid prompt payload'}}));
+            ..write(jsonEncode({
+              'error': {'message': 'Invalid prompt payload'}
+            }));
           await request.response.close();
         } else {
           // Empty content
@@ -834,7 +949,8 @@ void main() {
         expect(emptyContentResult, equals('No response generated.'));
 
         // Test 5: completeStream yields chunks
-        final streamChunks = await cloudProvider.completeStream('Stream test').toList();
+        final streamChunks =
+            await cloudProvider.completeStream('Stream test').toList();
         expect(streamChunks, isNotEmpty);
       } finally {
         await server.close(force: true);
@@ -842,7 +958,9 @@ void main() {
       }
     });
 
-    test('AIProviderRouter registration, routing logic, execution modes, and fallback', () async {
+    test(
+        'AIProviderRouter registration, routing logic, execution modes, and fallback',
+        () async {
       final android = AndroidAICoreProvider();
       final local = LocalLLMProvider(isModelLoaded: false);
       final cloud = CloudLLMProvider(
@@ -904,7 +1022,8 @@ void main() {
 
       expect(router.configuredProviders.length, equals(5));
       expect(router.defaultProviderId, equals('cfg_gemini'));
-      expect(router.activeProviderConfig?.displayName, equals('Gemini 1.5 Pro'));
+      expect(
+          router.activeProviderConfig?.displayName, equals('Gemini 1.5 Pro'));
 
       // Capability routing check
       router.setCapabilityRoute('reasoning', 'cfg_openai');
@@ -927,7 +1046,8 @@ void main() {
       final cloudProvider = await router.selectProvider(capability: 'code');
       expect(cloudProvider.id, equals('anthropic_llm'));
 
-      final defaultCloudProvider = await router.selectProvider(capability: 'unknown_cap');
+      final defaultCloudProvider =
+          await router.selectProvider(capability: 'unknown_cap');
       expect(defaultCloudProvider, isNotNull);
 
       // 4. Auto mode routing
@@ -942,7 +1062,8 @@ void main() {
 
       // Remove config
       router.removeProviderConfig('cfg_gemini');
-      expect(router.configuredProviders.any((c) => c.id == 'cfg_gemini'), isFalse);
+      expect(
+          router.configuredProviders.any((c) => c.id == 'cfg_gemini'), isFalse);
 
       // Set default provider
       router.setDefaultProvider('cfg_openai');
@@ -976,14 +1097,16 @@ void main() {
 
     test('AndroidGenAIProvider full interface and capability tests', () async {
       // 1. When unavailable / unsupported
-      final unsupportedProvider = AndroidGenAIProvider(simulateAvailable: false);
+      final unsupportedProvider =
+          AndroidGenAIProvider(simulateAvailable: false);
       expect(unsupportedProvider.id, equals('android_aicore_gemini_nano'));
       expect(unsupportedProvider.name, contains('Android GenAI'));
       expect(unsupportedProvider.isOfflineCapable, isTrue);
 
       final status = await unsupportedProvider.checkCapability();
       expect(status.isAvailable, isFalse);
-      expect(await unsupportedProvider.getFeatureStatus(), equals('NOT_SUPPORTED'));
+      expect(await unsupportedProvider.getFeatureStatus(),
+          equals('NOT_SUPPORTED'));
       expect(await unsupportedProvider.warmup(), isFalse);
 
       final diag = await unsupportedProvider.getDiagnostics();
@@ -1022,7 +1145,8 @@ void main() {
       final gen = await supportedProvider.generate('Tell me a joke');
       expect(gen, contains('Gemini Nano on-device output'));
 
-      final streamChunks = await supportedProvider.generateStreaming('Tell me a story').toList();
+      final streamChunks =
+          await supportedProvider.generateStreaming('Tell me a story').toList();
       expect(streamChunks.join(''), contains('Gemini Nano on-device output'));
 
       final sum = await supportedProvider.summarize('Text to summarize');
@@ -1039,11 +1163,14 @@ void main() {
       expect(aicoreStatus.isAvailable, isTrue);
     });
 
-    test('OpenAIProvider complete, completeStream, testConnection, retry and error handling', () async {
+    test(
+        'OpenAIProvider complete, completeStream, testConnection, retry and error handling',
+        () async {
       NetworkGate().setOfflineEnforcement(false);
 
       // 1. testConnection in offline mode
-      final offlineProvider = OpenAIProvider(executionMode: ExecutionMode.privateOffline, apiKey: 'key');
+      final offlineProvider = OpenAIProvider(
+          executionMode: ExecutionMode.privateOffline, apiKey: 'key');
       final offlineConn = await offlineProvider.testConnection();
       expect(offlineConn.isSuccessful, isFalse);
       expect(offlineConn.errorMessage, contains('private_offline'));
@@ -1052,7 +1179,13 @@ void main() {
       final clientOk = _MockHttpClient(
         onPost: (uri, method) async => _FakeHttpClientResponse(
           statusCode: HttpStatus.ok,
-          body: jsonEncode({'choices': [{'message': {'content': 'ok'}}]}),
+          body: jsonEncode({
+            'choices': [
+              {
+                'message': {'content': 'ok'}
+              }
+            ]
+          }),
         ),
       );
       final providerOk = OpenAIProvider(
@@ -1070,7 +1203,9 @@ void main() {
       final client401 = _MockHttpClient(
         onPost: (uri, method) async => _FakeHttpClientResponse(
           statusCode: HttpStatus.unauthorized,
-          body: jsonEncode({'error': {'message': 'Invalid key'}}),
+          body: jsonEncode({
+            'error': {'message': 'Invalid key'}
+          }),
         ),
       );
       final provider401 = OpenAIProvider(
@@ -1084,7 +1219,8 @@ void main() {
 
       // 4. testConnection SocketException
       final clientSocket = _MockHttpClient(
-        onPost: (uri, method) async => throw const SocketException('Connection refused'),
+        onPost: (uri, method) async =>
+            throw const SocketException('Connection refused'),
       );
       final providerSocket = OpenAIProvider(
         executionMode: ExecutionMode.cloud,
@@ -1124,7 +1260,8 @@ void main() {
         baseUrl: 'https://custom.api.com/',
         httpClientFactory: () => clientComplete,
       );
-      final compResult = await providerComplete.complete('prompt', systemPrompt: 'sys');
+      final compResult =
+          await providerComplete.complete('prompt', systemPrompt: 'sys');
       expect(compResult, equals('OpenAI completion result'));
 
       // 7. complete with empty choices and null content
@@ -1139,12 +1276,19 @@ void main() {
         apiKey: 'sk-test',
         httpClientFactory: () => clientEmpty,
       );
-      expect(await providerEmpty.complete('hi'), equals('No response generated.'));
+      expect(
+          await providerEmpty.complete('hi'), equals('No response generated.'));
 
       final clientNull = _MockHttpClient(
         onPost: (uri, method) async => _FakeHttpClientResponse(
           statusCode: HttpStatus.ok,
-          body: jsonEncode({'choices': [{'message': {'content': null}}]}),
+          body: jsonEncode({
+            'choices': [
+              {
+                'message': {'content': null}
+              }
+            ]
+          }),
         ),
       );
       final providerNull = OpenAIProvider(
@@ -1152,7 +1296,8 @@ void main() {
         apiKey: 'sk-test',
         httpClientFactory: () => clientNull,
       );
-      expect(await providerNull.complete('hi'), equals('No response generated.'));
+      expect(
+          await providerNull.complete('hi'), equals('No response generated.'));
 
       // 8. complete retry on 429 then success
       int attempts429 = 0;
@@ -1164,7 +1309,13 @@ void main() {
           }
           return _FakeHttpClientResponse(
             statusCode: HttpStatus.ok,
-            body: jsonEncode({'choices': [{'message': {'content': 'Success after 429'}}]}),
+            body: jsonEncode({
+              'choices': [
+                {
+                  'message': {'content': 'Success after 429'}
+                }
+              ]
+            }),
           );
         },
       );
@@ -1194,7 +1345,8 @@ void main() {
 
       // 10. complete SocketException retry exceeded
       final clientSocketErr = _MockHttpClient(
-        onPost: (uri, method) async => throw const SocketException('Host unreachable'),
+        onPost: (uri, method) async =>
+            throw const SocketException('Host unreachable'),
       );
       final providerSocketErr = OpenAIProvider(
         executionMode: ExecutionMode.cloud,
@@ -1207,20 +1359,25 @@ void main() {
       );
 
       // 11. completeStream
-      final streamChunks = await providerComplete.completeStream('Stream test').toList();
+      final streamChunks =
+          await providerComplete.completeStream('Stream test').toList();
       expect(streamChunks.join(''), equals('OpenAI completion result'));
     });
 
-    test('AnthropicProvider complete, completeStream, testConnection, retry and error handling', () async {
+    test(
+        'AnthropicProvider complete, completeStream, testConnection, retry and error handling',
+        () async {
       NetworkGate().setOfflineEnforcement(false);
 
       // 1. testConnection in offline mode and missing API key
-      final offlineProvider = AnthropicProvider(executionMode: ExecutionMode.privateOffline, apiKey: 'key');
+      final offlineProvider = AnthropicProvider(
+          executionMode: ExecutionMode.privateOffline, apiKey: 'key');
       final offlineConn = await offlineProvider.testConnection();
       expect(offlineConn.isSuccessful, isFalse);
       expect(offlineConn.errorMessage, contains('private_offline'));
 
-      final missingKeyProvider = AnthropicProvider(executionMode: ExecutionMode.cloud, apiKey: '');
+      final missingKeyProvider =
+          AnthropicProvider(executionMode: ExecutionMode.cloud, apiKey: '');
       final missingConn = await missingKeyProvider.testConnection();
       expect(missingConn.isSuccessful, isFalse);
       expect(missingConn.errorMessage, contains('Missing Anthropic API key'));
@@ -1229,7 +1386,11 @@ void main() {
       final clientOk = _MockHttpClient(
         onPost: (uri, method) async => _FakeHttpClientResponse(
           statusCode: HttpStatus.ok,
-          body: jsonEncode({'content': [{'text': 'ok'}]}),
+          body: jsonEncode({
+            'content': [
+              {'text': 'ok'}
+            ]
+          }),
         ),
       );
       final providerOk = AnthropicProvider(
@@ -1247,7 +1408,9 @@ void main() {
       final client401 = _MockHttpClient(
         onPost: (uri, method) async => _FakeHttpClientResponse(
           statusCode: HttpStatus.unauthorized,
-          body: jsonEncode({'error': {'message': 'Invalid key'}}),
+          body: jsonEncode({
+            'error': {'message': 'Invalid key'}
+          }),
         ),
       );
       final provider401 = AnthropicProvider(
@@ -1261,7 +1424,8 @@ void main() {
 
       // 4. testConnection SocketException
       final clientSocket = _MockHttpClient(
-        onPost: (uri, method) async => throw const SocketException('Connection refused'),
+        onPost: (uri, method) async =>
+            throw const SocketException('Connection refused'),
       );
       final providerSocket = AnthropicProvider(
         executionMode: ExecutionMode.cloud,
@@ -1302,7 +1466,8 @@ void main() {
         apiKey: 'sk-ant-test',
         httpClientFactory: () => clientComplete,
       );
-      final compResult = await providerComplete.complete('prompt', systemPrompt: 'sys');
+      final compResult =
+          await providerComplete.complete('prompt', systemPrompt: 'sys');
       expect(compResult, equals('Claude completion result'));
 
       // 7. complete with empty content and null text
@@ -1317,12 +1482,17 @@ void main() {
         apiKey: 'sk-ant-test',
         httpClientFactory: () => clientEmpty,
       );
-      expect(await providerEmpty.complete('hi'), equals('No response generated.'));
+      expect(
+          await providerEmpty.complete('hi'), equals('No response generated.'));
 
       final clientNull = _MockHttpClient(
         onPost: (uri, method) async => _FakeHttpClientResponse(
           statusCode: HttpStatus.ok,
-          body: jsonEncode({'content': [{'text': null}]}),
+          body: jsonEncode({
+            'content': [
+              {'text': null}
+            ]
+          }),
         ),
       );
       final providerNull = AnthropicProvider(
@@ -1330,7 +1500,8 @@ void main() {
         apiKey: 'sk-ant-test',
         httpClientFactory: () => clientNull,
       );
-      expect(await providerNull.complete('hi'), equals('No response generated.'));
+      expect(
+          await providerNull.complete('hi'), equals('No response generated.'));
 
       // 8. complete retry on 503 then success
       int attempts503 = 0;
@@ -1338,11 +1509,16 @@ void main() {
         onPost: (uri, method) async {
           attempts503++;
           if (attempts503 == 1) {
-            return _FakeHttpClientResponse(statusCode: 503, body: 'Service Unavailable');
+            return _FakeHttpClientResponse(
+                statusCode: 503, body: 'Service Unavailable');
           }
           return _FakeHttpClientResponse(
             statusCode: HttpStatus.ok,
-            body: jsonEncode({'content': [{'text': 'Success after 503'}]}),
+            body: jsonEncode({
+              'content': [
+                {'text': 'Success after 503'}
+              ]
+            }),
           );
         },
       );
@@ -1372,7 +1548,8 @@ void main() {
 
       // 10. complete SocketException retry exceeded
       final clientSocketErr = _MockHttpClient(
-        onPost: (uri, method) async => throw const SocketException('Host unreachable'),
+        onPost: (uri, method) async =>
+            throw const SocketException('Host unreachable'),
       );
       final providerSocketErr = AnthropicProvider(
         executionMode: ExecutionMode.cloud,
@@ -1385,11 +1562,13 @@ void main() {
       );
 
       // 11. completeStream
-      final streamChunks = await providerComplete.completeStream('Stream test').toList();
+      final streamChunks =
+          await providerComplete.completeStream('Stream test').toList();
       expect(streamChunks.join(''), equals('Claude completion result'));
     });
 
-    test('ModelMetadata serialization and deserialization with enriched fields', () {
+    test('ModelMetadata serialization and deserialization with enriched fields',
+        () {
       final model = ModelMetadata(
         id: 'test-model',
         name: 'Test Model',

@@ -74,7 +74,8 @@ class OfflineTranslationEngine implements TranslationProvider {
     final neuralRes = await neuralEngine.translate(trimmed, options: options);
     if (neuralRes.translatedText != trimmed) {
       return TranslationResult(
-        translatedText: _applyCaseAndPunctuation(trimmed, neuralRes.translatedText),
+        translatedText:
+            _applyCaseAndPunctuation(trimmed, neuralRes.translatedText),
         sourceLanguage: sourceLang,
         targetLanguage: targetLang,
         detectedSourceLanguage: detectedSource,
@@ -203,7 +204,9 @@ class OfflineTranslationEngine implements TranslationProvider {
     var result = target;
     if (result.startsWith('¿') && result.length > 1) {
       result = '¿${result[1].toUpperCase()}${result.substring(2)}';
-    } else if (source.isNotEmpty && source[0] == source[0].toUpperCase() && result.isNotEmpty) {
+    } else if (source.isNotEmpty &&
+        source[0] == source[0].toUpperCase() &&
+        result.isNotEmpty) {
       result = result[0].toUpperCase() + result.substring(1);
     }
 
@@ -212,7 +215,9 @@ class OfflineTranslationEngine implements TranslationProvider {
       result += lastChar;
     }
     // Strip any accidental multiple question/exclamation marks
-    result = result.replaceAll(RegExp(r'\?{2,}'), '?').replaceAll(RegExp(r'!{2,}'), '!');
+    result = result
+        .replaceAll(RegExp(r'\?{2,}'), '?')
+        .replaceAll(RegExp(r'!{2,}'), '!');
     return result;
   }
 }

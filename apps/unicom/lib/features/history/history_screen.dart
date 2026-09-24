@@ -216,7 +216,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   const SizedBox(height: 10),
                   Row(
                     children: [
-                      const Icon(Icons.access_time, size: 13, color: Colors.grey),
+                      const Icon(Icons.access_time,
+                          size: 13, color: Colors.grey),
                       const SizedBox(width: 4),
                       Text(
                         dateFormatted,
@@ -231,14 +232,18 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         onPressed: () {
                           final buffer = StringBuffer();
                           for (final seg in conv.segments) {
-                            buffer.writeln('${seg.speakerName}: ${seg.originalText}');
+                            buffer.writeln(
+                                '${seg.speakerName}: ${seg.originalText}');
                             if (seg.translatedText.isNotEmpty) {
                               buffer.writeln('  -> ${seg.translatedText}');
                             }
                           }
-                          Clipboard.setData(ClipboardData(text: buffer.toString()));
+                          Clipboard.setData(
+                              ClipboardData(text: buffer.toString()));
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Copied conversation to clipboard')),
+                            const SnackBar(
+                                content:
+                                    Text('Copied conversation to clipboard')),
                           );
                         },
                       ),
@@ -272,7 +277,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
             onPressed: () => Navigator.pop(ctx),
           ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: UnicomTheme.dangerRed),
+            style:
+                FilledButton.styleFrom(backgroundColor: UnicomTheme.dangerRed),
             child: const Text('Delete'),
             onPressed: () async {
               Navigator.pop(ctx);
@@ -298,7 +304,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
             onPressed: () => Navigator.pop(ctx),
           ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: UnicomTheme.dangerRed),
+            style:
+                FilledButton.styleFrom(backgroundColor: UnicomTheme.dangerRed),
             child: const Text('Clear All'),
             onPressed: () async {
               Navigator.pop(ctx);

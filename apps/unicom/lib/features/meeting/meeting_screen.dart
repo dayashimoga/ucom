@@ -16,7 +16,12 @@ class MeetingScreen extends StatefulWidget {
 class _MeetingScreenState extends State<MeetingScreen> {
   final TextEditingController _statementController = TextEditingController();
   String _selectedSpeaker = 'Speaker 1';
-  final List<String> _speakers = ['Speaker 1', 'Speaker 2', 'Speaker 3', 'Speaker 4'];
+  final List<String> _speakers = [
+    'Speaker 1',
+    'Speaker 2',
+    'Speaker 3',
+    'Speaker 4'
+  ];
 
   @override
   void dispose() {
@@ -50,12 +55,13 @@ class _MeetingScreenState extends State<MeetingScreen> {
                   icon: const Icon(Icons.description_outlined, size: 18),
                   label: const Text('Minutes'),
                   onPressed: () async {
-                    final report =
-                        await widget.controller.createReport(ReportType.meetingMinutes);
+                    final report = await widget.controller
+                        .createReport(ReportType.meetingMinutes);
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('Meeting minutes generated: ${report.title}'),
+                          content: Text(
+                              'Meeting minutes generated: ${report.title}'),
                           backgroundColor: UnicomTheme.successGreen,
                         ),
                       );
@@ -68,12 +74,13 @@ class _MeetingScreenState extends State<MeetingScreen> {
                   icon: const Icon(Icons.description_outlined),
                   tooltip: 'Minutes',
                   onPressed: () async {
-                    final report =
-                        await widget.controller.createReport(ReportType.meetingMinutes);
+                    final report = await widget.controller
+                        .createReport(ReportType.meetingMinutes);
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('Meeting minutes generated: ${report.title}'),
+                          content: Text(
+                              'Meeting minutes generated: ${report.title}'),
                           backgroundColor: UnicomTheme.successGreen,
                         ),
                       );
@@ -85,17 +92,23 @@ class _MeetingScreenState extends State<MeetingScreen> {
                 if (!isPhone)
                   FilledButton.tonalIcon(
                     style: FilledButton.styleFrom(
-                      backgroundColor: isPaused ? UnicomTheme.warningAmber.withOpacity(0.2) : UnicomTheme.dangerRed.withOpacity(0.2),
+                      backgroundColor: isPaused
+                          ? UnicomTheme.warningAmber.withOpacity(0.2)
+                          : UnicomTheme.dangerRed.withOpacity(0.2),
                     ),
                     icon: Icon(
                       isPaused ? Icons.play_arrow : Icons.pause,
                       size: 18,
-                      color: isPaused ? UnicomTheme.warningAmber : UnicomTheme.dangerRed,
+                      color: isPaused
+                          ? UnicomTheme.warningAmber
+                          : UnicomTheme.dangerRed,
                     ),
                     label: Text(
                       isPaused ? 'Resume' : 'Pause',
                       style: TextStyle(
-                        color: isPaused ? UnicomTheme.warningAmber : UnicomTheme.dangerRed,
+                        color: isPaused
+                            ? UnicomTheme.warningAmber
+                            : UnicomTheme.dangerRed,
                         fontSize: 13,
                       ),
                     ),
@@ -123,18 +136,26 @@ class _MeetingScreenState extends State<MeetingScreen> {
               ],
               FilledButton.icon(
                 style: FilledButton.styleFrom(
-                  backgroundColor: isActive ? UnicomTheme.dangerRed : UnicomTheme.primaryBlue,
-                  padding: isPhone ? const EdgeInsets.symmetric(horizontal: 10) : null,
+                  backgroundColor: isActive
+                      ? UnicomTheme.dangerRed
+                      : UnicomTheme.primaryBlue,
+                  padding: isPhone
+                      ? const EdgeInsets.symmetric(horizontal: 10)
+                      : null,
                 ),
-                icon: Icon(isActive ? Icons.stop : Icons.fiber_manual_record, size: 18),
-                label: Text(isActive ? (isPhone ? 'End' : 'End Meeting') : (isPhone ? 'Start' : 'Start Meeting')),
+                icon: Icon(isActive ? Icons.stop : Icons.fiber_manual_record,
+                    size: 18),
+                label: Text(isActive
+                    ? (isPhone ? 'End' : 'End Meeting')
+                    : (isPhone ? 'Start' : 'Start Meeting')),
                 onPressed: () async {
                   if (isActive) {
                     final report = await widget.controller.stopMeeting();
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('Meeting ended. Report saved: ${report.title}'),
+                          content: Text(
+                              'Meeting ended. Report saved: ${report.title}'),
                           action: SnackBarAction(
                             label: 'View',
                             onPressed: () {
@@ -168,7 +189,8 @@ class _MeetingScreenState extends State<MeetingScreen> {
     );
   }
 
-  Widget _buildMeetingStatusBar(BuildContext context, bool isActive, bool isPaused) {
+  Widget _buildMeetingStatusBar(
+      BuildContext context, bool isActive, bool isPaused) {
     if (!isActive) {
       return Container(
         width: double.infinity,
@@ -204,7 +226,9 @@ class _MeetingScreenState extends State<MeetingScreen> {
             height: 10,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: isPaused ? UnicomTheme.warningAmber : UnicomTheme.successGreen,
+              color: isPaused
+                  ? UnicomTheme.warningAmber
+                  : UnicomTheme.successGreen,
             ),
           ),
           Flexible(
@@ -213,7 +237,9 @@ class _MeetingScreenState extends State<MeetingScreen> {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
-                color: isPaused ? UnicomTheme.warningAmber : UnicomTheme.successGreen,
+                color: isPaused
+                    ? UnicomTheme.warningAmber
+                    : UnicomTheme.successGreen,
               ),
               overflow: TextOverflow.ellipsis,
             ),
@@ -223,7 +249,8 @@ class _MeetingScreenState extends State<MeetingScreen> {
             Expanded(
               child: Text(
                 '"$partial"',
-                style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+                style:
+                    const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -252,8 +279,12 @@ class _MeetingScreenState extends State<MeetingScreen> {
           const TabBar(
             indicatorColor: UnicomTheme.accentCyan,
             tabs: [
-              Tab(icon: Icon(Icons.forum_outlined, size: 18), text: 'Transcript'),
-              Tab(icon: Icon(Icons.assignment_outlined, size: 18), text: 'Decisions & Actions'),
+              Tab(
+                  icon: Icon(Icons.forum_outlined, size: 18),
+                  text: 'Transcript'),
+              Tab(
+                  icon: Icon(Icons.assignment_outlined, size: 18),
+                  text: 'Decisions & Actions'),
             ],
           ),
           Expanded(
@@ -335,7 +366,8 @@ class _MeetingScreenState extends State<MeetingScreen> {
                 ),
                 const SizedBox(height: 6),
                 Text(seg.originalText, style: const TextStyle(fontSize: 14)),
-                if (seg.translatedText.isNotEmpty && seg.translatedText != seg.originalText) ...[
+                if (seg.translatedText.isNotEmpty &&
+                    seg.translatedText != seg.originalText) ...[
                   const SizedBox(height: 4),
                   Text(
                     seg.translatedText,
@@ -375,10 +407,12 @@ class _MeetingScreenState extends State<MeetingScreen> {
                   padding: const EdgeInsets.all(10),
                   child: Row(
                     children: [
-                      const Icon(Icons.check_box, color: UnicomTheme.successGreen, size: 18),
+                      const Icon(Icons.check_box,
+                          color: UnicomTheme.successGreen, size: 18),
                       const SizedBox(width: 8),
                       Expanded(
-                        child: Text(d.decisionText, style: const TextStyle(fontSize: 13)),
+                        child: Text(d.decisionText,
+                            style: const TextStyle(fontSize: 13)),
                       ),
                     ],
                   ),
@@ -403,11 +437,14 @@ class _MeetingScreenState extends State<MeetingScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(a.title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                      Text(a.title,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w600, fontSize: 13)),
                       const SizedBox(height: 4),
                       Text(
                         'Assignee: ${a.assignee ?? "Unassigned"}',
-                        style: const TextStyle(fontSize: 12, color: UnicomTheme.accentCyan),
+                        style: const TextStyle(
+                            fontSize: 12, color: UnicomTheme.accentCyan),
                       ),
                     ],
                   ),
@@ -429,7 +466,8 @@ class _MeetingScreenState extends State<MeetingScreen> {
                 margin: const EdgeInsets.only(bottom: 6),
                 child: Padding(
                   padding: const EdgeInsets.all(10),
-                  child: Text('• ${q.questionText}', style: const TextStyle(fontSize: 13)),
+                  child: Text('• ${q.questionText}',
+                      style: const TextStyle(fontSize: 13)),
                 ),
               )),
       ],
@@ -441,7 +479,8 @@ class _MeetingScreenState extends State<MeetingScreen> {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
-        border: const Border(top: BorderSide(color: UnicomTheme.darkSurfaceVariant)),
+        border: const Border(
+            top: BorderSide(color: UnicomTheme.darkSurfaceVariant)),
       ),
       child: SafeArea(
         child: Row(
@@ -450,7 +489,9 @@ class _MeetingScreenState extends State<MeetingScreen> {
               value: _selectedSpeaker,
               underline: const SizedBox(),
               items: _speakers
-                  .map((s) => DropdownMenuItem(value: s, child: Text(s, style: const TextStyle(fontSize: 13))))
+                  .map((s) => DropdownMenuItem(
+                      value: s,
+                      child: Text(s, style: const TextStyle(fontSize: 13))))
                   .toList(),
               onChanged: (val) {
                 if (val != null) setState(() => _selectedSpeaker = val);

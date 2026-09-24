@@ -199,7 +199,8 @@ void main() {
       await tester.pumpAndSettle();
     });
 
-    testWidgets('changes source and target language via dropdowns and clears session via More menu',
+    testWidgets(
+        'changes source and target language via dropdowns and clears session via More menu',
         (tester) async {
       await tester.binding.setSurfaceSize(const Size(800, 1000));
       await tester.pumpWidget(createTestApp());
@@ -316,7 +317,8 @@ void main() {
       await tester.pumpAndSettle();
     });
 
-    testWidgets('Language picker modal opens and selects source and target languages',
+    testWidgets(
+        'Language picker modal opens and selects source and target languages',
         (tester) async {
       await tester.binding.setSurfaceSize(const Size(800, 1000));
       await tester.pumpWidget(createTestApp());
@@ -402,7 +404,13 @@ void main() {
         expect(find.text('Explanation & Nuances'), findsOneWidget);
 
         // Tap persona chips inside modal
-        for (final personaLabel in ['Detailed', 'Technical', 'Child-Friendly', 'Grammar', 'Simple']) {
+        for (final personaLabel in [
+          'Detailed',
+          'Technical',
+          'Child-Friendly',
+          'Grammar',
+          'Simple'
+        ]) {
           final chip = find.descendant(
             of: find.byType(BottomSheet),
             matching: find.text(personaLabel),

@@ -53,6 +53,7 @@ Thumbs.db
 # Podman / Container temporary files
 .container-tmp/
 .podman_pub_cache/
+.gradle-cache/
 **/.gradle/
 
 # Flutter ephemeral & local

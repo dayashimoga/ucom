@@ -30,27 +30,31 @@ Return ONLY a valid JSON object with:
 - "recommendedFollowUps": list of strings (2-3 relevant follow-up questions)
 - "studyPlan": list of strings (3 targeted preparation drills)
 ''';
-        final response = await provider!.complete(prompt, maxTokens: 1000, temperature: 0.3);
+        final response =
+            await provider!.complete(prompt, maxTokens: 1000, temperature: 0.3);
         final cleanJson = _extractJson(response);
         if (cleanJson != null) {
           final parsed = jsonDecode(cleanJson) as Map<String, dynamic>;
           final overallScore = (parsed['overallScore'] as num?)?.toInt() ?? 8;
           final rubricsList = (parsed['rubrics'] as List<dynamic>?)
-                  ?.map((r) => InterviewRubricScore.fromJson(r as Map<String, dynamic>))
+                  ?.map((r) =>
+                      InterviewRubricScore.fromJson(r as Map<String, dynamic>))
                   .toList() ??
               [];
           final strengths = (parsed['strengths'] as List<dynamic>?)
                   ?.map((s) => s.toString())
                   .toList() ??
               [];
-          final areasForImprovement = (parsed['areasForImprovement'] as List<dynamic>?)
-                  ?.map((a) => a.toString())
-                  .toList() ??
-              [];
-          final recommendedFollowUps = (parsed['recommendedFollowUps'] as List<dynamic>?)
-                  ?.map((f) => f.toString())
-                  .toList() ??
-              [];
+          final areasForImprovement =
+              (parsed['areasForImprovement'] as List<dynamic>?)
+                      ?.map((a) => a.toString())
+                      .toList() ??
+                  [];
+          final recommendedFollowUps =
+              (parsed['recommendedFollowUps'] as List<dynamic>?)
+                      ?.map((f) => f.toString())
+                      .toList() ??
+                  [];
           final studyPlan = (parsed['studyPlan'] as List<dynamic>?)
                   ?.map((p) => p.toString())
                   .toList() ??

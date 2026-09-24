@@ -103,7 +103,8 @@ class AudioEnergyVad {
     final double snrDb = 20.0 * (log(signalRms / noiseFloorEstimate) / ln10);
 
     final durationMs = ((sampleCount / sampleRate.toDouble()) * 1000).round();
-    final bool isSpeech = rms >= speechEnergyThreshold && snrDb >= minSnrDbThreshold;
+    final bool isSpeech =
+        rms >= speechEnergyThreshold && snrDb >= minSnrDbThreshold;
 
     return VadFrame(
       rmsEnergy: rms,
@@ -125,7 +126,9 @@ class AudioEnergyVad {
     bool speechFound = false;
 
     // Find first frame with speech
-    for (int i = 0; i + frameSizeBytes <= pcmBytes.length; i += frameSizeBytes) {
+    for (int i = 0;
+        i + frameSizeBytes <= pcmBytes.length;
+        i += frameSizeBytes) {
       final slice = pcmBytes.sublist(i, i + frameSizeBytes);
       final frame = analyzePcm(slice);
       if (frame.isSpeech) {
@@ -140,7 +143,9 @@ class AudioEnergyVad {
     }
 
     // Find last frame with speech
-    for (int i = pcmBytes.length - frameSizeBytes; i >= startOffset; i -= frameSizeBytes) {
+    for (int i = pcmBytes.length - frameSizeBytes;
+        i >= startOffset;
+        i -= frameSizeBytes) {
       final slice = pcmBytes.sublist(i, i + frameSizeBytes);
       final frame = analyzePcm(slice);
       if (frame.isSpeech) {
